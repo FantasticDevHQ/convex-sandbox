@@ -4,5 +4,6 @@
   "env": {},
   "secretEnv": [],
   "siteUrlEnv": [],
-  "bootstrapMissingEnv": []
+  "bootstrapMissingEnv": [],
+  "prepareCommand": ["pnpm", "build:lib"]
 }

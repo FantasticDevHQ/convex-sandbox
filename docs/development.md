@@ -4,8 +4,8 @@ The repository uses the toolkit from
 [convex-worktrees](https://github.com/FantasticDevHQ/convex-worktrees) at commit
 `1c677d33372991ea4dc7269826ece2778fa07503`, installed with its Node installer.
 All exported modules, configuration and tests are adopted under `scripts/worktree`.
-Its license is preserved. The configured backend is `example`; there is no
-frontend process until the separate playground implementation lands.
+Its license is preserved. The configured backend is `example`; the toolkit does not yet launch the
+frontend. Use `pnpm dev:frontend` for the Vite/TanStack Router starter.
 
 Commit changes before `pnpm worktree:setup`. Setup discovers and fetches origin's
 live default branch, checks freshness and allocates stable backend/site ports
@@ -27,3 +27,25 @@ it already launches that UI. Two-worktree application qualification remains CSB-
 On a constrained host, serialize installs, tests, codegen and backend integration
 with the shared heavy-job lock, set `NODE_OPTIONS=--max-old-space-size=512`, and use
 one worker. Run the full check:all command on actual UbiCloud CI.
+
+## Package and frontend workflow
+
+The library publishes ESM entry points from `dist`: core, component configuration,
+generated component types and optional testing utilities. `pnpm build:lib` builds
+these before example type checking or backend setup. Keep the package private
+until the release ticket verifies the packed artifact and registry settings.
+The example has an explicit workspace dependency and uses public package exports.
+
+`pnpm dev:frontend` builds the library and starts Vite on an available loopback
+port. This starter is static and has no provider credentials or backend identity.
+TanStack Router handles `/` and `/integration`; the full playground is later work.
+No router plugin/code generator is needed for these code-defined routes.
+
+`pnpm test:example` uses Playwright with an in-process Vite server on an OS-assigned
+port. It closes the server on teardown, including test failures. Tests cover
+navigation, reload, browser back and a narrow viewport. Their screenshots/video
+are temporary artifacts, not repository documentation. `CSB_PLAYWRIGHT_OUTPUT`
+selects a local output directory; CI uses the runner's temporary directory.
+
+The official brand logo is retained unchanged. Formatting excludes generated
+bindings, upstream toolkit source and the logo asset to preserve provenance.

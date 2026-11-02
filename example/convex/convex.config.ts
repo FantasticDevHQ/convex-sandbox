@@ -1,5 +1,5 @@
 import { defineApp } from "convex/server";
-import sandbox from "../../src/component/convex.config.js";
+import sandbox from "@fantastic.dev/convex-sandbox/convex.config.js";
 
 const app = defineApp();
 app.use(sandbox);

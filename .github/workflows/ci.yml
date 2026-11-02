@@ -25,4 +25,16 @@ jobs:
         run: |
           echo "Runner: $RUNNER_NAME / $RUNNER_OS / $RUNNER_ARCH"
           uname -a
+      - name: Install browser for example checks
+        run: pnpm exec playwright install --with-deps chromium
       - run: pnpm check:all
+        env:
+          CSB_PLAYWRIGHT_OUTPUT: ${{ runner.temp }}/convex-sandbox-e2e
+      - name: Save example test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: example-test-results
+          path: ${{ runner.temp }}/convex-sandbox-e2e
+          if-no-files-found: ignore
+          retention-days: 7
