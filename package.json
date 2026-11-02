@@ -1,0 +1,35 @@
+{
+  "name": "@fantastic.dev/convex-sandbox",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run --maxWorkers=1",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "check:all": "pnpm typecheck && pnpm test && pnpm build && pnpm test:pr-standard && pnpm test:worktree",
+    "worktree:setup": "node scripts/worktree/cli.mjs setup",
+    "worktree:start": "node scripts/worktree/cli.mjs start",
+    "worktree:stop": "node scripts/worktree/cli.mjs stop",
+    "worktree:teardown": "node scripts/worktree/cli.mjs teardown",
+    "worktree:cleanup": "node scripts/worktree/cli.mjs cleanup",
+    "worktree:prune": "node scripts/worktree/cli.mjs prune",
+    "test:worktree": "node --test --test-concurrency=1 scripts/worktree/*.test.mjs",
+    "test:pr-standard": "node --test --test-concurrency=1 scripts/pr-standard.test.mjs scripts/enforce-pr-standard.test.mjs"
+  },
+  "peerDependencies": {
+    "convex": "^1.49.0"
+  },
+  "devDependencies": {
+    "convex": "1.49.0",
+    "convex-test": "0.0.66",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

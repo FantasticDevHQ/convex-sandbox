@@ -1,0 +1,11 @@
+{
+  "name": "convex-sandbox-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:backend": "convex dev"
+  },
+  "dependencies": {
+    "convex": "1.49.0"
+  }
+}
