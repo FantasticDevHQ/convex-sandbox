@@ -1,0 +1,28 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubicloud-standard-2-ubuntu-2404
+    timeout-minutes: 15
+    env:
+      NODE_OPTIONS: --max-old-space-size=512
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Runner identity
+        run: |
+          echo "Runner: $RUNNER_NAME / $RUNNER_OS / $RUNNER_ARCH"
+          uname -a
+      - run: pnpm check:all
