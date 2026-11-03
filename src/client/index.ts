@@ -1,14 +1,6 @@
-/** Experimental CSB-1 boundary proof, not the complete sandbox API. */
-export interface SandboxIdentity {
-  scope: string;
-  key: string;
-  provider: string;
-  providerId: string;
-}
-
-export interface Observation extends SandboxIdentity {
-  state: "running" | "stopped";
-}
+export * from "../contracts.js";
+export * from "./providers.js";
+import type { Observation, SandboxIdentity } from "../contracts.js";
 
 /** SDK-specific results are untrusted until projected to the common contract. */
 export interface DescribeAdapter {
