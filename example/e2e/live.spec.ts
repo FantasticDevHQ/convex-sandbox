@@ -22,7 +22,10 @@ test("real local playground walkthrough, recovery and narrow layout", async ({
   ).toBeVisible();
   const output = page.getByRole("textbox", { name: "Command output" });
   const run = page.getByRole("button", { name: "Run fixture", exact: true });
-  await run.click();
+  await page.getByLabel("Command scenario").focus();
+  await page.keyboard.press("Tab");
+  await expect(run).toBeFocused();
+  await page.keyboard.press("Enter");
   await expect(output).toHaveValue("Hello from convex-sandbox.\n");
   await page.getByLabel("Command scenario").selectOption("large-output");
   await run.click();

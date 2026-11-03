@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useAction, useConvexConnectionState, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { BackendBoundary, backendClient } from "./backend";
+import { BackendBoundary } from "./backend";
+import { backendClient } from "./backend-client";
 import { useTask } from "./use-task";
 import { Machine } from "./playground-machine";
 
