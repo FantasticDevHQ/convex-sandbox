@@ -7,6 +7,17 @@ test("real local playground walkthrough, recovery and narrow layout", async ({
   const origin = process.env.CSB_LIVE_URL;
   if (!origin) throw new Error("Run inside owned worktree qualification");
   const errors: string[] = [];
+  let externalRequests = 0;
+  await page.route("**/*", (route) => {
+    if (
+      ["localhost", "127.0.0.1", "[::1]"].includes(
+        new URL(route.request().url()).hostname,
+      )
+    )
+      return route.continue();
+    externalRequests++;
+    return route.abort("blockedbyclient");
+  });
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(`${origin}/playground`);
   await expect(
@@ -39,8 +50,22 @@ test("real local playground walkthrough, recovery and narrow layout", async ({
   await expect(
     page.getByText("The reply was lost.", { exact: false }),
   ).toBeVisible();
+  await page.screenshot({
+    path: info.outputPath("unknown-before-reload.png"),
+    fullPage: true,
+  });
+  await page.reload();
+  await page.getByText("Recent execution history", { exact: true }).click();
+  await page.getByRole("button", { name: / · unknown$/ }).click();
+  await expect(page.locator(".execution-summary strong")).toHaveText("unknown");
   await page.getByRole("button", { name: "Check execution" }).click();
   await expect(output).toHaveValue("Hello from convex-sandbox.\n");
+  await page.getByLabel("Command scenario").selectOption("rejected");
+  await run.click();
+  await expect(page.locator(".execution-summary strong")).toHaveText("failed");
+  await expect(
+    page.getByText("This fixture failed.", { exact: false }),
+  ).toBeVisible();
   await page.getByLabel("Command scenario").selectOption("background");
   await run.click();
   await page.getByRole("button", { name: "Cancel execution" }).click();
@@ -138,4 +163,5 @@ test("real local playground walkthrough, recovery and narrow layout", async ({
     page.getByRole("heading", { name: "persistent is deleted" }),
   ).toBeVisible();
   expect(errors).toEqual([]);
+  expect(externalRequests).toBe(0);
 });

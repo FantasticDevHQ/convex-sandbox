@@ -290,3 +290,67 @@ test("large fixture output exposes multiple bounded reactive cache pages", async
     first.entries[1]?.sequence ?? -1,
   );
 });
+
+test("reconcile and replay keep exactly one native command after a lost reply", async () => {
+  const t = fixture();
+  await t.action(api.demo.seed, {});
+  const nativeCount = () =>
+    t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("demoProfiles")
+        .withIndex("by_profile", (q) => q.eq("profile", "persistent"))
+        .unique();
+      const state = JSON.parse(row?.stateJson ?? "null") as {
+        machines: { executions: unknown[] }[];
+      };
+      return state.machines.reduce(
+        (count, machine) => count + machine.executions.length,
+        0,
+      );
+    });
+  const handle = {
+    profile: "persistent" as const,
+    operationId: "no-redispatch",
+  };
+  expect(
+    (await t.action(api.demo.execute, { ...handle, scenario: "lost-reply" }))
+      .state,
+  ).toBe("unknown");
+  expect(await nativeCount()).toBe(1);
+  expect((await t.action(api.demo.status, handle))?.state).toBe("completed");
+  expect(
+    (await t.action(api.demo.execute, { ...handle, scenario: "lost-reply" }))
+      .state,
+  ).toBe("completed");
+  expect(await nativeCount()).toBe(1);
+});
+
+test("fixture epochs cannot read each other's command, log or file records", async () => {
+  const t = fixture();
+  const seeded = await t.action(api.demo.seed, {});
+  const handle = { profile: "persistent" as const, operationId: "prior-epoch" };
+  await t.action(api.demo.execute, { ...handle, scenario: "hello" });
+  await t.action(api.demo.writeFile, {
+    profile: "persistent",
+    path: "/workspace/old.txt",
+    text: "old fixture",
+    operationId: "old-file",
+  });
+  const next = await t.action(api.demo.reset, {});
+  expect(next.epoch).toBeGreaterThan(seeded.epoch);
+  expect(await t.query(api.demo.execution, handle)).toBeNull();
+  expect(
+    (await t.query(api.demo.logs, { ...handle, cursor: null })).entries,
+  ).toHaveLength(0);
+  expect(
+    (await t.query(api.demo.files, { profile: "persistent" })).some(
+      (file) => file.path === "/workspace/old.txt",
+    ),
+  ).toBe(false);
+  await expect(
+    t.query(api.demo.execution, {
+      ...handle,
+      scope: `example-local-fixture-${seeded.epoch}`,
+    } as never),
+  ).rejects.toThrow();
+});
