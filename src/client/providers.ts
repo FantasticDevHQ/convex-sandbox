@@ -117,22 +117,20 @@ function projectDescription(
   request: DescribeRequest,
   raw: unknown,
 ): SandboxDescription {
-  if (
-    !raw ||
-    typeof raw !== "object" ||
-    !("providerId" in raw) ||
-    raw.providerId !== request.reference.providerId ||
-    !("state" in raw) ||
-    !isSandboxState(raw.state)
-  )
+  if (!raw || typeof raw !== "object")
+    throw new Error("Invalid provider description");
+  // SDK objects may use getters. Validate exactly the values we return.
+  const providerId: unknown = Reflect.get(raw, "providerId");
+  const state: unknown = Reflect.get(raw, "state");
+  const resources: unknown = Reflect.get(raw, "resources");
+  if (providerId !== request.reference.providerId || !isSandboxState(state))
     throw new Error("Invalid provider description");
   const result: SandboxDescription = {
     sandbox: request.sandbox,
     reference: request.reference,
-    state: raw.state,
+    state,
   };
-  if ("resources" in raw && raw.resources !== undefined) {
-    const resources = raw.resources;
+  if (resources !== undefined) {
     if (!resources || typeof resources !== "object" || Array.isArray(resources))
       throw new Error("Invalid provider description");
     const projected: MachineResources = {};

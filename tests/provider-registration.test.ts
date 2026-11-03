@@ -201,3 +201,26 @@ test("missing providers and adapter errors fail without retries", async () => {
   );
   expect(calls).toBe(1);
 });
+
+test("SDK getters are read once before validating and projecting", async () => {
+  let reads = 0;
+  const providers = new SandboxProviders({ authorize: async () => {} });
+  providers.register(
+    registerProvider({
+      name: "fixture",
+      adapter: {
+        describe: async (providerId) => ({
+          providerId,
+          get state() {
+            reads++;
+            return reads === 1 ? ("running" as const) : ("stopped" as const);
+          },
+        }),
+      },
+    }),
+  );
+  expect((await providers.describe({ sandbox, reference })).state).toBe(
+    "running",
+  );
+  expect(reads).toBe(1);
+});
