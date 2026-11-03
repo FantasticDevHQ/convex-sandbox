@@ -23,6 +23,419 @@ import type { FunctionReference } from "convex/server";
  */
 export type ComponentApi<Name extends string | undefined = string | undefined> =
   {
+    execution: {
+      acknowledgeCancel: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          acknowledgement: "accepted" | "rejected" | "unknown";
+          operationId: string;
+          sandbox: { key: string; scope: string };
+          token: number;
+        },
+        boolean,
+        Name
+      >;
+      appendLogs: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          operationId: string;
+          page?: {
+            complete: boolean;
+            entries: Array<{ stream: "stdout" | "stderr"; text: string }>;
+            nextCursor: string | null;
+            truncated?: boolean;
+          };
+          sandbox: { key: string; scope: string };
+          token: number;
+        },
+        boolean,
+        Name
+      >;
+      claim: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          mode: "start" | "status";
+          operationId: string;
+          sandbox: { key: string; scope: string };
+        },
+        null | {
+          record: {
+            cancellation: {
+              acknowledgement:
+                "none" | "pending" | "accepted" | "rejected" | "unknown";
+              requested: boolean;
+            };
+            createdAt: number;
+            errorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            executionId?: string;
+            exitCode?: number;
+            generation: number;
+            idempotency: "native" | "none";
+            key: string;
+            logErrorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            operationId: string;
+            outputBytes: number;
+            outputTruncated: boolean;
+            reference: { provider: string; providerId: string };
+            scope: string;
+            state:
+              | "queued"
+              | "running"
+              | "completed"
+              | "failed"
+              | "cancelled"
+              | "unknown";
+            updatedAt: number;
+            version: number;
+          };
+          token: number;
+        },
+        Name
+      >;
+      claimLogs: FunctionReference<
+        "mutation",
+        "internal",
+        { operationId: string; sandbox: { key: string; scope: string } },
+        null | {
+          cursor: string | null;
+          record: {
+            cancellation: {
+              acknowledgement:
+                "none" | "pending" | "accepted" | "rejected" | "unknown";
+              requested: boolean;
+            };
+            createdAt: number;
+            errorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            executionId?: string;
+            exitCode?: number;
+            generation: number;
+            idempotency: "native" | "none";
+            key: string;
+            logErrorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            operationId: string;
+            outputBytes: number;
+            outputTruncated: boolean;
+            reference: { provider: string; providerId: string };
+            scope: string;
+            state:
+              | "queued"
+              | "running"
+              | "completed"
+              | "failed"
+              | "cancelled"
+              | "unknown";
+            updatedAt: number;
+            version: number;
+          };
+          token: number;
+        },
+        Name
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { operationId: string; sandbox: { key: string; scope: string } },
+        null | {
+          cancellation: {
+            acknowledgement:
+              "none" | "pending" | "accepted" | "rejected" | "unknown";
+            requested: boolean;
+          };
+          createdAt: number;
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          exitCode?: number;
+          generation: number;
+          idempotency: "native" | "none";
+          key: string;
+          logErrorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          operationId: string;
+          outputBytes: number;
+          outputTruncated: boolean;
+          reference: { provider: string; providerId: string };
+          scope: string;
+          state:
+            | "queued"
+            | "running"
+            | "completed"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+      logs: FunctionReference<
+        "query",
+        "internal",
+        {
+          cursor: number | null;
+          limit: number;
+          operationId: string;
+          sandbox: { key: string; scope: string };
+        },
+        {
+          entries: Array<{
+            sequence: number;
+            stream: "stdout" | "stderr";
+            text: string;
+          }>;
+          isDone: boolean;
+          nextCursor: number | null;
+          truncated: boolean;
+        },
+        Name
+      >;
+      publish: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          operationId: string;
+          result:
+            | {
+                snapshot: {
+                  executionId: string;
+                  exitCode?: number;
+                  output?: {
+                    stderr: string;
+                    stdout: string;
+                    truncated: boolean;
+                  };
+                  state:
+                    | "queued"
+                    | "running"
+                    | "completed"
+                    | "failed"
+                    | "cancelled"
+                    | "unknown";
+                };
+              }
+            | {
+                errorCode:
+                  | "unsupported"
+                  | "validation"
+                  | "authentication"
+                  | "authorization"
+                  | "quota"
+                  | "rate_limit"
+                  | "capacity"
+                  | "timeout"
+                  | "stale_resource"
+                  | "unknown_outcome"
+                  | "unknown_provider";
+                notStarted: boolean;
+              };
+          sandbox: { key: string; scope: string };
+          token: number;
+        },
+        boolean,
+        Name
+      >;
+      requestCancel: FunctionReference<
+        "mutation",
+        "internal",
+        { operationId: string; sandbox: { key: string; scope: string } },
+        null | {
+          record: {
+            cancellation: {
+              acknowledgement:
+                "none" | "pending" | "accepted" | "rejected" | "unknown";
+              requested: boolean;
+            };
+            createdAt: number;
+            errorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            executionId?: string;
+            exitCode?: number;
+            generation: number;
+            idempotency: "native" | "none";
+            key: string;
+            logErrorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            operationId: string;
+            outputBytes: number;
+            outputTruncated: boolean;
+            reference: { provider: string; providerId: string };
+            scope: string;
+            state:
+              | "queued"
+              | "running"
+              | "completed"
+              | "failed"
+              | "cancelled"
+              | "unknown";
+            updatedAt: number;
+            version: number;
+          };
+          token: number;
+        },
+        Name
+      >;
+      reserve: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          expectedVersion: number;
+          idempotency: "native" | "none";
+          operationId: string;
+          sandbox: { key: string; scope: string };
+        },
+        {
+          cancellation: {
+            acknowledgement:
+              "none" | "pending" | "accepted" | "rejected" | "unknown";
+            requested: boolean;
+          };
+          createdAt: number;
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          exitCode?: number;
+          generation: number;
+          idempotency: "native" | "none";
+          key: string;
+          logErrorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          operationId: string;
+          outputBytes: number;
+          outputTruncated: boolean;
+          reference: { provider: string; providerId: string };
+          scope: string;
+          state:
+            | "queued"
+            | "running"
+            | "completed"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+    };
     lifecycle: {
       claimCreateReconciliation: FunctionReference<
         "mutation",
@@ -88,6 +501,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "stop"
             | "delete"
             | "execute"
+            | "cancelExecution"
+            | "executionLogs"
             | "readFile"
             | "writeFile"
             | "listFiles"
@@ -371,6 +786,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "stop"
             | "delete"
             | "execute"
+            | "cancelExecution"
+            | "executionLogs"
             | "readFile"
             | "writeFile"
             | "listFiles"
@@ -407,6 +824,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "stop"
             | "delete"
             | "execute"
+            | "cancelExecution"
+            | "executionLogs"
             | "readFile"
             | "writeFile"
             | "listFiles"
@@ -475,6 +894,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "stop"
               | "delete"
               | "execute"
+              | "cancelExecution"
+              | "executionLogs"
               | "readFile"
               | "writeFile"
               | "listFiles"
@@ -531,6 +952,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "stop"
             | "delete"
             | "execute"
+            | "cancelExecution"
+            | "executionLogs"
             | "readFile"
             | "writeFile"
             | "listFiles"
@@ -599,6 +1022,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "stop"
               | "delete"
               | "execute"
+              | "cancelExecution"
+              | "executionLogs"
               | "readFile"
               | "writeFile"
               | "listFiles"

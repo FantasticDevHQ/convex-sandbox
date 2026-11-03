@@ -61,3 +61,18 @@ test("an internal host action orchestrates create, stop and delete through the c
     await t.action(makeFunctionReference<"action">("proof:lifecycle"), {}),
   ).toEqual({ created: true, stopped: true, deleted: true });
 });
+
+test("an internal host action executes once, caches output and separates cancellation from completion", async () => {
+  const { makeFunctionReference } = await import("convex/server");
+  const t = convexTest(defineSchema({}), hostModules);
+  register(t);
+  expect(
+    await t.action(makeFunctionReference<"action">("proof:execution"), {}),
+  ).toEqual({
+    startedOnce: true,
+    completed: true,
+    cancelAcknowledged: true,
+    outputBounded: true,
+    deleted: true,
+  });
+});

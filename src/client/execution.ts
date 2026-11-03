@@ -21,14 +21,14 @@ function snapshotHandle({
     operationId,
   });
 }
-const key = (record: ExecutionRecord) =>
+const key = (record: ExecutionRecord, kind = "execute") =>
   JSON.stringify([
     "convex-sandbox",
     record.scope,
     record.key,
     record.reference.provider,
     record.generation,
-    "execute",
+    kind,
     record.operationId,
   ]);
 export class SandboxExecution {
@@ -195,7 +195,7 @@ export class SandboxExecution {
       const result = await boundedSDK((signal) =>
         provider.cancel(lease.record.executionId ?? "", {
           signal,
-          idempotencyKey: key(lease.record),
+          idempotencyKey: key(lease.record, "cancelExecution"),
         }),
       );
       acknowledgement = result.acknowledged ? "accepted" : "rejected";
@@ -226,7 +226,7 @@ export class SandboxExecution {
       const page = await boundedSDK((signal) =>
         provider.logs(lease.record.executionId ?? "", lease.cursor, {
           signal,
-          idempotencyKey: key(lease.record),
+          idempotencyKey: key(lease.record, "executionLogs"),
         }),
       );
       await this.store.appendLogs({ ...handle, token: lease.token, page });

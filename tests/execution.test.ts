@@ -526,3 +526,26 @@ test("late provider log pages cannot duplicate a terminal inline output snapshot
     ),
   ).toEqual(["whole output"]);
 });
+
+test("native cancellation uses a different idempotency key from command start", async () => {
+  let startKey = "",
+    cancelKey = "";
+  const f = fixture(
+    adapter({
+      idempotency: "native",
+      start: async (_, __, context) => {
+        startKey = context.idempotencyKey;
+        return { executionId: "exec-1", state: "queued" };
+      },
+      cancel: async (_, __, context) => {
+        cancelKey = context.idempotencyKey;
+        return { acknowledged: true };
+      },
+    }),
+  );
+  await f.setup();
+  await f.client.start({ ...handle, input });
+  await f.client.cancel(handle);
+  expect(startKey).not.toBe("");
+  expect(cancelKey).not.toBe(startKey);
+});

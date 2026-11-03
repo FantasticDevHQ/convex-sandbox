@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as execution from "../execution.js";
+import type * as executionHelpers from "../executionHelpers.js";
 import type * as lifecycle from "../lifecycle.js";
 import type * as observations from "../observations.js";
 import type * as operations from "../operations.js";
@@ -22,6 +24,8 @@ import type {
 import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
+  execution: typeof execution;
+  executionHelpers: typeof executionHelpers;
   lifecycle: typeof lifecycle;
   observations: typeof observations;
   operations: typeof operations;

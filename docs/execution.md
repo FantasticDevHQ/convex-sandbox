@@ -21,7 +21,8 @@ deadline and leave an unknown outcome; core does not build a shell service to
 make that SDK asynchronous. `status` and optional find must be read-only and must
 never start/restart a command. Find must correlate the scoped idempotency key and
 the correct provider machine/account. Native delivery guarantees remain provider
-responsibilities.
+responsibilities. Cancellation uses a separate request-key namespace from start;
+lookup uses the original command key.
 
 Input is an explicit shell command or executable/argv, plus optional cwd, env and
 runtime timeout. Shell text is never inferred from argv or concatenated by core.

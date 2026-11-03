@@ -3,6 +3,7 @@ import {
   SandboxProviders,
   registerProvider,
   createLifecycleStore,
+  createExecutionStore,
 } from "@fantastic.dev/convex-sandbox";
 import type { ComponentApi } from "@fantastic.dev/convex-sandbox/_generated/component.js";
 import { internalAction, internalQuery } from "./_generated/server.js";
@@ -123,6 +124,104 @@ export const lifecycle = internalAction({
       created: creates === 1,
       stopped,
       deleted: (await client.get(identity))?.tombstone === true,
+    };
+  },
+});
+
+/** Synthetic command SDK proof. No shell command runs on the host or a live provider. */
+export const execution = internalAction({
+  args: {},
+  returns: v.object({
+    startedOnce: v.boolean(),
+    completed: v.boolean(),
+    cancelAcknowledged: v.boolean(),
+    outputBounded: v.boolean(),
+    deleted: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    let starts = 0;
+    const providers = new SandboxProviders({
+      authorize: async () => {},
+      authorizeCreate: async () => {},
+    });
+    providers.register(
+      registerProvider({
+        name: "execution-simulated",
+        createIdempotency: "none",
+        capabilities: {
+          version: 1,
+          supported: [
+            "create",
+            "describe",
+            "delete",
+            "execute",
+            "cancelExecution",
+            "executionLogs",
+          ],
+        },
+        adapter: {
+          describe: async (providerId) => ({ providerId, state: "running" }),
+          create: async () => ({
+            providerId: "fixture-execution-machine",
+            state: "running",
+          }),
+          delete: async (providerId) => ({ providerId, state: "deleted" }),
+          execution: {
+            idempotency: "none",
+            start: async () => {
+              starts++;
+              return { executionId: "fixture-command", state: "queued" };
+            },
+            status: async () => ({
+              executionId: "fixture-command",
+              state: "completed",
+              exitCode: 0,
+            }),
+            cancel: async () => ({ acknowledged: true }),
+            logs: async () => ({
+              entries: [{ stream: "stdout", text: "synthetic output" }],
+              nextCursor: null,
+              complete: true,
+            }),
+          },
+        },
+      }),
+    );
+    const identity = { scope: "internal-fixture", key: "execution-proof" };
+    const lifecycle = providers.lifecycle(createLifecycleStore(ctx, sandbox));
+    await lifecycle.create({
+      sandbox: identity,
+      provider: "execution-simulated",
+      operationId: "create",
+    });
+    const client = providers.execution(createExecutionStore(ctx, sandbox));
+    const handle = { sandbox: identity, operationId: "command" };
+    const input = {
+      kind: "argv" as const,
+      executable: "printf",
+      args: ["synthetic output"],
+    };
+    await client.start({ ...handle, input });
+    await client.start({ ...handle, input });
+    await client.syncLogs(handle);
+    const cancellation = await client.cancel(handle);
+    const completed = await client.status(handle);
+    const logs = await client.logs({ ...handle, cursor: null });
+    await lifecycle.run({
+      sandbox: identity,
+      operationId: "delete",
+      action: "delete",
+    });
+    return {
+      startedOnce: starts === 1,
+      completed: completed?.state === "completed" && completed.exitCode === 0,
+      cancelAcknowledged:
+        cancellation?.cancellation.acknowledgement === "accepted" &&
+        cancellation.state === "queued",
+      outputBounded:
+        logs.entries.map((entry) => entry.text).join("") ===
+          "synthetic output" && (completed?.outputBytes ?? Infinity) <= 65536,
+      deleted: (await lifecycle.get(identity))?.tombstone === true,
     };
   },
 });
