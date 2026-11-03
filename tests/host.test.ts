@@ -383,3 +383,19 @@ test("known-secret matching treats credential punctuation as literal text", () =
     "value [redacted] end",
   );
 });
+
+test("secret handle checks reject keys with mixed URL escaping and lowercase escape digits", () => {
+  for (const token of ["master%2bkey%2fprivate", "master%2Bkey/private"]) {
+    expect(() =>
+      protectSecretHandle(
+        {
+          kind: "preview",
+          url: `https://preview.example.test/?token=${token}`,
+          expiresAt: Date.now() + 1000,
+          access: { kind: "public" },
+        },
+        ["master+key/private"],
+      ),
+    ).toThrow("Invalid provider data");
+  }
+});

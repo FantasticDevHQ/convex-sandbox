@@ -49,13 +49,24 @@ export function protectSecretHandle<T extends ConnectionHandle | FileTransfer>(
 ): T {
   const snapshot = structuredClone(handle);
   const encoded = JSON.stringify(snapshot);
+  const candidates = [
+    encoded,
+    encoded.replace(/%[\da-f]{2}/gi, (sequence) => sequence.toUpperCase()),
+  ];
+  try {
+    candidates.push(decodeURIComponent(encoded));
+  } catch {
+    /* Non-URI values can contain literal percent signs. */
+  }
   for (const value of secretList(secrets)) {
     if (
       [
         value,
         encodeURIComponent(value),
         JSON.stringify(value).slice(1, -1),
-      ].some((variant) => encoded.includes(variant))
+      ].some((variant) =>
+        candidates.some((candidate) => candidate.includes(variant)),
+      )
     )
       return hostError("validation");
   }
