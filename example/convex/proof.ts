@@ -640,6 +640,15 @@ export const hostSecurity = internalAction({
         masterKey,
       );
     }
+    const validHandle = protectSecretHandle(
+      {
+        kind: "preview",
+        url: "https://preview.example.test/short-lived",
+        expiresAt: Date.now() + 1000,
+        access: { kind: "token", token: "fixture-session-token" },
+      },
+      [masterKey],
+    );
     let secretHandleBlocked = false;
     try {
       protectSecretHandle(
@@ -651,8 +660,11 @@ export const hostSecurity = internalAction({
         },
         [masterKey],
       );
-    } catch {
-      secretHandleBlocked = true;
+    } catch (error) {
+      secretHandleBlocked =
+        error instanceof SandboxProviderError &&
+        error.data.code === "validation" &&
+        validHandle.access.token === "fixture-session-token";
     }
     return {
       deniedAcrossScopes: denied === 5,
