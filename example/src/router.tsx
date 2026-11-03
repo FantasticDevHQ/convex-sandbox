@@ -1,3 +1,4 @@
+import { Playground } from "./playground";
 import {
   createRootRoute,
   createRoute,
@@ -20,6 +21,7 @@ function Frame() {
           <Link to="/" activeOptions={{ exact: true }}>
             Overview
           </Link>
+          <Link to="/playground">Playground</Link>
           <Link to="/integration">Integration</Link>
         </nav>
         <a
@@ -61,7 +63,7 @@ function Overview() {
           <Link to="/integration" className="primary-link">
             Explore the integration <span aria-hidden="true">↗</span>
           </Link>
-          <p className="scope-note">Scaffold · no live provider</p>
+          <p className="scope-note">Simulation · no live provider</p>
         </div>
         <section className="code-window" aria-label="Adapter boundary example">
           <div className="window-bar">
@@ -133,9 +135,9 @@ function Overview() {
       <aside className="baseline-note">
         <span className="note-label">IN THIS STARTER</span>
         <p>
-          Package exports, a mounted server fixture, and this TanStack Router
-          app. Interactive sandbox controls and live adapters arrive in later
-          work.
+          Explore component state, command outcomes and files in the local
+          simulated playground. Live provider adapters have separate
+          integrations.
         </p>
       </aside>
     </>
@@ -183,9 +185,10 @@ function Integration() {
           <code>pnpm install --frozen-lockfile{"\n"}pnpm dev:frontend</code>
         </pre>
         <p>
-          The frontend starts without provider credentials or a backend
-          connection. To run the server fixture, follow the repository’s
-          local-development instructions.
+          The frontend starts without credentials. For the interactive
+          playground, run pnpm worktree:setup, then pnpm worktree:start
+          --frontend from a committed checkout. This provisions an anonymous
+          local backend.
         </p>
       </div>
     </section>
@@ -206,13 +209,31 @@ const overviewRoute = createRoute({
   path: "/",
   component: Overview,
 });
+const playgroundRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/playground",
+  component: () => <Playground />,
+});
+const detailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/playground/$profile",
+  component: () => {
+    const { profile } = detailRoute.useParams();
+    return <Playground profile={profile} />;
+  },
+});
 const integrationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/integration",
   component: Integration,
 });
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([overviewRoute, integrationRoute]),
+  routeTree: rootRoute.addChildren([
+    overviewRoute,
+    integrationRoute,
+    playgroundRoute,
+    detailRoute,
+  ]),
 });
 declare module "@tanstack/react-router" {
   interface Register {

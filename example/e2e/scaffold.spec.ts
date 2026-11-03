@@ -5,7 +5,10 @@ let server: ViteDevServer;
 let origin: string;
 
 test.beforeAll(async () => {
-  server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+  server = await createServer({
+    server: { host: "127.0.0.1", port: 0 },
+    define: { "import.meta.env.VITE_CONVEX_URL": JSON.stringify("") },
+  });
   await server.listen();
   const address = server.httpServer?.address();
   if (!address || typeof address === "string")
@@ -25,7 +28,7 @@ test("TanStack routes navigate and reload without requiring a backend", async ({
   await expect(
     page.getByRole("heading", { name: "One interface. Any sandbox." }),
   ).toBeVisible();
-  await expect(page.getByText("Scaffold · no live provider")).toBeVisible();
+  await expect(page.getByText("Simulation · no live provider")).toBeVisible();
   await page.getByRole("link", { name: "Integration", exact: true }).click();
   await expect(page).toHaveURL(/\/integration$/);
   await expect(
@@ -71,4 +74,27 @@ test("starter navigation stays usable on a narrow viewport", async ({
   await expect(
     page.getByRole("heading", { name: "One interface. Any sandbox." }),
   ).toBeVisible();
+});
+
+test("playground explains offline setup and offers no pretend provider", async ({
+  page,
+}) => {
+  await page.goto(origin);
+  await page.getByRole("link", { name: "Playground", exact: true }).click();
+  await expect(page).toHaveURL(/\/playground$/);
+  await expect(
+    page.getByRole("heading", { name: "Your sandbox workbench." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Simulated provider", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("No real VM or shell is running.", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Connect a local backend" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create demo machines" }),
+  ).toHaveCount(0);
 });

@@ -45,8 +45,11 @@ function waitFor(value) {
   });
 }
 try {
-  await waitFor("absent");
-  const seeded = await client.action(api.demo.seed, {});
+  const initial = await client.query(api.demo.info, {});
+  const seeded = await client.action(
+    initial.initialized ? api.demo.reset : api.demo.seed,
+    {},
+  );
   assert.deepEqual(await client.action(api.demo.seed, {}), seeded);
   await waitFor("running");
   await client.action(api.demo.lifecycle, {

@@ -167,7 +167,7 @@ export const logs = query({
         sandbox,
         operationId: args.operationId,
         cursor: args.cursor,
-        limit: 16,
+        limit: 2,
       });
     }),
 });
@@ -391,5 +391,33 @@ export const transfer = action({
           [],
         ),
       };
+    }),
+});
+
+export const snapshot = action({
+  args: { profile: profileValidator, operationId: v.string() },
+  returns: operationRecordValidator,
+  handler: (ctx, args) =>
+    withLease(ctx, false, true, async (lease) => {
+      operationId(args.operationId);
+      const client = await services(ctx, lease, args.profile);
+      return client.images.run({
+        sandbox: client.sandbox,
+        operationId: args.operationId,
+        kind: "snapshotDisk",
+      });
+    }),
+});
+export const snapshotStatus = action({
+  args: { profile: profileValidator, operationId: v.string() },
+  returns: v.union(v.null(), operationRecordValidator),
+  handler: (ctx, args) =>
+    withLease(ctx, false, true, async (lease) => {
+      operationId(args.operationId);
+      const client = await services(ctx, lease, args.profile);
+      return client.images.status({
+        sandbox: client.sandbox,
+        operationId: args.operationId,
+      });
     }),
 });

@@ -9,8 +9,9 @@ repository root after a frozen install. The library builds first. Vite chooses a
 available loopback port and prints its URL. `/` is the overview; `/integration`
 shows the host mount. Refresh and back navigation work on both routes.
 
-The UI starter is still static. The local Convex backend now mounts the component
-and exposes reactive queries and fixed actions backed by durable simulator state.
+The `/playground` route subscribes to the local component and exposes fixed
+actions backed by durable simulator state. Select one of three profiles to explore
+lifecycle, bounded output, unknown outcomes, files and snapshot readiness.
 It provisions no real machines and needs no provider keys. See the
 [backend guide](../docs/example-backend.md) for seed/reset, API behavior, limits
 and restart verification, and [development](../docs/development.md) for the
