@@ -237,6 +237,8 @@ test(
       deniedAcrossScopes: true, deniedListInjection: true, noUnauthorizedSDKCalls: true, outputWithheld: true, safeError: true, secretHandleBlocked: true,
     });
     console.log("PASS: host authorization denies cross-scope SDK access and keeps output and master keys out of component records on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:conformance", {}, true), { passed: 13, skipped: 0, total: 13 });
+    console.log("PASS: all 13 exported adapter conformance cases pass through the public simulator and installed component on both backends");
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));

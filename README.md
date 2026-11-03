@@ -49,7 +49,8 @@ creation claims and bounded reconciliation. The [execution guide](docs/execution
 covers one-shot commands, asynchronous handles, cancellation and bounded output. The
 [file guide](docs/files.md) covers bounded text/binary access, path policies and ephemeral transfer handles.
 The [image and connection guide](docs/images.md) covers native artifact readiness and expiring access handles.
-The [host security guide](docs/security.md) shows authenticated wrappers, server-owned provider selection and output/error policies. The
+The [host security guide](docs/security.md) shows authenticated wrappers, server-owned provider selection and output/error policies.
+The [adapter testing guide](docs/testing.md) covers reusable conformance cases, capability profiles and the bounded simulator. The
 experimental `SandboxBoundary` remains the narrow observation proof. Component types
 are available from `@fantastic.dev/convex-sandbox/_generated/component.js` and
 convex-test registration helpers from `@fantastic.dev/convex-sandbox/testing`.

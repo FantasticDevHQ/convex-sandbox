@@ -1,3 +1,7 @@
+export * from "./stores.js";
+export * from "./conformance.js";
+export * from "./faults.js";
+export * from "./simulator.js";
 import type { GenericDataModel } from "convex/server";
 import type { TestConvexRoot } from "convex-test";
 import type { ComponentApi } from "../component/_generated/component.js";
