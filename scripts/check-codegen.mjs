@@ -23,17 +23,23 @@ async function generate(check) {
   // These helpers reject foreign state and remove inherited cloud credentials.
   const { state, checkConfig, childEnv, cli } =
     await import("./worktree/config.mjs");
-  const { root, backend, dir } = await import("./worktree/context.mjs");
+  const { root, backend } = await import("./worktree/context.mjs");
   const s = await state();
   await checkConfig(s, true);
-  const env = childEnv(s);
+  // codegen has no --env-file flag in this SDK. Empty selectors also prevent
+  // dotenv from loading a cloud key from checkout-local .env files.
+  const env = {
+    ...childEnv(s),
+    CONVEX_DEPLOYMENT: `anonymous:${s.deployment}`,
+    CONVEX_DEPLOY_KEY: "",
+    CONVEX_SELF_HOSTED_URL: "",
+    CONVEX_SELF_HOSTED_ADMIN_KEY: "",
+  };
   const run = (args, cwd = backend) =>
     execFileSync(process.execPath, args, { cwd, env, stdio: "inherit" });
   const codegen = [
     cli(),
     "codegen",
-    "--env-file",
-    path.join(dir, "convex.env"),
     "--typecheck",
     "disable",
   ];

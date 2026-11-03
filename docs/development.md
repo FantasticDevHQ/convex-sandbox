@@ -106,7 +106,8 @@ remains a separate Prettier concern.
 
 After `pnpm worktree:setup` and `pnpm worktree:start`, run `pnpm codegen` to
 regenerate bindings. The command validates the checkout's local backend identity,
-removes inherited Convex cloud configuration and uses its managed environment.
+removes inherited Convex cloud configuration and pins its validated anonymous
+deployment. Empty cloud selectors prevent dotenv files from overriding that choice.
 It explicitly generates `src/component` from TypeScript, rebuilds the package,
 then generates the consuming example. App codegen alone skips the package's
 published JavaScript component and cannot validate its source bindings.
