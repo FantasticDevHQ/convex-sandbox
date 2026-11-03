@@ -11,11 +11,7 @@ import {
   type TemplatePage,
   type ConnectionKind,
 } from "../images.js";
-import {
-  nativeId,
-  normalizeImage,
-  normalizeImageSnapshot,
-} from "../imageProtocol.js";
+import { normalizeImage, normalizeImageSnapshot } from "../imageProtocol.js";
 import {
   requireCapability,
   normalizeProviderError,
@@ -23,9 +19,19 @@ import {
 } from "./errors.js";
 import type { SandboxAdapter, AuthorizeSandbox } from "./providers.js";
 import { boundedSDK } from "./executionProvider.js";
-import { fileCursor, integer } from "./fileProtocol.js";
+import { fileCursor, integer, hasControls } from "./fileProtocol.js";
 import { normalizeConnection } from "./connectionProtocol.js";
 
+const operationIdentity = (value: string) => {
+  if (
+    typeof value !== "string" ||
+    !value ||
+    value.length > 256 ||
+    hasControls(value)
+  )
+    throw new Error("Invalid image operation identity");
+  return value;
+};
 const terminal = (op: OperationRecord) =>
   ["succeeded", "failed", "cancelled"].includes(op.status);
 type Handle = { sandbox: SandboxKey; operationId: string };
@@ -80,6 +86,8 @@ export class SandboxImages {
     const current = await this.store.getSandbox(sandbox);
     if (
       !current ||
+      current.scope !== sandbox.scope ||
+      current.key !== sandbox.key ||
       current.tombstone ||
       current.generation !== row.generation ||
       current.reference.provider !== row.reference.provider ||
@@ -109,7 +117,7 @@ export class SandboxImages {
 
   async run(input: ImageRequest): Promise<OperationRecord> {
     const kind = input.kind,
-      operationId = nativeId(input.operationId);
+      operationId = operationIdentity(input.operationId);
     if (
       operationId.length > 256 ||
       !imageKindValidator.members.some((member) => member.value === kind)
@@ -147,13 +155,13 @@ export class SandboxImages {
     return record;
   }
   async get(input: Handle): Promise<OperationRecord | null> {
-    const operationId = nativeId(input.operationId);
+    const operationId = operationIdentity(input.operationId);
     const { sandbox } = await this.binding(input.sandbox, "imageGet");
     const op = await this.store.getOperation({ sandbox, operationId });
     return op?.nativeImage ? op : null;
   }
   async status(input: Handle): Promise<OperationRecord | null> {
-    const operationId = nativeId(input.operationId);
+    const operationId = operationIdentity(input.operationId);
     const { sandbox, row } = await this.binding(input.sandbox, "imageStatus");
     const existing = await this.store.getOperation({ sandbox, operationId });
     if (!existing?.nativeImage || terminal(existing))

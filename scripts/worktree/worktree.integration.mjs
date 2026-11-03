@@ -229,6 +229,10 @@ test(
       text: true, binary: true, listed: true, deleted: true, transferBounded: true, denied: true,
     });
     console.log("PASS: host file bridge preserves text/binary, bounds transfer handles and enforces path policy on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:images", {}, true), {
+      pending: true, connected: true, unsupportedDesktop: true,
+    });
+    console.log("PASS: host image bridge retains pending native jobs and issues only supported ephemeral connections on both backends");
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));
@@ -293,6 +297,11 @@ test(
     const cachedLogs = await componentRpc(roots[0], "execution:logs", { ...commandHandle, cursor: null, limit: 16 });
     assert.equal(cachedLogs.entries.map(entry => entry.text).join(""), "synthetic output");
     console.log("PASS: execution handles, completion, cancellation acknowledgement and cached logs survive restart");
+    assert.deepEqual(await componentRpc(roots[0], "proof:imageStatus", {}, true), { ready: true, nativeIdentity: true });
+    const imageHandle = { sandbox: { scope: "internal-fixture", key: "images-proof" }, operationId: "snapshot" };
+    assert.equal((await componentRpc(roots[0], "operations:get", imageHandle)).status, "succeeded");
+    assert.equal((await componentRpc(roots[1], "operations:get", imageHandle)).status, "running");
+    console.log("PASS: native image readiness resumes in a new host action after restart without crossing worktrees");
     const restored = await componentRpc(roots[0], "registry:get", { sandbox: identity });
     assert.equal(restored.reference.providerId, "alpha");
     assert.equal(restored.activeOperationId, "qualification-execution");

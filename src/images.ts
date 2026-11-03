@@ -132,6 +132,7 @@ export const connectionKindValidator = v.union(
 );
 export type ConnectionKind = Infer<typeof connectionKindValidator>;
 export const connectionHandleValidator = v.object({
+  username: v.optional(v.string()),
   kind: connectionKindValidator,
   url: v.string(),
   expiresAt: v.number(),

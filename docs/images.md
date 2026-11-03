@@ -54,7 +54,7 @@ const handle = await images.connection({
 });
 ```
 
-Kinds are `preview`, `ssh`, `desktop` and `browser`. Adapters declare supported kinds and return only what their native service offers. An optional port must be 1..65535. Handles contain kind, URL, expiration and an explicit access requirement: `public`, `token`, `headers`, `ssh-key` or `provider-session`. Token/header secrets are present only for their corresponding requirement. SSH keys and provider login sessions are external requirements; this API never generates or returns private SSH keys.
+Kinds are `preview`, `ssh`, `desktop` and `browser`. Adapters declare supported kinds and return only what their native service offers. An optional port must be 1..65535. Handles contain kind, URL, expiration and an explicit access requirement: `public`, `token`, `headers`, `ssh-key` or `provider-session`. Token/header secrets are present only for their corresponding requirement. An SSH handle may include a separate native `username`; URL userinfo remains forbidden. SSH keys and provider login sessions are external requirements; this API never generates or returns private SSH keys.
 
 Preview URLs require HTTPS, desktop/browser URLs HTTPS or WSS, and SSH URLs the SSH scheme. URLs cannot contain userinfo or control characters. Expiration must be in the future and within the requested lifetime, default 60 seconds and maximum five minutes. Tokens and request headers are bounded and projected. Providers must enforce their claimed native access and expiration semantics; the core validates metadata, not remote revocation. A provider without an expiring native connection handle must leave that kind unsupported. Public access is allowed only when the host deliberately authorizes it.
 

@@ -436,6 +436,226 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    images: {
+      claim: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          mode: "start" | "status";
+          operationId: string;
+          sandbox: { key: string; scope: string };
+        },
+        null | {
+          createdAt: number;
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          generation: number;
+          key: string;
+          kind:
+            | "create"
+            | "describe"
+            | "start"
+            | "stop"
+            | "delete"
+            | "execute"
+            | "cancelExecution"
+            | "executionLogs"
+            | "readFile"
+            | "writeFile"
+            | "listFiles"
+            | "deleteFile"
+            | "transferFile"
+            | "listTemplates"
+            | "createTemplate"
+            | "createFromTemplate"
+            | "fork"
+            | "restore"
+            | "snapshotDisk"
+            | "suspendMemory"
+            | "resumeMemory"
+            | "getConnection";
+          leaseUntil?: number;
+          nativeImage?: {
+            leaseMode?: "start" | "status";
+            providerOperationId?: string;
+            result?:
+              | {
+                  image: {
+                    id: string;
+                    kind: "template" | "disk-snapshot";
+                    provider: string;
+                  };
+                }
+              | { machine: { provider: string; providerId: string } }
+              | { restored: true };
+            source?: {
+              id: string;
+              kind: "template" | "disk-snapshot";
+              provider: string;
+            };
+          };
+          observationSequence?: number;
+          operationId: string;
+          reference: { provider: string; providerId: string };
+          scope: string;
+          sequence: number;
+          status:
+            | "pending"
+            | "running"
+            | "succeeded"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+      publish: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          expectedVersion: number;
+          operationId: string;
+          result:
+            | { operationId: string; state: "pending" }
+            | {
+                result:
+                  | {
+                      image: {
+                        id: string;
+                        kind: "template" | "disk-snapshot";
+                        provider: string;
+                      };
+                    }
+                  | { machine: { provider: string; providerId: string } }
+                  | { restored: true };
+                state: "ready";
+              }
+            | { state: "failed" }
+            | {
+                errorCode:
+                  | "unsupported"
+                  | "validation"
+                  | "authentication"
+                  | "authorization"
+                  | "quota"
+                  | "rate_limit"
+                  | "capacity"
+                  | "timeout"
+                  | "stale_resource"
+                  | "unknown_outcome"
+                  | "unknown_provider";
+                notStarted: boolean;
+              };
+          sandbox: { key: string; scope: string };
+        },
+        boolean,
+        Name
+      >;
+      reserve: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          expectedVersion: number;
+          image?: {
+            id: string;
+            kind: "template" | "disk-snapshot";
+            provider: string;
+          };
+          kind: "snapshotDisk" | "createTemplate" | "fork" | "restore";
+          operationId: string;
+          sandbox: { key: string; scope: string };
+        },
+        {
+          createdAt: number;
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          generation: number;
+          key: string;
+          kind:
+            | "create"
+            | "describe"
+            | "start"
+            | "stop"
+            | "delete"
+            | "execute"
+            | "cancelExecution"
+            | "executionLogs"
+            | "readFile"
+            | "writeFile"
+            | "listFiles"
+            | "deleteFile"
+            | "transferFile"
+            | "listTemplates"
+            | "createTemplate"
+            | "createFromTemplate"
+            | "fork"
+            | "restore"
+            | "snapshotDisk"
+            | "suspendMemory"
+            | "resumeMemory"
+            | "getConnection";
+          leaseUntil?: number;
+          nativeImage?: {
+            leaseMode?: "start" | "status";
+            providerOperationId?: string;
+            result?:
+              | {
+                  image: {
+                    id: string;
+                    kind: "template" | "disk-snapshot";
+                    provider: string;
+                  };
+                }
+              | { machine: { provider: string; providerId: string } }
+              | { restored: true };
+            source?: {
+              id: string;
+              kind: "template" | "disk-snapshot";
+              provider: string;
+            };
+          };
+          observationSequence?: number;
+          operationId: string;
+          reference: { provider: string; providerId: string };
+          scope: string;
+          sequence: number;
+          status:
+            | "pending"
+            | "running"
+            | "succeeded"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+    };
     lifecycle: {
       claimCreateReconciliation: FunctionReference<
         "mutation",
@@ -510,11 +730,33 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "transferFile"
             | "listTemplates"
             | "createTemplate"
+            | "createFromTemplate"
+            | "fork"
+            | "restore"
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
             | "getConnection";
           leaseUntil?: number;
+          nativeImage?: {
+            leaseMode?: "start" | "status";
+            providerOperationId?: string;
+            result?:
+              | {
+                  image: {
+                    id: string;
+                    kind: "template" | "disk-snapshot";
+                    provider: string;
+                  };
+                }
+              | { machine: { provider: string; providerId: string } }
+              | { restored: true };
+            source?: {
+              id: string;
+              kind: "template" | "disk-snapshot";
+              provider: string;
+            };
+          };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -797,6 +1039,9 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "transferFile"
             | "listTemplates"
             | "createTemplate"
+            | "createFromTemplate"
+            | "fork"
+            | "restore"
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
@@ -837,11 +1082,33 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "transferFile"
             | "listTemplates"
             | "createTemplate"
+            | "createFromTemplate"
+            | "fork"
+            | "restore"
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
             | "getConnection";
           leaseUntil?: number;
+          nativeImage?: {
+            leaseMode?: "start" | "status";
+            providerOperationId?: string;
+            result?:
+              | {
+                  image: {
+                    id: string;
+                    kind: "template" | "disk-snapshot";
+                    provider: string;
+                  };
+                }
+              | { machine: { provider: string; providerId: string } }
+              | { restored: true };
+            source?: {
+              id: string;
+              kind: "template" | "disk-snapshot";
+              provider: string;
+            };
+          };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -909,11 +1176,33 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "transferFile"
               | "listTemplates"
               | "createTemplate"
+              | "createFromTemplate"
+              | "fork"
+              | "restore"
               | "snapshotDisk"
               | "suspendMemory"
               | "resumeMemory"
               | "getConnection";
             leaseUntil?: number;
+            nativeImage?: {
+              leaseMode?: "start" | "status";
+              providerOperationId?: string;
+              result?:
+                | {
+                    image: {
+                      id: string;
+                      kind: "template" | "disk-snapshot";
+                      provider: string;
+                    };
+                  }
+                | { machine: { provider: string; providerId: string } }
+                | { restored: true };
+              source?: {
+                id: string;
+                kind: "template" | "disk-snapshot";
+                provider: string;
+              };
+            };
             observationSequence?: number;
             operationId: string;
             reference: { provider: string; providerId: string };
@@ -969,11 +1258,33 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "transferFile"
             | "listTemplates"
             | "createTemplate"
+            | "createFromTemplate"
+            | "fork"
+            | "restore"
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
             | "getConnection";
           leaseUntil?: number;
+          nativeImage?: {
+            leaseMode?: "start" | "status";
+            providerOperationId?: string;
+            result?:
+              | {
+                  image: {
+                    id: string;
+                    kind: "template" | "disk-snapshot";
+                    provider: string;
+                  };
+                }
+              | { machine: { provider: string; providerId: string } }
+              | { restored: true };
+            source?: {
+              id: string;
+              kind: "template" | "disk-snapshot";
+              provider: string;
+            };
+          };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -1041,11 +1352,33 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "transferFile"
               | "listTemplates"
               | "createTemplate"
+              | "createFromTemplate"
+              | "fork"
+              | "restore"
               | "snapshotDisk"
               | "suspendMemory"
               | "resumeMemory"
               | "getConnection";
             leaseUntil?: number;
+            nativeImage?: {
+              leaseMode?: "start" | "status";
+              providerOperationId?: string;
+              result?:
+                | {
+                    image: {
+                      id: string;
+                      kind: "template" | "disk-snapshot";
+                      provider: string;
+                    };
+                  }
+                | { machine: { provider: string; providerId: string } }
+                | { restored: true };
+              source?: {
+                id: string;
+                kind: "template" | "disk-snapshot";
+                provider: string;
+              };
+            };
             observationSequence?: number;
             operationId: string;
             reference: { provider: string; providerId: string };

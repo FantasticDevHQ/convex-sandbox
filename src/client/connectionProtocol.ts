@@ -69,6 +69,7 @@ export function normalizeConnection(
     let size = 0;
     for (const [key, value] of entries) {
       if (
+        key.length > 256 ||
         !/^[!#$%&'*+.^_`|~\da-z-]+$/i.test(key) ||
         typeof value !== "string" ||
         value.length > 16384 ||
@@ -82,5 +83,21 @@ export function normalizeConnection(
     access.headers = headers;
   } else if (raw.access.headers !== undefined) return invalid();
   if (kind !== "ssh" && raw.access.kind === "ssh-key") return invalid();
-  return { kind, url: raw.url, expiresAt: raw.expiresAt, access };
+  let username: string | undefined;
+  if (raw.username !== undefined) {
+    if (
+      kind !== "ssh" ||
+      typeof raw.username !== "string" ||
+      !/^[a-z_][a-z\d_.-]{0,127}$/i.test(raw.username)
+    )
+      return invalid();
+    username = raw.username;
+  }
+  return {
+    kind,
+    url: raw.url,
+    expiresAt: raw.expiresAt,
+    access,
+    ...(username === undefined ? {} : { username }),
+  };
 }

@@ -1,3 +1,4 @@
+export * from "./imageStore.js";
 export * from "../images.js";
 export * from "./images.js";
 export * from "../files.js";

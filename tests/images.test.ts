@@ -8,6 +8,7 @@ import {
   type ImageAdapter,
   type ImageStore,
   type ConnectionAdapter,
+  type LifecycleStore,
 } from "@fantastic.dev/convex-sandbox";
 
 const sandbox = { scope: "scope-a", key: "machine" };
@@ -31,6 +32,21 @@ function fixture(
     reserve: (args) => t.mutation(c.images.reserve, args),
     claim: (args) => t.mutation(c.images.claim, args),
     publish: (args) => t.mutation(c.images.publish, args),
+  };
+  const lifecycleStore: LifecycleStore = {
+    get: (sandbox) => t.query(c.registry.get, { sandbox }),
+    getOperation: (sandbox, operationId) =>
+      t.query(c.operations.get, { sandbox, operationId }),
+    begin: (args) => t.mutation(c.operations.begin, args),
+    reserveCreate: (args) => t.mutation(c.lifecycle.reserveCreate, args),
+    getProvision: (sandbox) => t.query(c.lifecycle.getProvision, { sandbox }),
+    claimCreateReconciliation: (args) =>
+      t.mutation(c.lifecycle.claimCreateReconciliation, args),
+    finishCreate: (args) => t.mutation(c.lifecycle.finishCreate, args),
+    claimOperation: (args) => t.mutation(c.lifecycle.claimOperation, args),
+    finishOperation: (args) => t.mutation(c.lifecycle.finishOperation, args),
+    beginRefresh: (sandbox) => t.mutation(c.registry.beginRefresh, { sandbox }),
+    finishRefresh: (args) => t.mutation(c.registry.finishRefresh, args),
   };
   const providers = new SandboxProviders({
     authorize: async () => {},
@@ -83,6 +99,7 @@ function fixture(
     c,
     store,
     providers,
+    lifecycle: providers.lifecycle(lifecycleStore),
     client: providers.images(store),
     setup: () =>
       t.mutation(c.registry.ensure, {
@@ -428,17 +445,7 @@ test("create-from-template requires its own capability before native creation", 
       },
     }),
   );
-  const { createLifecycleStore } =
-    await import("@fantastic.dev/convex-sandbox");
-  const client = f.providers.lifecycle(
-    createLifecycleStore(
-      {
-        runQuery: (...args) => f.t.query(...args),
-        runMutation: (...args) => f.t.mutation(...args),
-      },
-      f.c,
-    ),
-  );
+  const client = f.lifecycle;
   await expect(
     client.create({
       sandbox,
@@ -579,17 +586,7 @@ test("advertised create-from-template dispatches the selected provider's templat
       },
     }),
   );
-  const { createLifecycleStore } =
-    await import("@fantastic.dev/convex-sandbox");
-  const client = f.providers.lifecycle(
-    createLifecycleStore(
-      {
-        runQuery: (...args) => f.t.query(...args),
-        runMutation: (...args) => f.t.mutation(...args),
-      },
-      f.c,
-    ),
-  );
+  const client = f.lifecycle;
   expect(
     await client.create({
       sandbox,
@@ -599,4 +596,57 @@ test("advertised create-from-template dispatches the selected provider's templat
     }),
   ).toMatchObject({ kind: "provision", provision: { status: "succeeded" } });
   expect(received).toBe("native-template");
+});
+
+test("SSH connection metadata carries native username and external key requirement", async () => {
+  const f = fixture(
+    {},
+    {
+      kinds: ["ssh"],
+      get: async () => ({
+        kind: "ssh",
+        url: "ssh://ssh.example.test:2222",
+        username: "sandbox",
+        expiresAt: Date.now() + 1000,
+        access: { kind: "ssh-key" },
+      }),
+    },
+  );
+  await f.setup();
+  expect(await f.client.connection({ sandbox, kind: "ssh" })).toMatchObject({
+    username: "sandbox",
+    access: { kind: "ssh-key" },
+  });
+});
+
+test("changed machine binding withholds a freshly issued connection handle", async () => {
+  let changed = false;
+  const f = fixture(
+    {},
+    {
+      kinds: ["preview"],
+      get: async () => {
+        changed = true;
+        return {
+          kind: "preview",
+          url: "https://preview.example.test",
+          expiresAt: Date.now() + 1000,
+          access: { kind: "public" },
+        };
+      },
+    },
+  );
+  await f.setup();
+  const row = await f.store.getSandbox(sandbox);
+  if (!row) throw new Error("Missing fixture");
+  const client = f.providers.images({
+    ...f.store,
+    getSandbox: async () => ({
+      ...row,
+      generation: changed ? row.generation + 1 : row.generation,
+    }),
+  });
+  await expect(
+    client.connection({ sandbox, kind: "preview" }),
+  ).rejects.toMatchObject({ data: { code: "stale_resource" } });
 });

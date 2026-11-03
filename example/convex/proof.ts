@@ -5,6 +5,7 @@ import {
   createLifecycleStore,
   createExecutionStore,
   createFileStore,
+  createImageStore,
 } from "@fantastic.dev/convex-sandbox";
 import type { ComponentApi } from "@fantastic.dev/convex-sandbox/_generated/component.js";
 import { internalAction, internalQuery } from "./_generated/server.js";
@@ -349,6 +350,111 @@ export const files = internalAction({
       transferBounded:
         transfer.maxBytes === 1024 && transfer.expiresAt <= Date.now() + 60000,
       denied,
+    };
+  },
+});
+
+function imageProviders() {
+  const providers = new SandboxProviders({ authorize: async () => {} });
+  providers.register(
+    registerProvider({
+      name: "images-simulated",
+      capabilities: {
+        version: 1,
+        supported: ["snapshotDisk", "getConnection"],
+      },
+      adapter: {
+        describe: async (providerId) => ({ providerId, state: "running" }),
+        images: {
+          snapshotDisk: async () => ({
+            state: "pending",
+            operationId: "synthetic-image-job",
+          }),
+          status: async () => ({
+            state: "ready",
+            result: {
+              image: {
+                provider: "images-simulated",
+                id: "synthetic-disk-image",
+                kind: "disk-snapshot",
+              },
+            },
+          }),
+        },
+        connections: {
+          kinds: ["preview"],
+          get: async (_, request) => ({
+            kind: "preview",
+            url: "https://preview.example.test/signed",
+            expiresAt: Date.now() + request.expiresInMs - 100,
+            access: { kind: "token", token: "synthetic-connection-secret" },
+          }),
+        },
+      },
+    }),
+  );
+  return providers;
+}
+const imageIdentity = { scope: "internal-fixture", key: "images-proof" };
+
+/** A pending synthetic native job. A different action resolves it after restart. */
+export const images = internalAction({
+  args: {},
+  returns: v.object({
+    pending: v.boolean(),
+    connected: v.boolean(),
+    unsupportedDesktop: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    await ctx.runMutation(sandbox.registry.ensure, {
+      sandbox: imageIdentity,
+      reference: { provider: "images-simulated", providerId: "fixture-images" },
+    });
+    const client = imageProviders().images(createImageStore(ctx, sandbox));
+    const op = await client.run({
+      sandbox: imageIdentity,
+      operationId: "snapshot",
+      kind: "snapshotDisk",
+    });
+    const connection = await client.connection({
+      sandbox: imageIdentity,
+      kind: "preview",
+    });
+    let unsupportedDesktop = false;
+    try {
+      await client.connection({ sandbox: imageIdentity, kind: "desktop" });
+    } catch (error) {
+      unsupportedDesktop =
+        error instanceof Error && error.message === "Unsupported capability";
+    }
+    return {
+      pending:
+        op.status === "running" &&
+        op.nativeImage?.providerOperationId === "synthetic-image-job",
+      connected:
+        connection.kind === "preview" && connection.access.kind === "token",
+      unsupportedDesktop,
+    };
+  },
+});
+
+export const imageStatus = internalAction({
+  args: {},
+  returns: v.object({ ready: v.boolean(), nativeIdentity: v.boolean() }),
+  handler: async (ctx) => {
+    const client = imageProviders().images(createImageStore(ctx, sandbox));
+    const record = await client.status({
+      sandbox: imageIdentity,
+      operationId: "snapshot",
+    });
+    const result = record?.nativeImage?.result;
+    return {
+      ready: record?.status === "succeeded",
+      nativeIdentity:
+        !!result &&
+        "image" in result &&
+        result.image.provider === "images-simulated" &&
+        result.image.id === "synthetic-disk-image",
     };
   },
 });
