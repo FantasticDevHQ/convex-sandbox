@@ -1,3 +1,4 @@
+export * from "../state.js";
 export * from "../capabilities.js";
 export * from "./errors.js";
 export * from "../contracts.js";

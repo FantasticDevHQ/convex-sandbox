@@ -42,7 +42,8 @@ export default app;
 ```
 
 The core entry point exports `SandboxProviders`, `registerProvider`, shared types
-and Convex validators. See the [common contract guide](docs/contracts.md). The
+and Convex validators. See the [common contract guide](docs/contracts.md) and
+[registry and operation guide](docs/state.md). The
 experimental `SandboxBoundary` remains the narrow observation proof. Component types
 are available from `@fantastic.dev/convex-sandbox/_generated/component.js` and
 convex-test registration helpers from `@fantastic.dev/convex-sandbox/testing`.

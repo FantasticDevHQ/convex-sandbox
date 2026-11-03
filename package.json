@@ -56,7 +56,8 @@
     "LICENSE",
     "README.md",
     "docs/architecture/0001-adapter-boundary.md",
-    "docs/contracts.md"
+    "docs/contracts.md",
+    "docs/state.md"
   ],
   "exports": {
     ".": {

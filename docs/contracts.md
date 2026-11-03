@@ -1,9 +1,9 @@
 # Common contracts
 
 These pre-1.0 contracts are experimental. Provider integration projects may refine
-them before release. The current dispatcher implements `describe` only. Lifecycle,
-execution and operation tracking have types here, but their dispatch and persistence
-arrive in later baseline work.
+them before release. The current dispatcher implements `describe` only. Lifecycle and
+execution dispatch arrive in later baseline work. The component registry now
+persists operation tracking; see the [state guide](state.md).
 
 ## Identity and values
 
@@ -26,7 +26,7 @@ explicitly. They must not infer that an unknown state is running.
 `OperationHandle` identifies an application operation by sandbox and operation ID.
 `ExecutionHandle` adds the provider reference and provider execution ID. These
 handles contain no SDK objects, callbacks, access URLs or credentials. Operation
-status is pending, running, succeeded, failed or cancelled. `LifecycleResult` adds
+status is pending, running, succeeded, failed, cancelled or unknown. `LifecycleResult` adds
 an optional operation handle to a description. Observed state is not a guarantee
 that an asynchronous lifecycle operation has completed. No retry or exactly-once
 guarantee follows from a handle.
@@ -106,7 +106,9 @@ The core never exposes an arbitrary SDK-method escape hatch.
 
 The older `SandboxBoundary` remains the narrow observation proof. Its host must
 authorize before calling it; new provider contracts use `SandboxProviders` with
-its required authorization callback. Neither registry persists state by itself.
+its required authorization callback. The action-local registry does not persist state by itself. The component
+[registry and operation APIs](state.md) provide transactional state and scoped
+reactive queries.
 
 ## Capability discovery and persistence
 

@@ -9,6 +9,9 @@
  */
 
 import type * as observations from "../observations.js";
+import type * as operations from "../operations.js";
+import type * as registry from "../registry.js";
+import type * as stateHelpers from "../stateHelpers.js";
 
 import type {
   ApiFromModules,
@@ -19,6 +22,9 @@ import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
   observations: typeof observations;
+  operations: typeof operations;
+  registry: typeof registry;
+  stateHelpers: typeof stateHelpers;
 }> = anyApi as any;
 
 /**

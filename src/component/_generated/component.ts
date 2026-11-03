@@ -51,4 +51,585 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
         Name
       >;
     };
+    operations: {
+      begin: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          expectedVersion: number;
+          kind:
+            | "create"
+            | "describe"
+            | "start"
+            | "stop"
+            | "delete"
+            | "execute"
+            | "readFile"
+            | "writeFile"
+            | "listFiles"
+            | "listTemplates"
+            | "createTemplate"
+            | "snapshotDisk"
+            | "suspendMemory"
+            | "resumeMemory"
+            | "getConnection";
+          operationId: string;
+          sandbox: { key: string; scope: string };
+        },
+        {
+          createdAt: number;
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          generation: number;
+          key: string;
+          kind:
+            | "create"
+            | "describe"
+            | "start"
+            | "stop"
+            | "delete"
+            | "execute"
+            | "readFile"
+            | "writeFile"
+            | "listFiles"
+            | "listTemplates"
+            | "createTemplate"
+            | "snapshotDisk"
+            | "suspendMemory"
+            | "resumeMemory"
+            | "getConnection";
+          operationId: string;
+          reference: { provider: string; providerId: string };
+          scope: string;
+          sequence: number;
+          status:
+            | "pending"
+            | "running"
+            | "succeeded"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+      executions: FunctionReference<
+        "query",
+        "internal",
+        {
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          sandbox: { key: string; scope: string };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            createdAt: number;
+            errorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            executionId?: string;
+            generation: number;
+            key: string;
+            kind:
+              | "create"
+              | "describe"
+              | "start"
+              | "stop"
+              | "delete"
+              | "execute"
+              | "readFile"
+              | "writeFile"
+              | "listFiles"
+              | "listTemplates"
+              | "createTemplate"
+              | "snapshotDisk"
+              | "suspendMemory"
+              | "resumeMemory"
+              | "getConnection";
+            operationId: string;
+            reference: { provider: string; providerId: string };
+            scope: string;
+            sequence: number;
+            status:
+              | "pending"
+              | "running"
+              | "succeeded"
+              | "failed"
+              | "cancelled"
+              | "unknown";
+            updatedAt: number;
+            version: number;
+          }>;
+        },
+        Name
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { operationId: string; sandbox: { key: string; scope: string } },
+        null | {
+          createdAt: number;
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          generation: number;
+          key: string;
+          kind:
+            | "create"
+            | "describe"
+            | "start"
+            | "stop"
+            | "delete"
+            | "execute"
+            | "readFile"
+            | "writeFile"
+            | "listFiles"
+            | "listTemplates"
+            | "createTemplate"
+            | "snapshotDisk"
+            | "suspendMemory"
+            | "resumeMemory"
+            | "getConnection";
+          operationId: string;
+          reference: { provider: string; providerId: string };
+          scope: string;
+          sequence: number;
+          status:
+            | "pending"
+            | "running"
+            | "succeeded"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          sandbox: { key: string; scope: string };
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            createdAt: number;
+            errorCode?:
+              | "unsupported"
+              | "validation"
+              | "authentication"
+              | "authorization"
+              | "quota"
+              | "rate_limit"
+              | "capacity"
+              | "timeout"
+              | "stale_resource"
+              | "unknown_outcome"
+              | "unknown_provider";
+            executionId?: string;
+            generation: number;
+            key: string;
+            kind:
+              | "create"
+              | "describe"
+              | "start"
+              | "stop"
+              | "delete"
+              | "execute"
+              | "readFile"
+              | "writeFile"
+              | "listFiles"
+              | "listTemplates"
+              | "createTemplate"
+              | "snapshotDisk"
+              | "suspendMemory"
+              | "resumeMemory"
+              | "getConnection";
+            operationId: string;
+            reference: { provider: string; providerId: string };
+            scope: string;
+            sequence: number;
+            status:
+              | "pending"
+              | "running"
+              | "succeeded"
+              | "failed"
+              | "cancelled"
+              | "unknown";
+            updatedAt: number;
+            version: number;
+          }>;
+        },
+        Name
+      >;
+      transition: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          errorCode?:
+            | "unsupported"
+            | "validation"
+            | "authentication"
+            | "authorization"
+            | "quota"
+            | "rate_limit"
+            | "capacity"
+            | "timeout"
+            | "stale_resource"
+            | "unknown_outcome"
+            | "unknown_provider";
+          executionId?: string;
+          expectedVersion: number;
+          operationId: string;
+          sandbox: { key: string; scope: string };
+          status:
+            | "pending"
+            | "running"
+            | "succeeded"
+            | "failed"
+            | "cancelled"
+            | "unknown";
+        },
+        boolean,
+        Name
+      >;
+    };
+    registry: {
+      beginRefresh: FunctionReference<
+        "mutation",
+        "internal",
+        { sandbox: { key: string; scope: string } },
+        { generation: number; sequence: number },
+        Name
+      >;
+      ensure: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          reference: { provider: string; providerId: string };
+          sandbox: { key: string; scope: string };
+        },
+        {
+          activeOperationId?: string;
+          generation: number;
+          key: string;
+          observedAt?: number;
+          observedSequence: number;
+          observedState:
+            | "starting"
+            | "running"
+            | "stopping"
+            | "stopped"
+            | "paused"
+            | "deleted"
+            | "error"
+            | "unknown";
+          reference: { provider: string; providerId: string };
+          refresh:
+            | { status: "never" }
+            | { status: "pending" }
+            | { status: "stale" }
+            | { status: "fresh" }
+            | {
+                errorCode:
+                  | "unsupported"
+                  | "validation"
+                  | "authentication"
+                  | "authorization"
+                  | "quota"
+                  | "rate_limit"
+                  | "capacity"
+                  | "timeout"
+                  | "stale_resource"
+                  | "unknown_outcome"
+                  | "unknown_provider";
+                status: "failed";
+              };
+          refreshSequence: number;
+          requestedState?: "running" | "stopped" | "deleted";
+          resources?: {
+            cpuCount?: number;
+            diskMiB?: number;
+            memoryMiB?: number;
+          };
+          scope: string;
+          tombstone: boolean;
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+      finishRefresh: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generation: number;
+          result:
+            | {
+                resources?: {
+                  cpuCount?: number;
+                  diskMiB?: number;
+                  memoryMiB?: number;
+                };
+                state:
+                  | "starting"
+                  | "running"
+                  | "stopping"
+                  | "stopped"
+                  | "paused"
+                  | "deleted"
+                  | "error"
+                  | "unknown";
+              }
+            | {
+                errorCode:
+                  | "unsupported"
+                  | "validation"
+                  | "authentication"
+                  | "authorization"
+                  | "quota"
+                  | "rate_limit"
+                  | "capacity"
+                  | "timeout"
+                  | "stale_resource"
+                  | "unknown_outcome"
+                  | "unknown_provider";
+              };
+          sandbox: { key: string; scope: string };
+          sequence: number;
+        },
+        boolean,
+        Name
+      >;
+      get: FunctionReference<
+        "query",
+        "internal",
+        { sandbox: { key: string; scope: string } },
+        null | {
+          activeOperationId?: string;
+          generation: number;
+          key: string;
+          observedAt?: number;
+          observedSequence: number;
+          observedState:
+            | "starting"
+            | "running"
+            | "stopping"
+            | "stopped"
+            | "paused"
+            | "deleted"
+            | "error"
+            | "unknown";
+          reference: { provider: string; providerId: string };
+          refresh:
+            | { status: "never" }
+            | { status: "pending" }
+            | { status: "stale" }
+            | { status: "fresh" }
+            | {
+                errorCode:
+                  | "unsupported"
+                  | "validation"
+                  | "authentication"
+                  | "authorization"
+                  | "quota"
+                  | "rate_limit"
+                  | "capacity"
+                  | "timeout"
+                  | "stale_resource"
+                  | "unknown_outcome"
+                  | "unknown_provider";
+                status: "failed";
+              };
+          refreshSequence: number;
+          requestedState?: "running" | "stopped" | "deleted";
+          resources?: {
+            cpuCount?: number;
+            diskMiB?: number;
+            memoryMiB?: number;
+          };
+          scope: string;
+          tombstone: boolean;
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+      list: FunctionReference<
+        "query",
+        "internal",
+        {
+          paginationOpts: {
+            cursor: string | null;
+            endCursor?: string | null;
+            id?: number;
+            maximumBytesRead?: number;
+            maximumRowsRead?: number;
+            numItems: number;
+          };
+          scope: string;
+        },
+        {
+          continueCursor: string;
+          isDone: boolean;
+          page: Array<{
+            activeOperationId?: string;
+            generation: number;
+            key: string;
+            observedAt?: number;
+            observedSequence: number;
+            observedState:
+              | "starting"
+              | "running"
+              | "stopping"
+              | "stopped"
+              | "paused"
+              | "deleted"
+              | "error"
+              | "unknown";
+            reference: { provider: string; providerId: string };
+            refresh:
+              | { status: "never" }
+              | { status: "pending" }
+              | { status: "stale" }
+              | { status: "fresh" }
+              | {
+                  errorCode:
+                    | "unsupported"
+                    | "validation"
+                    | "authentication"
+                    | "authorization"
+                    | "quota"
+                    | "rate_limit"
+                    | "capacity"
+                    | "timeout"
+                    | "stale_resource"
+                    | "unknown_outcome"
+                    | "unknown_provider";
+                  status: "failed";
+                };
+            refreshSequence: number;
+            requestedState?: "running" | "stopped" | "deleted";
+            resources?: {
+              cpuCount?: number;
+              diskMiB?: number;
+              memoryMiB?: number;
+            };
+            scope: string;
+            tombstone: boolean;
+            updatedAt: number;
+            version: number;
+          }>;
+        },
+        Name
+      >;
+      rebind: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          expectedVersion: number;
+          reference: { provider: string; providerId: string };
+          sandbox: { key: string; scope: string };
+        },
+        {
+          activeOperationId?: string;
+          generation: number;
+          key: string;
+          observedAt?: number;
+          observedSequence: number;
+          observedState:
+            | "starting"
+            | "running"
+            | "stopping"
+            | "stopped"
+            | "paused"
+            | "deleted"
+            | "error"
+            | "unknown";
+          reference: { provider: string; providerId: string };
+          refresh:
+            | { status: "never" }
+            | { status: "pending" }
+            | { status: "stale" }
+            | { status: "fresh" }
+            | {
+                errorCode:
+                  | "unsupported"
+                  | "validation"
+                  | "authentication"
+                  | "authorization"
+                  | "quota"
+                  | "rate_limit"
+                  | "capacity"
+                  | "timeout"
+                  | "stale_resource"
+                  | "unknown_outcome"
+                  | "unknown_provider";
+                status: "failed";
+              };
+          refreshSequence: number;
+          requestedState?: "running" | "stopped" | "deleted";
+          resources?: {
+            cpuCount?: number;
+            diskMiB?: number;
+            memoryMiB?: number;
+          };
+          scope: string;
+          tombstone: boolean;
+          updatedAt: number;
+          version: number;
+        },
+        Name
+      >;
+    };
   };
