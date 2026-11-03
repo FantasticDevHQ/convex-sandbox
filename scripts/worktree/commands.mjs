@@ -7,7 +7,7 @@ import { projectLock } from "./registry.mjs";
 import { state, childEnv } from "./config.mjs";
 import { ownedRunning, serve, start, stopOnly } from "./processes.mjs";
 import { setup, teardown, prune } from "./lifecycle.mjs";
-import { packageBin } from "./dependencies.mjs";
+import { frontendArgs } from "./frontend.mjs";
 
 export async function main() {
   const command = process.argv[2];
@@ -55,12 +55,7 @@ export async function main() {
     const s = await state();
     const child = spawn(
       process.execPath,
-      [
-        packageBin("next", "next", [frontend, root]),
-        "dev",
-        "--port",
-        String(s.ports.web),
-      ],
+      frontendArgs(s.ports.web, layout, [frontend, root]),
       { cwd: frontend, env: childEnv(s), stdio: "inherit" },
     );
     process.on("SIGTERM", () => child.kill("SIGINT"));

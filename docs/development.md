@@ -4,8 +4,8 @@ The repository uses the toolkit from
 [convex-worktrees](https://github.com/FantasticDevHQ/convex-worktrees) at commit
 `1c677d33372991ea4dc7269826ece2778fa07503`, installed with its Node installer.
 All exported modules, configuration and tests are adopted under `scripts/worktree`.
-Its license is preserved. The configured backend is `example`; the toolkit does not yet launch the
-frontend. Use `pnpm dev:frontend` for the Vite/TanStack Router starter.
+Its license is preserved. The configured backend and frontend are `example`;
+`frontendRuntime: "vite"` selects the reserved-port Vite adapter.
 
 Commit changes before `pnpm worktree:setup`. Setup discovers and fetches origin's
 live default branch, checks freshness and allocates stable backend/site ports
@@ -20,9 +20,10 @@ ignored by Git. Start and stop use recorded process ownership rather than ports.
 - `pnpm worktree:cleanup --yes`: delete only owned disposable state explicitly.
 - `pnpm worktree:prune`: remove eligible stale reservations.
 
-The inherited toolkit uses Node-only commands. Its optional frontend adapter is
-Next-specific; adapt it for Vite in the example-app ticket rather than pretending
-it already launches that UI. Two-worktree application qualification remains CSB-3.
+The toolkit uses Node-only lifecycle commands. This application adds a Vite
+adapter while retaining the upstream Next default for generic toolkit fixtures.
+Run `pnpm worktree:start --frontend` to supervise both services on reserved ports.
+Stop an existing backend-only supervisor before requesting a frontend.
 
 On a constrained host, serialize installs, tests, codegen and backend integration
 with the shared heavy-job lock, set `NODE_OPTIONS=--max-old-space-size=512`, and use
@@ -32,7 +33,8 @@ one worker. Run the full check:all command on actual UbiCloud CI.
 
 The library publishes ESM entry points from `dist`: core, component configuration,
 generated component types and optional testing utilities. `pnpm build:lib` builds
-these before example type checking or backend setup. Keep the package private
+these before example type checking or backend setup. The lifecycle setup now executes
+`prepareCommand` before the first backend push; preparation failures stop setup. Keep the package private
 until the release ticket verifies the packed artifact and registry settings.
 The example has an explicit workspace dependency and uses public package exports.
 
@@ -49,3 +51,47 @@ selects a local output directory; CI uses the runner's temporary directory.
 
 The official brand logo is retained unchanged. Formatting excludes generated
 bindings, upstream toolkit source and the logo asset to preserve provenance.
+
+## Two-worktree qualification
+
+From a clean committed checkout, run `pnpm test:worktree:integration`. This is a
+real-backend test, not a provider test. It requires network access for origin and
+initial dependencies/backend binaries, but no cloud development account or keys.
+CI includes it in check:all on UbiCloud and fetches full Git history.
+
+The adopted integration test discovers and fetches the selected origin base via
+the toolkit's existing freshness adapter. It creates two disposable detached
+checkouts at that immutable commit, applies the tested commit's tracked delta,
+and commits that delta only inside the disposable checkouts. It refuses a dirty
+source or a candidate not based on the freshly fetched base. No local environment,
+database, untracked source or user credentials are copied.
+
+Each checkout installs frozen dependencies and runs the actual component and Vite
+frontend. The local Convex CLI invokes the mounted observations component with
+synthetic values under identical logical keys. No extra public probe endpoint or
+schema is added to the example. Qualification checks distinct credentials without
+printing them, six reserved ports, isolated component rows, stable restart,
+frontend availability, teardown/reacquisition, busy-port refusal and cleanup that
+leaves the sibling running.
+
+Cleanup uses owned lifecycle operations with `--yes` before removing only the
+created disposable checkouts. If ownership validation or shutdown fails, the
+checkout is preserved for inspection. The harness does not kill by port or name.
+
+### Toolkit adaptations
+
+The recorded upstream remains `1c677d33372991ea4dc7269826ece2778fa07503`.
+All exported modules and tests are retained. Application-specific changes are:
+
+- `frontend.mjs` and its tests select Vite with loopback binding and strict ports.
+- `prepare.mjs` and its tests execute a configured argv array without a shell.
+- Lifecycle/configuration helpers build the package before push and bind Vite to
+  the owned local backend rather than an inherited cloud URL.
+- Process supervision validates the frontend CLI/port before starting services
+  and waits for its owned frontend listener during startup/shutdown.
+- The upstream integration harness uses existing component CLI operations and
+  fresh-base candidate checkouts instead of requiring public probe functions.
+
+Keep these adaptations separate from upstream ownership, locking, cleanup and
+freshness modules. Reconcile them when updating the toolkit; a source link alone
+is not adoption. Real qualification results belong in PR evidence, not this guide.

@@ -1,4 +1,5 @@
-// Optional real-backend isolation test for a consuming app with the example probe functions.
+// Adapted upstream qualification: exercise the installed component with the local CLI.
+// No public probe functions or test-only schema are deployed.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, realpath } from "node:fs/promises";
@@ -8,18 +9,25 @@ import { spawn, execFileSync } from "node:child_process";
 import net from "node:net";
 import { existsSync } from "node:fs";
 import { installDependencies } from "./dependencies.mjs";
+import { refreshCheckout } from "./freshness.mjs";
 
 const source = await realpath(process.cwd());
-const layout = JSON.parse(await readFile(path.join(source, "scripts/worktree.config.json"), "utf8"));
+const layout = JSON.parse(
+  await readFile(path.join(source, "scripts/worktree.config.json"), "utf8"),
+);
 const backendPath = layout.backend || ".";
 const hasApp = existsSync(path.join(source, backendPath, "convex.json"));
 function run(cwd, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ["scripts/worktree/cli.mjs", ...args], {
-      cwd,
-      env: { ...process.env, CI: "true" },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    const child = spawn(
+      process.execPath,
+      ["scripts/worktree/cli.mjs", ...args],
+      {
+        cwd,
+        env: { ...process.env, CI: "true" },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
     let output = "";
     child.stdout.on("data", (d) => (output += d));
     child.stderr.on("data", (d) => (output += d));
@@ -32,25 +40,78 @@ async function ok(cwd, ...args) {
   assert.equal(r.code, 0, r.output.slice(-8000));
   return r;
 }
-async function rpc(s, kind, fn, args = {}) {
-  const response = await fetch(
-    `http://127.0.0.1:${s.ports.cloud}/api/${kind}`,
+async function componentRpc(root, fn, args) {
+  const code = `
+    import { spawnSync } from "node:child_process";
+    import path from "node:path";
+    import { state, checkConfig, childEnv, cli } from "./scripts/worktree/config.mjs";
+    import { backend, dir } from "./scripts/worktree/context.mjs";
+    const s = await state(); await checkConfig(s, true);
+    const result = spawnSync(process.execPath, [cli(), "run", "--env-file", path.join(dir, "convex.env"), "--component", "sandbox", process.argv[1], process.argv[2]], {cwd:backend, env:childEnv(s), encoding:"utf8"});
+    if (result.status !== 0) throw new Error("Local component RPC failed: " + result.stderr.slice(-2000));
+    const text = result.stdout.trim();
+    process.stdout.write(text ? JSON.stringify(JSON.parse(text)) : "null");
+  `;
+  const output = execFileSync(
+    process.execPath,
+    ["--input-type=module", "-e", code, fn, JSON.stringify(args)],
     {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: fn, args, format: "json" }),
-      signal: AbortSignal.timeout(10000),
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 30000,
     },
   );
-  const result = await response.json();
-  assert.equal(result.status, "success", JSON.stringify(result));
-  return result.value;
+  return JSON.parse(output);
+}
+const identity = { scope: "qualification", key: "same-key" };
+function readObservation(root) {
+  return componentRpc(root, "observations:get", identity);
+}
+function writeObservation(root, value) {
+  return componentRpc(root, "observations:record", {
+    ...identity,
+    provider: "simulated",
+    providerId: value,
+    state: "running",
+  });
+}
+async function frontendReady(s) {
+  const response = await fetch(`http://127.0.0.1:${s.ports.web}`, {
+    signal: AbortSignal.timeout(10000),
+  });
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /src\/main\.tsx/);
 }
 
 test(
-  "two real worktrees: isolated databases, concurrent backends, stable restart, safe teardown and cleanup",
-  { timeout: 600000, skip: hasApp ? false : "Run from a consuming Convex app with examples/probe.ts installed" },
+  "two real worktrees: isolated component state, Vite ports, restart and safe cleanup",
+  {
+    timeout: 600000,
+    skip: hasApp ? false : "Run from this Convex component repository",
+  },
   async (t) => {
+    const selectedBase = await refreshCheckout(source, {
+      refreshCurrent: false,
+    });
+    assert.ok(
+      selectedBase,
+      "Qualification requires a Git checkout and live origin base.",
+    );
+    const testedHead = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: source,
+      encoding: "utf8",
+    }).trim();
+    execFileSync(
+      "git",
+      ["merge-base", "--is-ancestor", selectedBase, testedHead],
+      { cwd: source },
+    );
+    const patch = execFileSync(
+      "git",
+      ["diff", "--binary", selectedBase, testedHead],
+      { cwd: source },
+    );
     const base = await realpath(
       await mkdtemp(path.join(tmpdir(), "convex-worktree-e2e-")),
     );
@@ -59,15 +120,18 @@ test(
       let safeToRemove = true;
       for (const root of roots) {
         if (!existsSync(root)) continue;
-        const result = await run(root, ["teardown"]).catch((error) => ({
+        const result = await run(root, ["cleanup", "--yes"]).catch((error) => ({
           code: 1,
           output: error.message,
         }));
         if (result.code) {
           safeToRemove = false;
-          console.error("Cleanup limitation; temporary checkout preserved:", root, result.output);
-        }
-        else
+          console.error(
+            "Cleanup limitation; temporary checkout preserved:",
+            root,
+            result.output,
+          );
+        } else
           execFileSync("git", ["worktree", "remove", "--force", root], {
             cwd: source,
             stdio: "ignore",
@@ -77,10 +141,28 @@ test(
       if (safeToRemove) await rm(base, { recursive: true, force: true });
     });
     for (const root of roots) {
-      execFileSync("git", ["worktree", "add", "--detach", root, "HEAD"], {
+      execFileSync("git", ["worktree", "add", "--detach", root, selectedBase], {
         cwd: source,
         stdio: "ignore",
       });
+      // Start at the fetched immutable base, then apply the candidate's tracked
+      // delta in this disposable checkout. Never copy local state or credentials.
+      if (patch.length) {
+        execFileSync("git", ["apply", "--index"], { cwd: root, input: patch });
+        execFileSync(
+          "git",
+          [
+            "-c",
+            "user.name=Sandbox qualification",
+            "-c",
+            "user.email=qualification@example.invalid",
+            "commit",
+            "-m",
+            "test: apply candidate for disposable qualification",
+          ],
+          { cwd: root, stdio: "ignore" },
+        );
+      }
       installDependencies(root);
     }
     const setups = await Promise.allSettled(
@@ -99,12 +181,18 @@ test(
     const configs = await Promise.all(
       roots.map((root) =>
         readFile(
-          path.join(root, path.join(backendPath, ".convex/local/default/config.json")),
+          path.join(
+            root,
+            path.join(backendPath, ".convex/local/default/config.json"),
+          ),
           "utf8",
         ).then(JSON.parse),
       ),
     );
-    assert.notEqual(configs[0].adminKey, configs[1].adminKey);
+    assert.ok(
+      configs[0].adminKey !== configs[1].adminKey,
+      "Local admin credentials must be distinct",
+    );
     assert.equal(
       new Set(states.flatMap((s) => Object.values(s.ports))).size,
       6,
@@ -112,30 +200,17 @@ test(
     console.log(
       "PASS: parallel setup, distinct deployment identities, six distinct reserved ports",
     );
-    await Promise.all(roots.map((root) => ok(root, "start")));
-    await rpc(
-      states[0],
-      "mutation",
-      "probe:write",
-      { value: "alpha" },
-    );
-    await rpc(
-      states[1],
-      "mutation",
-      "probe:write",
-      { value: "beta" },
-    );
-    const entries = await Promise.all(
-      states.map((s) =>
-        rpc(s, "query", "probe:read"),
-      ),
-    );
+    await Promise.all(roots.map((root) => ok(root, "start", "--frontend")));
+    await Promise.all(states.map(frontendReady));
+    await writeObservation(roots[0], "alpha");
+    await writeObservation(roots[1], "beta");
+    const entries = await Promise.all(roots.map(readObservation));
     assert.deepEqual(
-      entries.map((rows) => rows.map((r) => r.value)),
-      [["alpha"], ["beta"]],
+      entries.map((row) => row.providerId),
+      ["alpha", "beta"],
     );
     console.log(
-      "PASS: two simultaneous backends return different isolated database rows",
+      "PASS: two live Vite frontends and isolated component observations under identical logical keys",
     );
     for (const root of roots)
       assert.equal(
@@ -152,17 +227,14 @@ test(
     );
     await ok(roots[0], "stop");
     await ok(roots[0], "setup");
-    await ok(roots[0], "start");
-    assert.equal(
-      await readFile(path.join(roots[0], ".worktree/backend.env"), "utf8"),
-      before,
+    await ok(roots[0], "start", "--frontend");
+    await frontendReady(states[0]);
+    assert.ok(
+      (await readFile(path.join(roots[0], ".worktree/backend.env"), "utf8")) ===
+        before,
+      "Repeated setup must preserve managed configuration",
     );
-    assert.equal(
-      (
-        await rpc(states[0], "query", "probe:read")
-      )[0].value,
-      "alpha",
-    );
+    assert.equal((await readObservation(roots[0])).providerId, "alpha");
     assert.deepEqual(
       JSON.parse(
         await readFile(path.join(roots[0], ".worktree/local.json"), "utf8"),
@@ -173,39 +245,31 @@ test(
       "PASS: repeated setup/restart preserves database, identity, ports and generated configuration",
     );
     await ok(roots[0], "teardown");
-    assert.equal(
-      (
-        await rpc(states[1], "query", "probe:read")
-      )[0].value,
-      "beta",
-    );
-    await ok(roots[0], "start");
-    assert.equal(
-      (
-        await rpc(states[0], "query", "probe:read")
-      )[0].value,
-      "alpha",
-    );
+    await frontendReady(states[1]);
+    assert.equal((await readObservation(roots[1])).providerId, "beta");
+    await ok(roots[0], "start", "--frontend");
+    await frontendReady(states[0]);
+    assert.equal((await readObservation(roots[0])).providerId, "alpha");
     console.log(
       "PASS: teardown preserves data, leaves sibling backend running, restart reacquires ports",
     );
     await ok(roots[0], "stop");
-    const blocker = net.createServer();
-    await new Promise((resolve) =>
-      blocker.listen(states[0].ports.cloud, "127.0.0.1", resolve),
-    );
-    try {
-      const r = await run(roots[0], ["start"]);
-      assert.notEqual(r.code, 0);
-      assert.match(r.output, /busy/);
-      assert.equal(blocker.listening, true);
-    } finally {
-      await new Promise((resolve) => blocker.close(resolve));
+    for (const port of [states[0].ports.cloud, states[0].ports.web]) {
+      const blocker = net.createServer();
+      await new Promise((resolve) => blocker.listen(port, "127.0.0.1", resolve));
+      try {
+        const r = await run(roots[0], ["start", "--frontend"]);
+        assert.notEqual(r.code, 0);
+        assert.match(r.output, /busy/);
+        assert.equal(blocker.listening, true);
+      } finally {
+        await new Promise((resolve) => blocker.close(resolve));
+      }
     }
-    console.log(
-      "PASS: occupied port causes explicit failure without killing its owner",
-    );
+    console.log("PASS: occupied backend and frontend ports fail without killing their owner");
     await ok(roots[0], "cleanup", "--yes");
+    const cleanedEnv = await readFile(path.join(roots[0], backendPath, ".env.local"), "utf8");
+    assert.doesNotMatch(cleanedEnv, /^(VITE_CONVEX_URL|CONVEX_DEPLOYMENT)=/m);
     await assert.rejects(
       readFile(
         path.join(
@@ -216,12 +280,8 @@ test(
       { code: "ENOENT" },
     );
     await ok(roots[0], "cleanup", "--yes");
-    assert.equal(
-      (
-        await rpc(states[1], "query", "probe:read")
-      )[0].value,
-      "beta",
-    );
+    await frontendReady(states[1]);
+    assert.equal((await readObservation(roots[1])).providerId, "beta");
     console.log(
       "PASS: explicit cleanup removes only the owned database and is repeatable",
     );

@@ -50,7 +50,8 @@ core imports do not require them. The testing entry point needs convex-test.
 ## Local backend
 
 Commit changes, then use `pnpm worktree:setup` and `pnpm worktree:start`. These use
-checkout-local anonymous Convex backends and stable allocated ports. The internal
+checkout-local anonymous Convex backends and stable allocated ports. Use
+`pnpm worktree:start --frontend` to include Vite on its reserved frontend port. The internal
 `proof:observe` fixture invokes a simulated adapter and stores the projected
 observation; `proof:latest` reads it. It is a server-only fixture, not a public API.
 See [development instructions](docs/development.md) for safe lifecycle commands.
