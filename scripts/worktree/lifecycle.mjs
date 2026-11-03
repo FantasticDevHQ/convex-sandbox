@@ -26,6 +26,7 @@ import {
 } from "./config.mjs";
 import { run, ownedRunning, stopOnly } from "./processes.mjs";
 import { refreshCheckout } from "./freshness.mjs";
+import { prepareCheckout } from "./prepare.mjs";
 
 export async function setup(prepareOnly) {
   await refreshCheckout(root);
@@ -100,6 +101,7 @@ export async function setup(prepareOnly) {
       {
         CONVEX_DEPLOYMENT: selection,
         NEXT_PUBLIC_CONVEX_URL: cloud,
+        ...(layout.frontendRuntime === "vite" ? { VITE_CONVEX_URL: cloud } : {}),
         NEXT_PUBLIC_CONVEX_SITE_URL: site,
         NEXT_PUBLIC_SITE_URL: `http://localhost:${s.ports.web}`,
         PORT: s.ports.web,
@@ -142,6 +144,7 @@ export async function setup(prepareOnly) {
   });
   if (!prepareOnly)
     await projectLock(async () => {
+      prepareCheckout(root, layout.prepareCommand);
       // First run uses the documented non-TTY anonymous flow, which generates a unique
       // name rather than the agent-mode constant that can select legacy HOME state.
       if (!s.deployment) {

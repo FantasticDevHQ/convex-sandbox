@@ -13,11 +13,12 @@ import {
   dir,
   sleep,
   read,
+  layout,
 } from "./context.mjs";
 import { safe, json } from "./files.mjs";
 import { alive, locked, available } from "./registry.mjs";
 import { state, checkConfig, childEnv, convexArgs } from "./config.mjs";
-import { packageBin } from "./dependencies.mjs";
+import { frontendArgs } from "./frontend.mjs";
 
 export async function run(
   args,
@@ -108,7 +109,7 @@ export async function ownedRunning(s) {
   return runtime;
 }
 
-export async function reserve(s) {
+export async function reserve(s, withFrontend = false) {
   await locked(async (leases) => {
     for (const [p, v] of Object.entries(leases)) {
       if (
@@ -121,7 +122,7 @@ export async function reserve(s) {
           "Worktree ports have been reassigned; run setup after resolving reservations.",
         );
     }
-    for (const port of [s.ports.cloud, s.ports.site])
+    for (const port of [s.ports.cloud, s.ports.site, ...(withFrontend ? [s.ports.web] : [])])
       if (!(await available(port)))
         throw new Error(`Reserved port ${port} is busy.`);
     leases[root] = { id: s.id, ports: s.ports };
@@ -131,8 +132,8 @@ export async function reserve(s) {
 export async function serve(s, withFrontend = false) {
   await checkConfig(s, true);
   const backendArgs = convexArgs(s);
-  const frontendBin = withFrontend ? packageBin("next", "next", [frontend, root]) : null;
-  await json(path.join(dir, "runtime.json"), { pid: process.pid, id: s.id });
+  const webArgs = withFrontend ? frontendArgs(s.ports.web, layout, [frontend, root]) : null;
+  await json(path.join(dir, "runtime.json"), { pid: process.pid, id: s.id, frontend: withFrontend });
   const children = [];
   let stopping = false;
   async function stop(code = 0) {
@@ -168,15 +169,11 @@ export async function serve(s, withFrontend = false) {
   if (withFrontend) {
     const web = spawn(
       process.execPath,
-      [
-        frontendBin,
-        "dev",
-        "--port",
-        String(s.ports.web),
-      ],
+      webArgs,
       { cwd: frontend, env: childEnv(s), stdio: "inherit" },
     );
     children.push(web);
+    web.on("error", (error) => { console.error(error.message); void stop(1); });
     web.on("exit", (code) => {
       if (!stopping) void stop(code ?? 1);
     });
@@ -191,8 +188,8 @@ export async function start(withFrontend = false) {
   }
   await checkConfig(s, true);
   convexArgs(s);
-  if (withFrontend) packageBin("next", "next", [frontend, root]);
-  await reserve(s);
+  if (withFrontend) frontendArgs(s.ports.web, layout, [frontend, root]);
+  await reserve(s, withFrontend);
   await safe(path.join(dir, "backend.log"));
   const log = openSync(path.join(dir, "backend.log"), "w", 0o600);
   const child = spawn(
@@ -211,9 +208,9 @@ export async function start(withFrontend = false) {
     if (!alive(child.pid))
       throw new Error("Backend exited; inspect .worktree/backend.log.");
     const output = await fs.readFile(path.join(dir, "backend.log"), "utf8");
-    if (output.includes("Convex functions ready")) {
+    if (output.includes("Convex functions ready") && (!withFrontend || !(await available(s.ports.web)))) {
       console.log(
-        `Backend ready at http://127.0.0.1:${s.ports.cloud}${withFrontend ? `; frontend http://localhost:${s.ports.web}` : ""}`,
+        `Backend ready at http://127.0.0.1:${s.ports.cloud}${withFrontend ? `; frontend http://127.0.0.1:${s.ports.web}` : ""}`,
       );
       return;
     }
@@ -232,7 +229,7 @@ export async function stopOnly(s) {
   for (let n = 0; n < 200; n++) {
     if (!alive(runtime.pid)) {
       for (let attempt = 0; attempt < 200; attempt++) {
-        if ((await available(s.ports.cloud)) && (await available(s.ports.site)))
+        if ((await available(s.ports.cloud)) && (await available(s.ports.site)) && (!runtime.frontend || (await available(s.ports.web))))
           return;
         await sleep(100);
       }

@@ -49,13 +49,14 @@ export async function checkConfig(s, required = false) {
 export function childEnv(s, bootstrap = false) {
   const env = { ...process.env };
   for (const key of Object.keys(env)) {
-    if (key.startsWith("CONVEX_") || key.startsWith("NEXT_PUBLIC_CONVEX_"))
+    if (key.startsWith("CONVEX_") || key.startsWith("NEXT_PUBLIC_CONVEX_") || key.startsWith("VITE_CONVEX_"))
       delete env[key];
   }
   return {
     ...env,
     CONVEX_AGENT_MODE: bootstrap ? "" : "anonymous",
     PORT: String(s.ports.web),
+    ...(layout.frontendRuntime === "vite" ? { VITE_CONVEX_URL: `http://127.0.0.1:${s.ports.cloud}` } : {}),
     HOME: path.join(dir, "home"),
     XDG_CACHE_HOME: path.join(dir, "cache"),
   };

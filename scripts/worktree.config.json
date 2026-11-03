@@ -1,9 +1,10 @@
 {
   "backend": "example",
-  "frontend": false,
+  "frontend": "example",
   "env": {},
   "secretEnv": [],
   "siteUrlEnv": [],
   "bootstrapMissingEnv": [],
-  "prepareCommand": ["pnpm", "build:lib"]
+  "prepareCommand": ["pnpm", "build:lib"],
+  "frontendRuntime": "vite"
 }
