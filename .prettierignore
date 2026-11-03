@@ -1,0 +1,6 @@
+node_modules
+dist
+**/_generated/**
+scripts/worktree/**
+assets/brand/logo-mark.svg
+pnpm-lock.yaml

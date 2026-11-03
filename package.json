@@ -5,10 +5,10 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "test": "vitest run --maxWorkers=1",
-    "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json",
-    "check:all": "pnpm typecheck && pnpm test && pnpm build && pnpm test:pr-standard && pnpm test:worktree",
+    "test": "pnpm build:lib && vitest run --maxWorkers=1",
+    "typecheck": "pnpm build:lib && pnpm typecheck:lib && pnpm typecheck:example",
+    "build": "pnpm build:lib && pnpm build:example",
+    "check:all": "pnpm typecheck && pnpm test && pnpm build:example && pnpm test:package && pnpm test:example && pnpm test:pr-standard && pnpm test:worktree",
     "worktree:setup": "node scripts/worktree/cli.mjs setup",
     "worktree:start": "node scripts/worktree/cli.mjs start",
     "worktree:stop": "node scripts/worktree/cli.mjs stop",
@@ -16,20 +16,62 @@
     "worktree:cleanup": "node scripts/worktree/cli.mjs cleanup",
     "worktree:prune": "node scripts/worktree/cli.mjs prune",
     "test:worktree": "node --test --test-concurrency=1 scripts/worktree/*.test.mjs",
-    "test:pr-standard": "node --test --test-concurrency=1 scripts/pr-standard.test.mjs scripts/enforce-pr-standard.test.mjs"
+    "test:pr-standard": "node --test --test-concurrency=1 scripts/pr-standard.test.mjs scripts/enforce-pr-standard.test.mjs",
+    "build:lib": "tsc -p tsconfig.build.json",
+    "build:example": "pnpm --filter convex-sandbox-example build",
+    "typecheck:lib": "tsc --noEmit",
+    "typecheck:example": "pnpm --filter convex-sandbox-example typecheck",
+    "test:example": "pnpm --filter convex-sandbox-example test:e2e",
+    "test:package": "node --test tests/package.test.mjs",
+    "dev:frontend": "pnpm build:lib && pnpm --filter convex-sandbox-example dev:frontend"
   },
   "peerDependencies": {
-    "convex": "^1.49.0"
+    "convex": "^1.49.0",
+    "convex-test": "^0.0.66"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "^22.0.0",
     "convex": "1.49.0",
     "convex-test": "0.0.66",
+    "prettier": "3.9.10",
     "typescript": "7.0.2",
-    "vitest": "5.1.0",
-    "@types/node": "^22.0.0"
+    "vitest": "5.1.0"
   },
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "description": "Provider-neutral Convex sandbox component. Experimental baseline under development.",
+  "main": "./dist/client/index.js",
+  "types": "./dist/client/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "docs/architecture/0001-adapter-boundary.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/client/index.d.ts",
+      "default": "./dist/client/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./convex.config.js": {
+      "types": "./dist/component/convex.config.d.ts",
+      "default": "./dist/component/convex.config.js"
+    },
+    "./_generated/component.js": {
+      "types": "./dist/component/_generated/component.d.ts",
+      "default": "./dist/component/_generated/component.js"
+    }
+  },
+  "peerDependenciesMeta": {
+    "convex-test": {
+      "optional": true
+    }
+  }
 }

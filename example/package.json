@@ -3,9 +3,24 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:backend": "convex dev"
+    "dev:backend": "convex dev",
+    "dev:frontend": "vite --host 127.0.0.1 --port 0",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
-    "convex": "1.49.0"
+    "convex": "1.49.0",
+    "@fantastic.dev/convex-sandbox": "workspace:*",
+    "@tanstack/react-router": "1.170.46",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "vite": "8.3.5",
+    "@vitejs/plugin-react": "6.2.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@playwright/test": "1.64.1"
   }
 }

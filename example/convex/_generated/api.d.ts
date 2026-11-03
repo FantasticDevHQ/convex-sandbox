@@ -47,5 +47,5 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
-  sandbox: import("../../../src/component/_generated/component.js").ComponentApi<"sandbox">;
+  sandbox: import("@fantastic.dev/convex-sandbox/_generated/component.js").ComponentApi<"sandbox">;
 };

@@ -6,3 +6,5 @@ coverage/
 .convex/
 *.tsbuildinfo
 .worktree/
+test-results/
+playwright-report/
