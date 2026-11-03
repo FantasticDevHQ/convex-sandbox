@@ -1,4 +1,8 @@
 import {
+  createSimulatedProvider,
+  runAdapterConformance,
+} from "@fantastic.dev/convex-sandbox/testing";
+import {
   createHostAccess,
   protectExecutionStore,
   protectSecretHandle,
@@ -673,6 +677,68 @@ export const hostSecurity = internalAction({
       outputWithheld: logs.entries.length === 0,
       safeError,
       secretHandleBlocked,
+    };
+  },
+});
+
+/** Public testing API on a real installed component, with isolated fixture keys. */
+export const conformance = internalAction({
+  args: {},
+  returns: v.object({
+    passed: v.number(),
+    skipped: v.number(),
+    total: v.number(),
+  }),
+  handler: async (ctx) => {
+    let index = 0;
+    const scope = `internal-conformance-${Date.now()}`;
+    const report = await runAdapterConformance(() => {
+      const simulated = createSimulatedProvider({ profile: "persistent" });
+      return {
+        provider: simulated.provider,
+        sandbox: { scope, key: `case-${index++}` },
+        stores: {
+          lifecycle: createLifecycleStore(ctx, sandbox),
+          execution: createExecutionStore(ctx, sandbox),
+          files: {
+            ...createFileStore(ctx, sandbox),
+            authorizePath: async ({ path }) =>
+              path === "/workspace" || path.startsWith("/workspace/"),
+          },
+          images: createImageStore(ctx, sandbox),
+        },
+        commands: {
+          complete: {
+            kind: "argv",
+            executable: "fixture",
+            args: ["echo", "conformance"],
+          },
+          running: {
+            kind: "argv",
+            executable: "fixture",
+            args: ["progress", "4", "conformance"],
+          },
+          largeOutput: {
+            kind: "argv",
+            executable: "fixture",
+            args: ["generate", "100000"],
+          },
+        },
+        expectedOutput: "conformance\n",
+        cleanup: async () => {
+          for (const machine of simulated.snapshot().machines)
+            if (machine.state !== "deleted")
+              await simulated.provider.adapter.delete?.(machine.id, {
+                idempotencyKey: `cleanup-${machine.id}`,
+                signal: new AbortController().signal,
+              });
+        },
+      };
+    });
+    return {
+      passed: report.filter((item) => item.status === "passed").length,
+      skipped: report.filter((item) => item.status === "skipped").length,
+      total: report.length,
     };
   },
 });

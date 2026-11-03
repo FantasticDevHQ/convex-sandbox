@@ -62,7 +62,8 @@
     "docs/execution.md",
     "docs/files.md",
     "docs/images.md",
-    "docs/security.md"
+    "docs/security.md",
+    "docs/testing.md"
   ],
   "exports": {
     ".": {

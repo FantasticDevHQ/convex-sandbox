@@ -38,3 +38,27 @@ test("server helpers fail browser imports while Convex resolution remains availa
   );
   assert.equal(convex.status, 0, convex.stderr);
 });
+
+test("core and testing entry graphs do not load React or test-runner runtime dependencies", () => {
+  const code = `
+    import { registerHooks } from "node:module";
+    registerHooks({ resolve(specifier, context, next) {
+      if (/^(react(?:$|\\/)|react-dom(?:$|\\/)|vitest(?:$|\\/)|convex-test(?:$|\\/))/.test(specifier)) throw new Error("Forbidden runtime dependency");
+      const result = next(specifier, context);
+      if (process.argv[2] === "core" && result.url.includes("/dist/testing/")) throw new Error("Core loaded test fixtures");
+      return result;
+    } });
+    await import(process.argv[1]);
+  `;
+  for (const [entry, mode] of [
+    ["@fantastic.dev/convex-sandbox", "core"],
+    ["@fantastic.dev/convex-sandbox/testing", "testing"],
+  ]) {
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "-e", code, entry, mode],
+      { encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+  }
+});
