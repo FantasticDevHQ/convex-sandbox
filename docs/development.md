@@ -126,3 +126,11 @@ modified, deleted, staged or new binding files. The command writes generated
 files while checking. The full `pnpm check:all` runs this check inside the first
 disposable qualification checkout, so CI needs no cloud account or copied keys.
 Do not run codegen against an unmanaged deployment to satisfy this check.
+
+## Package and walkthrough qualification
+
+`pnpm test:package` packs the current built package and installs that tarball into an owned temporary consumer, outside the workspace. It first bootstraps the consumer with the source checkout's pinned Convex version and a fresh temporary registry metadata cache. It then removes only that consumer's node_modules and performs a frozen offline reinstall before verifying public exports without convex-test. Both installations disable scripts and automatic peers. A frozen source install alone does not guarantee pnpm has the registry metadata needed to resolve a new consumer. It also checks that private source paths are not exported and that the archive contains only the intended distribution/documents. The temporary consumer and archive are removed on completion or failure. Run `pnpm build:lib` before this standalone check; check:all already builds it. This does not publish a package or certify a registry release.
+
+The real browser walkthrough blocks non-loopback HTTP requests. It reloads while a command is unknown, selects its persisted history entry, and reconciles it; it also renders a rejected command and recovers with a new scenario. Unit checks count native simulator executions across lost reply, reconciliation and replay, and verify that reset epoch scopes cannot access prior commands, output or files through the public demo API. Existing host authorization checks cover foreign scope/provider identities before SDK dispatch.
+
+Initial frozen dependency installation, origin freshness checks and the first backend binary download still need network access. The browser and synthetic provider need no external service or provider credentials. CI retains browser artifacts outside the repository; PR media is uploaded through GitHub attachments.
