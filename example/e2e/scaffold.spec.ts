@@ -7,7 +7,7 @@ let origin: string;
 test.beforeAll(async () => {
   server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
   await server.listen();
-  const address = server.httpServer!.address();
+  const address = server.httpServer?.address();
   if (!address || typeof address === "string")
     throw new Error("No test server address");
   origin = `http://127.0.0.1:${address.port}`;
@@ -35,7 +35,10 @@ test("TanStack routes navigate and reload without requiring a backend", async ({
   await expect(
     page.getByRole("heading", { name: "Mount the component." }),
   ).toBeVisible();
-  await page.screenshot({ path: info.outputPath("integration.png"), fullPage: true });
+  await page.screenshot({
+    path: info.outputPath("integration.png"),
+    fullPage: true,
+  });
   await page.goBack();
   await expect(
     page.getByRole("heading", { name: "One interface. Any sandbox." }),
@@ -47,7 +50,9 @@ test("TanStack routes navigate and reload without requiring a backend", async ({
   expect(errors).toEqual([]);
 });
 
-test("starter navigation stays usable on a narrow viewport", async ({ page }, info) => {
+test("starter navigation stays usable on a narrow viewport", async ({
+  page,
+}, info) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/integration`);
   await expect(
@@ -58,7 +63,10 @@ test("starter navigation stays usable on a narrow viewport", async ({ page }, in
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
-  await page.screenshot({ path: info.outputPath("mobile.png"), fullPage: true });
+  await page.screenshot({
+    path: info.outputPath("mobile.png"),
+    fullPage: true,
+  });
   await page.getByRole("link", { name: "Overview", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "One interface. Any sandbox." }),

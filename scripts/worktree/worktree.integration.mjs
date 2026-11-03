@@ -202,6 +202,12 @@ test(
     );
     await Promise.all(roots.map((root) => ok(root, "start", "--frontend")));
     await Promise.all(states.map(frontendReady));
+    execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
+      cwd: roots[0],
+      env: { ...process.env, CI: "true" },
+      stdio: "inherit",
+      timeout: 120000,
+    });
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));
