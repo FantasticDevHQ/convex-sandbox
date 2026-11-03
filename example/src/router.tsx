@@ -15,7 +15,7 @@ function Frame() {
           <span className="brand-mark" aria-hidden="true">
             ⌘
           </span>
-          convex-sandbox<span className="version">0.0</span>
+          convex-sandbox<span className="version">RC</span>
         </Link>
         <nav aria-label="Primary">
           <Link to="/" activeOptions={{ exact: true }}>

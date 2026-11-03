@@ -10,6 +10,7 @@ import net from "node:net";
 import { existsSync } from "node:fs";
 import { installDependencies } from "./dependencies.mjs";
 import { refreshCheckout } from "./freshness.mjs";
+import { mountPackedComponent } from "../release/packed-component.mjs";
 
 const source = await realpath(process.cwd());
 const layout = JSON.parse(
@@ -166,6 +167,8 @@ test(
       }
       installDependencies(root);
     }
+    await mountPackedComponent(roots[0], base);
+    console.log("PASS: first anonymous host resolves the packed component instead of workspace source");
     const setups = await Promise.allSettled(
       roots.map((root) => ok(root, "setup")),
     );
