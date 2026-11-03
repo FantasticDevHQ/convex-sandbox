@@ -92,3 +92,5 @@ reference; no Stripe business logic is included. Worktree tooling retains its
 license and upstream provenance under `scripts/worktree` and in the development
 guide. The official Fantastic.Dev logo is copied unchanged from the brand-kit
 commit `0ce1aebc3e8418d7e59ce171e117cf9793dd2f3a`.
+
+The [local example backend](docs/example-backend.md) provides repeatable synthetic fixtures and reactive component queries without provider credentials.

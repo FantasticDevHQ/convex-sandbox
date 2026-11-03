@@ -9,9 +9,12 @@ repository root after a frozen install. The library builds first. Vite chooses a
 available loopback port and prints its URL. `/` is the overview; `/integration`
 shows the host mount. Refresh and back navigation work on both routes.
 
-The starter does not connect to a backend or provision machines. The Convex host
-fixture mounts the component through its public package export. Run it using the
-managed local backend described in `../docs/development.md`.
+The UI starter is still static. The local Convex backend now mounts the component
+and exposes reactive queries and fixed actions backed by durable simulator state.
+It provisions no real machines and needs no provider keys. See the
+[backend guide](../docs/example-backend.md) for seed/reset, API behavior, limits
+and restart verification, and [development](../docs/development.md) for the
+managed anonymous backend.
 
 Browser tests start and close their own Vite server on an OS-assigned loopback
 port, use one worker and require no keys. Screenshots and video live outside the

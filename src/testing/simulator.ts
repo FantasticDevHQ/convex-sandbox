@@ -293,6 +293,7 @@ export function createSimulatedProvider(
     idempotency?: "native" | "none";
     state?: unknown;
     now?: () => number;
+    onChange?: (state: SimulatedState) => Promise<void>;
   } = {},
 ) {
   let state = options.state
@@ -315,19 +316,38 @@ export function createSimulatedProvider(
   )
     throw new Error("Invalid simulated state");
   const now = options.now ?? Date.now;
-  function mutate<T>(call: () => T): T {
-    const before = clone(state);
-    try {
-      const result = call();
-      if (
-        new TextEncoder().encode(JSON.stringify(state)).byteLength > STATE_BYTES
-      )
-        fail("quota");
+  let tail: Promise<void> = Promise.resolve();
+  function mutate<T>(call: () => T): Promise<T> {
+    const work = tail.then(async () => {
+      const before = clone(state);
+      let result: T;
+      try {
+        result = call();
+        if (
+          new TextEncoder().encode(JSON.stringify(state)).byteLength >
+          STATE_BYTES
+        )
+          fail("quota");
+      } catch (error) {
+        state = before;
+        throw error;
+      }
+      try {
+        await options.onChange?.(clone(state));
+      } catch {
+        throw new SandboxProviderError({
+          code: "unknown_outcome",
+          outcome: "unknown",
+          retryable: false,
+        });
+      }
       return result;
-    } catch (error) {
-      state = before;
-      throw error;
-    }
+    });
+    tail = work.then(
+      () => {},
+      () => {},
+    );
+    return work;
   }
   function machine(id: string, running = false) {
     const found = state.machines.find((item) => item.id === id);
@@ -687,8 +707,11 @@ export function createSimulatedProvider(
             ["queued", "running"].includes(job.state) &&
             item.state === "running"
           ) {
-            if (job.cancelled) job.state = "cancelled";
-            else {
+            if (job.cancelled) {
+              job.state = "cancelled";
+              job.stdout = "";
+              job.stderr = "";
+            } else {
               job.polls = Math.max(0, job.polls - 1);
               job.state = job.polls ? "running" : "completed";
               if (!job.polls) job.exitCode = 0;

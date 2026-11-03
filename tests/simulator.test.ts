@@ -317,3 +317,67 @@ test("fixed fixture resources and unsupported connection kinds reject explicit r
     ),
   ).rejects.toMatchObject({ data: { code: "unsupported" } });
 });
+
+test("checkpoint hooks finish before a deliberately lost SDK reply", async () => {
+  const saved: unknown[] = [];
+  const f = createSimulatedProvider({
+    onChange: async (state) => {
+      saved.push(state);
+    },
+  });
+  f.faults.failNext("create", "after");
+  await expect(
+    f.provider.adapter.create?.({}, context("create")),
+  ).rejects.toMatchObject({ data: { outcome: "unknown" } });
+  const recovered = createSimulatedProvider({ state: saved[0] });
+  expect(
+    await recovered.provider.adapter.findCreate?.("create", context("find")),
+  ).toMatchObject({ providerId: "sim-vm-1" });
+});
+
+test("checkpoint failures are unknown and never leak the callback's raw message", async () => {
+  const f = createSimulatedProvider({
+    onChange: async () => {
+      throw new Error("private storage error");
+    },
+  });
+  await expect(
+    f.provider.adapter.create?.({}, context("create")),
+  ).rejects.toMatchObject({
+    data: { code: "unknown_outcome", outcome: "unknown" },
+  });
+  expect(f.snapshot().machines).toHaveLength(1);
+});
+
+test("async checkpoint hooks serialize fixture mutations and receive detached state", async () => {
+  let enter: () => void = () => {},
+    release: () => void = () => {};
+  const entered = new Promise<void>((resolve) => {
+      enter = resolve;
+    }),
+    gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+  const sizes: number[] = [];
+  const f = createSimulatedProvider({
+    onChange: async (state) => {
+      sizes.push(state.machines.length);
+      if (sizes.length === 1) {
+        enter();
+        await gate;
+      }
+      state.machines.length = 0;
+    },
+  });
+  const first = f.provider.adapter.create?.({}, context("first"));
+  await entered;
+  const second = f.provider.adapter.create?.({}, context("second"));
+  try {
+    expect(f.snapshot().machines).toHaveLength(1);
+  } finally {
+    release();
+  }
+  await Promise.all([first, second]);
+  expect(sizes).toEqual([1, 2]);
+  expect(f.snapshot().machines).toHaveLength(2);
+});
