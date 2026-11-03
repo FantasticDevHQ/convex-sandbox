@@ -12,6 +12,8 @@ export const capabilityValidator = v.union(
   v.literal("readFile"),
   v.literal("writeFile"),
   v.literal("listFiles"),
+  v.literal("deleteFile"),
+  v.literal("transferFile"),
   v.literal("listTemplates"),
   v.literal("createTemplate"),
   v.literal("snapshotDisk"),

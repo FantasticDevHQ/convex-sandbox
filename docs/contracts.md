@@ -2,7 +2,8 @@
 
 These pre-1.0 contracts are experimental. Provider integration projects may refine
 them before release. The provider dispatcher supports description and lifecycle operations.
-Execution dispatch is covered by the [execution guide](execution.md). See the [lifecycle guide](lifecycle.md). The component registry now
+Execution dispatch is covered by the [execution guide](execution.md). Native file operations
+are covered by the [file guide](files.md). See the [lifecycle guide](lifecycle.md). The component registry now
 persists operation tracking; see the [state guide](state.md).
 
 ## Identity and values

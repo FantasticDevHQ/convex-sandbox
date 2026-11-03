@@ -59,7 +59,8 @@
     "docs/contracts.md",
     "docs/state.md",
     "docs/lifecycle.md",
-    "docs/execution.md"
+    "docs/execution.md",
+    "docs/files.md"
   ],
   "exports": {
     ".": {

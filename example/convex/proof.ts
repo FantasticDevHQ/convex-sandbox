@@ -4,6 +4,7 @@ import {
   registerProvider,
   createLifecycleStore,
   createExecutionStore,
+  createFileStore,
 } from "@fantastic.dev/convex-sandbox";
 import type { ComponentApi } from "@fantastic.dev/convex-sandbox/_generated/component.js";
 import { internalAction, internalQuery } from "./_generated/server.js";
@@ -222,6 +223,132 @@ export const execution = internalAction({
         logs.entries.map((entry) => entry.text).join("") ===
           "synthetic output" && (completed?.outputBytes ?? Infinity) <= 65536,
       deleted: (await lifecycle.get(identity))?.tombstone === true,
+    };
+  },
+});
+
+/** In-memory native-file fixture; no real filesystem, bucket or provider access. */
+export const files = internalAction({
+  args: {},
+  returns: v.object({
+    text: v.boolean(),
+    binary: v.boolean(),
+    listed: v.boolean(),
+    deleted: v.boolean(),
+    transferBounded: v.boolean(),
+    denied: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    const identity = { scope: "internal-fixture", key: "files-proof" };
+    await ctx.runMutation(sandbox.registry.ensure, {
+      sandbox: identity,
+      reference: { provider: "files-simulated", providerId: "fixture-files" },
+    });
+    const data = new Map<string, ArrayBuffer>();
+    const providers = new SandboxProviders({ authorize: async () => {} });
+    providers.register(
+      registerProvider({
+        name: "files-simulated",
+        capabilities: {
+          version: 1,
+          supported: [
+            "readFile",
+            "writeFile",
+            "listFiles",
+            "deleteFile",
+            "transferFile",
+          ],
+        },
+        adapter: {
+          describe: async (providerId) => ({ providerId, state: "running" }),
+          files: {
+            read: async (_, path, request) => {
+              const bytes = data.get(path) ?? new ArrayBuffer(0);
+              return {
+                data: bytes.slice(
+                  request.offset,
+                  request.offset + request.maxBytes,
+                ),
+                offset: request.offset,
+                totalBytes: bytes.byteLength,
+                complete: request.offset + request.maxBytes >= bytes.byteLength,
+              };
+            },
+            write: async (_, path, bytes) => {
+              data.set(path, bytes.slice(0));
+              return { bytesWritten: bytes.byteLength, complete: true };
+            },
+            list: async () => ({
+              entries: [{ name: "text", kind: "file" }],
+              nextCursor: null,
+              complete: true,
+            }),
+            delete: async (_, path) => ({ deleted: data.delete(path) }),
+            transferDirections: ["download"],
+            transfer: async (_, __, request) => ({
+              url: "https://files.example.test/signed?token=synthetic",
+              method: "GET",
+              expiresAt: Date.now() + request.expiresInMs - 100,
+              maxBytes: request.maxBytes,
+              partial: false,
+            }),
+          },
+        },
+      }),
+    );
+    const client = providers.files({
+      ...createFileStore(ctx, sandbox),
+      authorizePath: async ({ path }) =>
+        path === "/workspace" || path.startsWith("/workspace/"),
+    });
+    await client.writeText({
+      sandbox: identity,
+      path: "/workspace/text",
+      text: "synthetic-file-content 🦊",
+      operationId: "text",
+    });
+    const text = await client.readText({
+      sandbox: identity,
+      path: "/workspace/text",
+    });
+    await client.write({
+      sandbox: identity,
+      path: "/workspace/binary",
+      data: new Uint8Array([0, 255, 128]).buffer,
+      operationId: "binary",
+    });
+    const binary = await client.read({
+      sandbox: identity,
+      path: "/workspace/binary",
+    });
+    const listed = await client.list({ sandbox: identity, path: "/workspace" });
+    const transfer = await client.transfer({
+      sandbox: identity,
+      path: "/workspace/text",
+      direction: "download",
+      operationId: "transfer",
+      maxBytes: 1024,
+    });
+    let denied = false;
+    try {
+      await client.read({ sandbox: identity, path: "/private/secret" });
+    } catch {
+      denied = true;
+    }
+    return {
+      text: text.text === "synthetic-file-content 🦊" && !text.truncated,
+      binary: [...new Uint8Array(binary.data)].join(",") === "0,255,128",
+      listed: listed.entries[0]?.name === "text" && !listed.partial,
+      deleted: (
+        await client.delete({
+          sandbox: identity,
+          path: "/workspace/binary",
+          operationId: "delete",
+        })
+      ).deleted,
+      transferBounded:
+        transfer.maxBytes === 1024 && transfer.expiresAt <= Date.now() + 60000,
+      denied,
     };
   },
 });

@@ -225,6 +225,10 @@ test(
       startedOnce: true, completed: true, cancelAcknowledged: true, outputBounded: true, deleted: true,
     });
     console.log("PASS: host execution bridge starts once, caches bounded logs and separates cancellation from completion on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:files", {}, true), {
+      text: true, binary: true, listed: true, deleted: true, transferBounded: true, denied: true,
+    });
+    console.log("PASS: host file bridge preserves text/binary, bounds transfer handles and enforces path policy on both backends");
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));
