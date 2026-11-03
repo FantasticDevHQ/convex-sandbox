@@ -1,3 +1,5 @@
+export * from "../capabilities.js";
+export * from "./errors.js";
 export * from "../contracts.js";
 export * from "./providers.js";
 import type { Observation, SandboxIdentity } from "../contracts.js";
