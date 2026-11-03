@@ -233,6 +233,10 @@ test(
       pending: true, connected: true, unsupportedDesktop: true,
     });
     console.log("PASS: host image bridge retains pending native jobs and issues only supported ephemeral connections on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:hostSecurity", {}, true), {
+      deniedAcrossScopes: true, deniedListInjection: true, noUnauthorizedSDKCalls: true, outputWithheld: true, safeError: true, secretHandleBlocked: true,
+    });
+    console.log("PASS: host authorization denies cross-scope SDK access and keeps output and master keys out of component records on both backends");
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));

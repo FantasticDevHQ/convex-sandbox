@@ -61,7 +61,8 @@
     "docs/lifecycle.md",
     "docs/execution.md",
     "docs/files.md",
-    "docs/images.md"
+    "docs/images.md",
+    "docs/security.md"
   ],
   "exports": {
     ".": {
@@ -79,6 +80,12 @@
     "./_generated/component.js": {
       "types": "./dist/component/_generated/component.d.ts",
       "default": "./dist/component/_generated/component.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "convex": "./dist/server/index.js",
+      "browser": "./dist/server/browser.js",
+      "default": "./dist/server/index.js"
     }
   },
   "peerDependenciesMeta": {

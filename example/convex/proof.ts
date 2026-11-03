@@ -1,6 +1,13 @@
 import {
+  createHostAccess,
+  protectExecutionStore,
+  protectSecretHandle,
+  serializeSandboxError,
+} from "@fantastic.dev/convex-sandbox/server";
+import {
   SandboxBoundary,
   SandboxProviders,
+  SandboxProviderError,
   registerProvider,
   createLifecycleStore,
   createExecutionStore,
@@ -455,6 +462,205 @@ export const imageStatus = internalAction({
         "image" in result &&
         result.image.provider === "images-simulated" &&
         result.image.id === "synthetic-disk-image",
+    };
+  },
+});
+
+/** Fixed internal fixture identities only. Never a browser-selectable auth example. */
+export const hostSecurity = internalAction({
+  args: {},
+  returns: v.object({
+    deniedAcrossScopes: v.boolean(),
+    deniedListInjection: v.boolean(),
+    noUnauthorizedSDKCalls: v.boolean(),
+    outputWithheld: v.boolean(),
+    safeError: v.boolean(),
+    secretHandleBlocked: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    const owned = { scope: "host-fixture-a", key: "owned" },
+      foreign = { scope: "host-fixture-b", key: "owned" };
+    for (const [identity, providerId] of [
+      [owned, "fixture-a"],
+      [foreign, "fixture-b"],
+    ] as const)
+      await ctx.runMutation(sandbox.registry.ensure, {
+        sandbox: identity,
+        reference: { provider: "host-simulated", providerId },
+      });
+    const masterKey = "fixture-only-not-a-real-master-key";
+    const access = createHostAccess({
+      authenticate: async () => ({
+        subject: "fixture-subject-a",
+        scope: owned.scope,
+      }),
+      getSandbox: (identity) =>
+        ctx.runQuery(sandbox.registry.get, { sandbox: identity }),
+      listSandboxes: (scope, page) =>
+        ctx.runQuery(sandbox.registry.list, {
+          scope,
+          paginationOpts: { cursor: page.cursor, numItems: page.limit },
+        }),
+      authorize: async ({ sandbox }) => sandbox.key === "owned",
+      selectProvider: async () => "host-simulated",
+      authorizePath: async ({ path }) => path.startsWith("/workspace/"),
+    });
+    let sdkCalls = 0;
+    const providers = new SandboxProviders({
+      authorize: access.authorize,
+      authorizeCreate: access.authorizeCreate,
+    });
+    providers.register(
+      registerProvider({
+        name: "host-simulated",
+        capabilities: {
+          version: 1,
+          supported: [
+            "describe",
+            "delete",
+            "execute",
+            "readFile",
+            "getConnection",
+          ],
+        },
+        adapter: {
+          describe: async () => {
+            throw new Error(`private SDK error: ${masterKey}`);
+          },
+          delete: async (providerId) => {
+            sdkCalls++;
+            return { providerId, state: "deleted" };
+          },
+          execution: {
+            idempotency: "none",
+            start: async () => {
+              sdkCalls++;
+              return {
+                executionId: "fixture-command",
+                state: "completed",
+                exitCode: 0,
+                output: {
+                  stdout: `${masterKey} https://signed.example.test/secret`,
+                  stderr: "private fixture output",
+                  truncated: false,
+                },
+              };
+            },
+            status: async () => ({
+              executionId: "fixture-command",
+              state: "completed",
+              exitCode: 0,
+            }),
+          },
+          files: {
+            read: async () => {
+              sdkCalls++;
+              return { data: new ArrayBuffer(0), offset: 0, complete: true };
+            },
+          },
+          connections: {
+            kinds: ["preview"],
+            get: async (_, request) => {
+              sdkCalls++;
+              return {
+                kind: "preview",
+                url: "https://preview.example.test",
+                expiresAt: Date.now() + request.expiresInMs - 100,
+                access: { kind: "public" },
+              };
+            },
+          },
+        },
+      }),
+    );
+    const lifecycle = providers.lifecycle(createLifecycleStore(ctx, sandbox));
+    const execution = providers.execution(
+      protectExecutionStore(createExecutionStore(ctx, sandbox)),
+    );
+    const files = providers.files({
+      ...createFileStore(ctx, sandbox),
+      authorizePath: access.authorizePath,
+    });
+    const images = providers.images(createImageStore(ctx, sandbox));
+    let denied = 0;
+    for (const call of [
+      () => lifecycle.get(foreign),
+      () =>
+        lifecycle.run({
+          sandbox: foreign,
+          operationId: "delete",
+          action: "delete",
+        }),
+      () =>
+        execution.start({
+          sandbox: foreign,
+          operationId: "command",
+          input: { kind: "shell", command: "synthetic only" },
+        }),
+      () => files.read({ sandbox: foreign, path: "/workspace/file" }),
+      () => images.connection({ sandbox: foreign, kind: "preview" }),
+    ]) {
+      try {
+        await call();
+      } catch (error) {
+        if (
+          error instanceof SandboxProviderError &&
+          error.data.code === "authorization"
+        )
+          denied++;
+      }
+    }
+    const noUnauthorizedSDKCalls = sdkCalls === 0;
+    let deniedListInjection = false;
+    try {
+      await access.list({ scope: foreign.scope, limit: 10 });
+    } catch (error) {
+      deniedListInjection =
+        error instanceof SandboxProviderError &&
+        error.data.code === "validation";
+    }
+    const resolved = await access.resolve({ key: "owned" }, "execute");
+    await execution.start({
+      sandbox: resolved.sandbox,
+      operationId: "command",
+      input: { kind: "shell", command: "synthetic only" },
+    });
+    const logs = await execution.logs({
+      sandbox: owned,
+      operationId: "command",
+      cursor: null,
+    });
+    let safeError = false;
+    try {
+      await providers.describe(
+        await access.resolve({ key: "owned" }, "describe"),
+      );
+    } catch (error) {
+      safeError = !JSON.stringify(serializeSandboxError(error)).includes(
+        masterKey,
+      );
+    }
+    let secretHandleBlocked = false;
+    try {
+      protectSecretHandle(
+        {
+          kind: "preview",
+          url: "https://preview.example.test",
+          expiresAt: Date.now() + 1000,
+          access: { kind: "token", token: masterKey },
+        },
+        [masterKey],
+      );
+    } catch {
+      secretHandleBlocked = true;
+    }
+    return {
+      deniedAcrossScopes: denied === 5,
+      deniedListInjection,
+      noUnauthorizedSDKCalls,
+      outputWithheld: logs.entries.length === 0,
+      safeError,
+      secretHandleBlocked,
     };
   },
 });
