@@ -12,6 +12,8 @@ export function register(
 ): ComponentApi {
   return host.registerComponent<ComponentApi>(path, schema, {
     "./_generated/server.js": () => import("../component/_generated/server.js"),
+    "./registry.js": () => import("../component/registry.js"),
+    "./operations.js": () => import("../component/operations.js"),
     "./observations.js": () => import("../component/observations.js"),
   });
 }

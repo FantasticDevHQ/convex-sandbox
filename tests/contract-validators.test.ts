@@ -90,3 +90,10 @@ test.each([
   const t = convexTest(defineSchema({}), modules);
   await expect(t.mutation(echo, { value: invalid })).rejects.toThrow();
 });
+
+test("the common operation status represents uncertain persisted outcomes", async () => {
+  const t = convexTest(defineSchema({}), modules);
+  expect(
+    await t.mutation(echo, { value: { ...value, status: "unknown" } }),
+  ).toMatchObject({ status: "unknown" });
+});

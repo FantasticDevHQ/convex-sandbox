@@ -60,6 +60,7 @@ export const operationStatusValidator = v.union(
   v.literal("succeeded"),
   v.literal("failed"),
   v.literal("cancelled"),
+  v.literal("unknown"),
 );
 export type OperationStatus = Infer<typeof operationStatusValidator>;
 
