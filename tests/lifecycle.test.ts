@@ -525,3 +525,37 @@ test("a leased worker cannot overwrite an observation that started later", async
     observedState: "stopped",
   });
 });
+
+test("lifecycle reconciliation rejects arbitrary execution records without calling the SDK", async () => {
+  let reads = 0;
+  const f = fixture(
+    adapter({
+      describe: async () => {
+        reads++;
+        return result();
+      },
+    }),
+  );
+  await f.lifecycle.create({
+    sandbox,
+    provider: "fixture",
+    operationId: "create",
+  });
+  const row = await f.store.get(sandbox);
+  const operation = await f.t.mutation(f.c.operations.begin, {
+    sandbox,
+    expectedVersion: row?.version ?? -1,
+    operationId: "command",
+    kind: "execute",
+  });
+  await f.t.mutation(f.c.operations.transition, {
+    sandbox,
+    operationId: "command",
+    expectedVersion: operation.version,
+    status: "unknown",
+  });
+  await expect(
+    f.lifecycle.reconcile({ sandbox, operationId: "command" }),
+  ).rejects.toThrow("Invalid lifecycle operation");
+  expect(reads).toBe(0);
+});

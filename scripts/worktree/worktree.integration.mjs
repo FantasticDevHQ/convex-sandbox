@@ -40,21 +40,22 @@ async function ok(cwd, ...args) {
   assert.equal(r.code, 0, r.output.slice(-8000));
   return r;
 }
-async function componentRpc(root, fn, args) {
+async function componentRpc(root, fn, args, host = false) {
   const code = `
     import { spawnSync } from "node:child_process";
     import path from "node:path";
     import { state, checkConfig, childEnv, cli } from "./scripts/worktree/config.mjs";
     import { backend, dir } from "./scripts/worktree/context.mjs";
     const s = await state(); await checkConfig(s, true);
-    const result = spawnSync(process.execPath, [cli(), "run", "--env-file", path.join(dir, "convex.env"), "--component", "sandbox", process.argv[1], process.argv[2]], {cwd:backend, env:childEnv(s), encoding:"utf8"});
+    const componentArgs = process.argv[3] === "host" ? [] : ["--component", "sandbox"];
+    const result = spawnSync(process.execPath, [cli(), "run", "--env-file", path.join(dir, "convex.env"), ...componentArgs, process.argv[1], process.argv[2]], {cwd:backend, env:childEnv(s), encoding:"utf8"});
     if (result.status !== 0) throw new Error("Local component RPC failed: " + result.stderr.slice(-2000));
     const text = result.stdout.trim();
     process.stdout.write(text ? JSON.stringify(JSON.parse(text)) : "null");
   `;
   const output = execFileSync(
     process.execPath,
-    ["--input-type=module", "-e", code, fn, JSON.stringify(args)],
+    ["--input-type=module", "-e", code, fn, JSON.stringify(args), host ? "host" : "component"],
     {
       cwd: root,
       encoding: "utf8",
@@ -216,6 +217,10 @@ test(
       stdio: "inherit",
       timeout: 120000,
     });
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:lifecycle", {}, true), {
+      created: true, stopped: true, deleted: true,
+    });
+    console.log("PASS: internal host lifecycle bridge creates once, stops and deletes synthetic machines on both backends");
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));

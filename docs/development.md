@@ -75,7 +75,9 @@ frontend availability, teardown/reacquisition, busy-port refusal and cleanup tha
 leaves the sibling running. It also persists distinct registry references and
 execution outcomes under the same logical/operation keys in each backend, then
 checks that an unknown execution and its active reservation survive restart.
-Cross-scope registry reads return null.
+Cross-scope registry reads return null. An internal host action also exercises
+the lifecycle store bridge and action runtime with synthetic create, stop and
+delete adapters on both backends. It installs no public test endpoint.
 
 Cleanup uses owned lifecycle operations with `--yes` before removing only the
 created disposable checkouts. If ownership validation or shutdown fails, the

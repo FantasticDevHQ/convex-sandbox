@@ -52,3 +52,12 @@ test("an internal host action invokes its adapter and persists into the mounted 
     state: "running",
   });
 });
+
+test("an internal host action orchestrates create, stop and delete through the component bridge", async () => {
+  const { makeFunctionReference } = await import("convex/server");
+  const t = convexTest(defineSchema({}), hostModules);
+  register(t);
+  expect(
+    await t.action(makeFunctionReference<"action">("proof:lifecycle"), {}),
+  ).toEqual({ created: true, stopped: true, deleted: true });
+});
