@@ -72,7 +72,10 @@ synthetic values under identical logical keys. No extra public probe endpoint or
 schema is added to the example. Qualification checks distinct credentials without
 printing them, six reserved ports, isolated component rows, stable restart,
 frontend availability, teardown/reacquisition, busy-port refusal and cleanup that
-leaves the sibling running.
+leaves the sibling running. It also persists distinct registry references and
+execution outcomes under the same logical/operation keys in each backend, then
+checks that an unknown execution and its active reservation survive restart.
+Cross-scope registry reads return null.
 
 Cleanup uses owned lifecycle operations with `--yes` before removing only the
 created disposable checkouts. If ownership validation or shutdown fails, the

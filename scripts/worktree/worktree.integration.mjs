@@ -226,6 +226,29 @@ test(
     console.log(
       "PASS: two live Vite frontends and isolated component observations under identical logical keys",
     );
+    for (const [index, root] of roots.entries()) {
+      const binding = await componentRpc(root, "registry:ensure", {
+        sandbox: identity,
+        reference: { provider: "simulated", providerId: index === 0 ? "alpha" : "beta" },
+      });
+      const operation = await componentRpc(root, "operations:begin", {
+        sandbox: identity,
+        expectedVersion: binding.version,
+        operationId: "qualification-execution",
+        kind: "execute",
+      });
+      assert.equal(await componentRpc(root, "operations:transition", {
+        sandbox: identity,
+        operationId: operation.operationId,
+        expectedVersion: operation.version,
+        status: index === 0 ? "unknown" : "succeeded",
+        executionId: index === 0 ? "exec-alpha" : "exec-beta",
+      }), true);
+      assert.equal(await componentRpc(root, "registry:get", {
+        sandbox: { ...identity, scope: "other-scope" },
+      }), null);
+    }
+    console.log("PASS: isolated registry bindings and distinct execution outcomes under identical logical/operation keys");
     for (const root of roots)
       assert.equal(
         execFileSync("git", ["status", "--porcelain"], {
@@ -249,6 +272,18 @@ test(
       "Repeated setup must preserve managed configuration",
     );
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
+    const restored = await componentRpc(roots[0], "registry:get", { sandbox: identity });
+    assert.equal(restored.reference.providerId, "alpha");
+    assert.equal(restored.activeOperationId, "qualification-execution");
+    const execution = await componentRpc(roots[0], "operations:get", {
+      sandbox: identity, operationId: "qualification-execution",
+    });
+    assert.equal(execution.status, "unknown");
+    assert.equal(execution.executionId, "exec-alpha");
+    assert.equal((await componentRpc(roots[1], "operations:get", {
+      sandbox: identity, operationId: "qualification-execution",
+    })).status, "succeeded");
+    console.log("PASS: registry binding and unknown execution reservation survive backend restart without crossing worktrees");
     assert.deepEqual(
       JSON.parse(
         await readFile(path.join(roots[0], ".worktree/local.json"), "utf8"),
