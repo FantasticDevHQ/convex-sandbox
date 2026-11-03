@@ -165,6 +165,7 @@ export class SandboxFiles {
       prepared.sandbox.key,
       prepared.row.generation,
       prepared.policy.operation,
+      prepared.policy.direction ?? null,
       prepared.path,
       key,
     ]);

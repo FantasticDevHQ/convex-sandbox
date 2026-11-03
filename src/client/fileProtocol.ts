@@ -61,7 +61,9 @@ export function transferHandle(
     !raw ||
     typeof raw !== "object" ||
     typeof raw.url !== "string" ||
-    raw.url.length > 16384
+    raw.url.length > 16384 ||
+    hasControls(raw.url) ||
+    raw.url.trim() !== raw.url
   )
     return invalid();
   let url: URL;
@@ -120,13 +122,16 @@ export function transferHandle(
     )
       return invalid();
     const headers: Record<string, string> = {};
+    let headerBytes = 0;
     for (const [key, value] of entries) {
       if (
         !/^[!#$%&'*+.^_`|~\da-z-]+$/i.test(key) ||
         typeof value !== "string" ||
-        /[\r\n\0]/.test(value)
+        hasControls(value)
       )
         return invalid();
+      headerBytes += key.length + new TextEncoder().encode(value).byteLength;
+      if (headerBytes > 16384) return invalid();
       Object.defineProperty(headers, key, { value, enumerable: true });
     }
     result.headers = headers;

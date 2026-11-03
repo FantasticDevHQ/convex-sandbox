@@ -430,31 +430,37 @@ test("raw SDK failures are sanitized and mutations are never automatically retri
 
 test.each([
   { url: "http://files.example.test/secret" },
+  { url: "https://files.example.test/secret\n" },
+  { headers: { Authorization: "bad\vheader" } },
+  { headers: { Authorization: "🦊".repeat(5000) } },
   { url: "https://user:password@files.example.test/secret" },
   { maxBytes: 2048 },
   { headers: { Authorization: "bad\r\nheader" } },
   { method: "PUT" as const },
-])("invalid native transfer metadata is rejected: %j", async (override) => {
-  const f = fixture({
-    transfer: async () => ({
-      url: "https://files.example.test/signed",
-      method: "GET",
-      expiresAt: Date.now() + 1000,
-      maxBytes: 1024,
-      partial: false,
-      ...override,
-    }),
-  });
-  await expect(
-    f.client.transfer({
-      sandbox,
-      path: "/workspace/file",
-      direction: "download",
-      operationId: "invalid",
-      maxBytes: 1024,
-    }),
-  ).rejects.toThrow("Invalid transfer handle");
-});
+])(
+  "invalid native transfer metadata is rejected (case %#)",
+  async (override) => {
+    const f = fixture({
+      transfer: async () => ({
+        url: "https://files.example.test/signed",
+        method: "GET",
+        expiresAt: Date.now() + 1000,
+        maxBytes: 1024,
+        partial: false,
+        ...override,
+      }),
+    });
+    await expect(
+      f.client.transfer({
+        sandbox,
+        path: "/workspace/file",
+        direction: "download",
+        operationId: "invalid",
+        maxBytes: 1024,
+      }),
+    ).rejects.toThrow("Invalid transfer handle");
+  },
+);
 
 test("invalid UTF-8 and non-progress text reads are explicit failures", async () => {
   const f = fixture();
@@ -540,4 +546,28 @@ test("provider byte limits, missing path policy and unsafe listing names are rej
   await expect(
     f.client.read({ sandbox, path: "/workspace/file", maxBytes: 3 }),
   ).rejects.toThrow("File limit exceeded");
+});
+
+test("upload and download transfer keys cannot collide under a shared operation ID", async () => {
+  const keys: string[] = [];
+  const f = fixture({
+    transfer: async (_, __, request, context) => {
+      keys.push(context.idempotencyKey);
+      return {
+        url: "https://files.example.test/signed",
+        method: request.direction === "upload" ? "PUT" : "GET",
+        expiresAt: Date.now() + 1000,
+        maxBytes: request.maxBytes,
+        partial: false,
+      };
+    },
+  });
+  for (const direction of ["upload", "download"] as const)
+    await f.client.transfer({
+      sandbox,
+      path: "/workspace/file",
+      direction,
+      operationId: "shared",
+    });
+  expect(new Set(keys).size).toBe(2);
 });
