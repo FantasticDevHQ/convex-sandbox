@@ -147,13 +147,14 @@ export class SandboxProviders {
     );
     const provider = this.#provider(request.reference.provider);
     requireCapability(provider.capabilities, "describe");
-    let raw: unknown;
     try {
-      raw = await provider.adapter.describe(request.reference.providerId);
+      const raw: unknown = await provider.adapter.describe(
+        request.reference.providerId,
+      );
+      return projectDescription(request, raw);
     } catch (error) {
       throw normalizeProviderError(error);
     }
-    return projectDescription(request, raw);
   }
 
   #request({ sandbox, reference }: DescribeRequest) {

@@ -310,3 +310,25 @@ test("native feature namespaces and extension fields cannot escape their protoco
     }),
   ).toThrow("Invalid extension contract");
 });
+
+test("SDK getter failures are normalized without leaking exception messages", async () => {
+  const providers = new SandboxProviders({ authorize: async () => {} });
+  providers.register(
+    registerProvider({
+      name: "fixture",
+      adapter: {
+        describe: async (providerId) => ({
+          providerId,
+          get state(): "running" {
+            throw new Error("private-getter-token");
+          },
+        }),
+      },
+    }),
+  );
+  const error = await providers
+    .describe(request)
+    .catch((error: unknown) => error);
+  expect(error).toBeInstanceOf(SandboxProviderError);
+  expect(String(error)).not.toContain("private-getter-token");
+});

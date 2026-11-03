@@ -163,7 +163,8 @@ unregistered provider and unknown outcome. The adapter must supply the safe
 provider code explicitly. Core does not guess failure semantics from arbitrary
 SDK exception shapes or HTTP status alone.
 
-Description dispatch normalizes exceptions from the SDK call. Known structured
+Description dispatch normalizes exceptions from the SDK call and from reading
+its result, including getter-backed SDK fields. Known structured
 errors retain their classification and provider code; attached SDK fields are
 dropped. Unclassified exceptions become non-retryable `unknown_outcome` errors
 with a fixed message and no original exception attached. Invalid returned data
