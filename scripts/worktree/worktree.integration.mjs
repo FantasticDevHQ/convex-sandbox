@@ -239,6 +239,11 @@ test(
     console.log("PASS: host authorization denies cross-scope SDK access and keeps output and master keys out of component records on both backends");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:conformance", {}, true), { passed: 13, skipped: 0, total: 13 });
     console.log("PASS: all 13 exported adapter conformance cases pass through the public simulator and installed component on both backends");
+    execFileSync(process.execPath, ["../node_modules/@playwright/test/cli.js", "test"], {
+      cwd: path.join(roots[0], "example"),
+      env: { ...process.env, CSB_LIVE_URL: `http://127.0.0.1:${states[0].ports.web}` },
+      stdio: "inherit", timeout: 120000,
+    });
     for (const root of roots) execFileSync(process.execPath, ["example/scripts/qualify-backend.mjs"], {
       cwd: root, stdio: "inherit", timeout: 60000,
     });

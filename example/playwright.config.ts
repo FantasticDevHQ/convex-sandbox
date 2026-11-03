@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: process.env.CSB_LIVE_URL ? "live.spec.ts" : "scaffold.spec.ts",
   workers: 1,
   fullyParallel: false,
   outputDir:

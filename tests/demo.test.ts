@@ -240,3 +240,53 @@ test("memory stop/resume and cancellation preserve their distinct component stat
     ).entries,
   ).toHaveLength(0);
 });
+
+test("public snapshot demo persists pending image state and reconciles via history", async () => {
+  const t = fixture();
+  await t.action(api.demo.seed, {});
+  const pending = await t.action(api.demo.snapshot, {
+    profile: "memory",
+    operationId: "snapshot-demo",
+  });
+  expect(pending.status).toBe("running");
+  const ready = await t.action(api.demo.snapshotStatus, {
+    profile: "memory",
+    operationId: "snapshot-demo",
+  });
+  expect(ready?.status).toBe("succeeded");
+  const history = await t.query(api.demo.history, {
+    profile: "memory",
+    paginationOpts: { cursor: null, numItems: 10 },
+  });
+  expect(
+    history.page.some(
+      (row) => row.kind === "snapshotDisk" && row.status === "succeeded",
+    ),
+  ).toBe(true);
+});
+
+test("large fixture output exposes multiple bounded reactive cache pages", async () => {
+  const t = fixture();
+  await t.action(api.demo.seed, {});
+  await t.action(api.demo.execute, {
+    profile: "persistent",
+    operationId: "pages",
+    scenario: "large-output",
+  });
+  const first = await t.query(api.demo.logs, {
+    profile: "persistent",
+    operationId: "pages",
+    cursor: null,
+  });
+  expect(first.entries).toHaveLength(2);
+  expect(first.isDone).toBe(false);
+  const next = await t.query(api.demo.logs, {
+    profile: "persistent",
+    operationId: "pages",
+    cursor: first.nextCursor,
+  });
+  expect(next.entries.length).toBeGreaterThan(0);
+  expect(next.entries[0]?.sequence).toBeGreaterThan(
+    first.entries[1]?.sequence ?? -1,
+  );
+});

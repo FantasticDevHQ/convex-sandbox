@@ -39,13 +39,13 @@ until the release ticket verifies the packed artifact and registry settings.
 The example has an explicit workspace dependency and uses public package exports.
 
 `pnpm dev:frontend` builds the library and starts Vite on an available loopback
-port. This starter is static and has no provider credentials or backend identity.
-TanStack Router handles `/` and `/integration`; the full playground is later work.
+port. A standalone frontend has no provider credentials or backend identity; `/playground` shows setup until a loopback backend is configured.
+TanStack Router handles `/`, `/integration`, `/playground` and `/playground/$profile`.
 No router plugin/code generator is needed for these code-defined routes.
 
 `pnpm test:example` uses Playwright with an in-process Vite server on an OS-assigned
 port. It closes the server on teardown, including test failures. Tests cover
-navigation, reload, browser back and a narrow viewport. Their screenshots/video
+navigation, reload, browser back, offline setup and a narrow viewport. The real-backend qualification also runs the interactive walkthrough on its owned frontend. Their screenshots/video
 are temporary artifacts, not repository documentation. `CSB_PLAYWRIGHT_OUTPUT`
 selects a local output directory; CI uses the runner's temporary directory.
 
