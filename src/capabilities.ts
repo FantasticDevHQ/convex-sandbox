@@ -7,6 +7,8 @@ export const capabilityValidator = v.union(
   v.literal("stop"),
   v.literal("delete"),
   v.literal("execute"),
+  v.literal("cancelExecution"),
+  v.literal("executionLogs"),
   v.literal("readFile"),
   v.literal("writeFile"),
   v.literal("listFiles"),

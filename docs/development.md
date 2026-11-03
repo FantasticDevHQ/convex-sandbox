@@ -77,7 +77,10 @@ execution outcomes under the same logical/operation keys in each backend, then
 checks that an unknown execution and its active reservation survive restart.
 Cross-scope registry reads return null. An internal host action also exercises
 the lifecycle store bridge and action runtime with synthetic create, stop and
-delete adapters on both backends. It installs no public test endpoint.
+delete adapters on both backends. A second internal action uses the execution
+bridge for one-shot dispatch, bounded logs and cancellation/completion separation.
+Its cached handle and output are checked after restart. These install no public
+test endpoint or shell service.
 
 Cleanup uses owned lifecycle operations with `--yes` before removing only the
 created disposable checkouts. If ownership validation or shutdown fails, the

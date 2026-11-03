@@ -221,6 +221,10 @@ test(
       created: true, stopped: true, deleted: true,
     });
     console.log("PASS: internal host lifecycle bridge creates once, stops and deletes synthetic machines on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:execution", {}, true), {
+      startedOnce: true, completed: true, cancelAcknowledged: true, outputBounded: true, deleted: true,
+    });
+    console.log("PASS: host execution bridge starts once, caches bounded logs and separates cancellation from completion on both backends");
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));
@@ -277,6 +281,14 @@ test(
       "Repeated setup must preserve managed configuration",
     );
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
+    const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
+    const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
+    assert.equal(cachedExecution.state, "completed");
+    assert.equal(cachedExecution.exitCode, 0);
+    assert.equal(cachedExecution.cancellation.acknowledgement, "accepted");
+    const cachedLogs = await componentRpc(roots[0], "execution:logs", { ...commandHandle, cursor: null, limit: 16 });
+    assert.equal(cachedLogs.entries.map(entry => entry.text).join(""), "synthetic output");
+    console.log("PASS: execution handles, completion, cancellation acknowledgement and cached logs survive restart");
     const restored = await componentRpc(roots[0], "registry:get", { sandbox: identity });
     assert.equal(restored.reference.providerId, "alpha");
     assert.equal(restored.activeOperationId, "qualification-execution");

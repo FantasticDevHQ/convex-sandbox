@@ -58,7 +58,8 @@
     "docs/architecture/0001-adapter-boundary.md",
     "docs/contracts.md",
     "docs/state.md",
-    "docs/lifecycle.md"
+    "docs/lifecycle.md",
+    "docs/execution.md"
   ],
   "exports": {
     ".": {
