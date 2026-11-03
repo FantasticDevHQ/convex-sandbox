@@ -1,3 +1,4 @@
+import { provisionFields } from "../lifecycle.js";
 import { v } from "convex/values";
 import { registryFields, operationFields } from "../state.js";
 import { defineSchema, defineTable } from "convex/server";
@@ -5,6 +6,10 @@ import { observationFields } from "../contracts.js";
 export { observationFields } from "../contracts.js";
 
 export default defineSchema({
+  provisions: defineTable(provisionFields).index("by_scope_and_key", [
+    "scope",
+    "key",
+  ]),
   sandboxes: defineTable({
     ...registryFields,
     operationCount: v.number(),

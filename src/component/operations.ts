@@ -95,7 +95,7 @@ export const begin = mutation({
     };
     await ctx.db.insert("operations", value);
     const requestedState =
-      kind === "start"
+      kind === "start" || kind === "resumeMemory"
         ? "running"
         : kind === "stop"
           ? "stopped"
@@ -137,7 +137,13 @@ export const transition = mutation({
     const row = await mustSandbox(ctx, sandbox);
     const op = await findOperation(ctx, sandbox, operationId);
     if (!op) throw new Error("Operation missing");
-    if (op.version !== expectedVersion || op.generation !== row.generation)
+    if (
+      (op.leaseUntil !== undefined &&
+        op.leaseUntil > 0 &&
+        op.leaseUntil <= Date.now()) ||
+      op.version !== expectedVersion ||
+      op.generation !== row.generation
+    )
       return false;
     if (
       terminal(op.status) ||
@@ -158,6 +164,7 @@ export const transition = mutation({
       status,
       executionId: executionId ?? op.executionId,
       errorCode,
+      leaseUntil: terminal(status) || status === "unknown" ? 0 : op.leaseUntil,
       version: op.version + 1,
       updatedAt: Date.now(),
     });

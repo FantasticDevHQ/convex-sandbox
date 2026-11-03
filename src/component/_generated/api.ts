@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as lifecycle from "../lifecycle.js";
 import type * as observations from "../observations.js";
 import type * as operations from "../operations.js";
 import type * as registry from "../registry.js";
@@ -21,6 +22,7 @@ import type {
 import { anyApi, componentsGeneric } from "convex/server";
 
 const fullApi: ApiFromModules<{
+  lifecycle: typeof lifecycle;
   observations: typeof observations;
   operations: typeof operations;
   registry: typeof registry;

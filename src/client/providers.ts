@@ -1,3 +1,11 @@
+import { SandboxLifecycle } from "./lifecycle.js";
+import type {
+  CreateOptions,
+  ProviderCallContext,
+  LifecycleStore,
+  PrepareLifecycle,
+  ProviderObservation,
+} from "../lifecycle.js";
 import { defineCapabilities, type Capabilities } from "../capabilities.js";
 import {
   normalizeProviderError,
@@ -22,7 +30,34 @@ export interface ProviderSandbox {
 
 /** An adapter lives in a trusted host action. Never store or send it over RPC. */
 export interface SandboxAdapter {
-  describe(providerId: string): Promise<ProviderSandbox>;
+  describe(
+    providerId: string,
+    context?: ProviderCallContext,
+  ): Promise<ProviderSandbox>;
+  create?(
+    options: CreateOptions,
+    context: ProviderCallContext,
+  ): Promise<ProviderSandbox>;
+  findCreate?(
+    idempotencyKey: string,
+    context: ProviderCallContext,
+  ): Promise<ProviderSandbox | null>;
+  start?(
+    providerId: string,
+    context: ProviderCallContext,
+  ): Promise<ProviderSandbox>;
+  resumeMemory?(
+    providerId: string,
+    context: ProviderCallContext,
+  ): Promise<ProviderSandbox>;
+  stop?(
+    providerId: string,
+    context: ProviderCallContext,
+  ): Promise<ProviderSandbox>;
+  delete?(
+    providerId: string,
+    context: ProviderCallContext,
+  ): Promise<ProviderSandbox>;
 }
 
 /** Declaration only. Extension execution requires future capability-gated dispatch. */
@@ -39,6 +74,7 @@ export interface ProviderRegistration<Name extends string = string> {
   name: Name;
   adapter: SandboxAdapter;
   capabilities?: Capabilities;
+  createIdempotency?: "native" | "none";
   extensions?: Readonly<Record<`${Name}.${string}`, ExtensionContract>>;
 }
 
@@ -52,6 +88,7 @@ export function registerProvider<
   name: Name;
   adapter: SandboxAdapter;
   capabilities?: Capabilities;
+  createIdempotency?: "native" | "none";
   extensions?: Extensions &
     Record<Exclude<keyof Extensions, `${NoInfer<Name>}.${string}`>, never>;
 }) {
@@ -66,6 +103,14 @@ export function registerProvider<
     )
       throw new Error("Invalid native feature namespace");
   }
+  if (
+    registration.capabilities?.supported.includes("create") &&
+    (typeof registration.adapter.create !== "function" ||
+      !["native", "none"].includes(registration.createIdempotency ?? ""))
+  )
+    throw new Error(
+      "Create requires explicit idempotency support and an implementation",
+    );
   for (const [key, extension] of Object.entries(
     registration.extensions ?? {},
   )) {
@@ -96,7 +141,15 @@ export type AuthorizeSandbox = (
   request: Readonly<{
     sandbox: Readonly<SandboxKey>;
     reference: Readonly<ProviderReference>;
-    operation: "describe" | "capabilities";
+    operation:
+      | "describe"
+      | "capabilities"
+      | "get"
+      | "observe"
+      | "start"
+      | "resumeMemory"
+      | "stop"
+      | "delete";
   }>,
 ) => Promise<void>;
 
@@ -104,14 +157,32 @@ export type AuthorizeSandbox = (
 export class SandboxProviders {
   readonly #adapters = new Map<
     string,
-    { adapter: SandboxAdapter; capabilities: Capabilities }
+    {
+      adapter: SandboxAdapter;
+      capabilities: Capabilities;
+      createIdempotency: "native" | "none";
+    }
   >();
   readonly #authorize: AuthorizeSandbox;
+  readonly #authorizeCreate?: (input: {
+    sandbox: Readonly<SandboxKey>;
+    provider: string;
+  }) => Promise<void>;
 
-  constructor({ authorize }: { authorize: AuthorizeSandbox }) {
+  constructor({
+    authorize,
+    authorizeCreate,
+  }: {
+    authorize: AuthorizeSandbox;
+    authorizeCreate?: (input: {
+      sandbox: Readonly<SandboxKey>;
+      provider: string;
+    }) => Promise<void>;
+  }) {
     if (typeof authorize !== "function")
       throw new Error("Authorization callback required");
     this.#authorize = authorize;
+    this.#authorizeCreate = authorizeCreate;
   }
 
   register(provider: ProviderRegistration): void {
@@ -121,11 +192,13 @@ export class SandboxProviders {
       adapter: provider.adapter,
       extensions: provider.extensions,
       capabilities: provider.capabilities,
+      createIdempotency: provider.createIdempotency,
     });
     if (this.#adapters.has(provider.name))
       throw new Error("Provider already registered");
     this.#adapters.set(provider.name, {
       adapter: provider.adapter,
+      createIdempotency: provider.createIdempotency ?? "none",
       capabilities: defineCapabilities(
         provider.capabilities ?? { version: 1, supported: ["describe"] },
       ),
@@ -156,6 +229,155 @@ export class SandboxProviders {
       throw normalizeProviderError(error);
     }
   }
+
+  lifecycle(store: LifecycleStore): SandboxLifecycle {
+    return new SandboxLifecycle(store, this.#prepareLifecycle);
+  }
+
+  readonly #prepareLifecycle: PrepareLifecycle = async (input) => {
+    const options = snapshotCreateOptions(input.options);
+    const sandbox = Object.freeze({
+      scope: input.sandbox.scope,
+      key: input.sandbox.key,
+    });
+    const reference = input.reference
+      ? Object.freeze({ ...input.reference })
+      : undefined;
+    const action = input.action;
+    if (action === "create") {
+      if (!this.#authorizeCreate)
+        throw new SandboxProviderError({
+          code: "authorization",
+          outcome: "not_started",
+          retryable: false,
+        });
+      await this.#authorizeCreate(
+        Object.freeze({ sandbox, provider: input.provider }),
+      );
+    } else {
+      if (!reference || reference.provider !== input.provider)
+        throw new Error("Reference conflict");
+      await this.#authorize(
+        Object.freeze({ sandbox, reference, operation: action }),
+      );
+    }
+    const provider = this.#provider(input.provider);
+    if (["start", "stop", "delete", "resumeMemory"].includes(action)) {
+      const method =
+        action === "start"
+          ? provider.adapter.start
+          : action === "stop"
+            ? provider.adapter.stop
+            : action === "delete"
+              ? provider.adapter.delete
+              : provider.adapter.resumeMemory;
+      if (!method)
+        throw new SandboxProviderError({
+          code: "unsupported",
+          capability: action as "start" | "stop" | "delete" | "resumeMemory",
+          outcome: "not_started",
+          retryable: false,
+        });
+    }
+    if (action !== "get" && action !== "observe")
+      requireCapability(provider.capabilities, action);
+    const validate = (raw: unknown): ProviderObservation => {
+      let selected = reference;
+      if (!selected) {
+        if (!raw || typeof raw !== "object")
+          throw new SandboxProviderError({
+            code: "validation",
+            outcome: "unknown",
+            retryable: false,
+          });
+        const id: unknown = Reflect.get(raw, "providerId");
+        if (typeof id !== "string" || !id || id.length > 1024)
+          throw new SandboxProviderError({
+            code: "validation",
+            outcome: "unknown",
+            retryable: false,
+          });
+        selected = { provider: input.provider, providerId: id };
+      }
+      const normalized = projectDescription(
+        { sandbox, reference: selected },
+        raw,
+      );
+      return {
+        providerId: normalized.reference.providerId,
+        state: normalized.state,
+        ...(normalized.resources ? { resources: normalized.resources } : {}),
+      };
+    };
+    const safe = async (fn: () => Promise<ProviderSandbox | null>) => {
+      try {
+        const raw = await fn();
+        return raw === null ? null : validate(raw);
+      } catch (error) {
+        throw normalizeProviderError(error);
+      }
+    };
+    return {
+      idempotency: provider.createIdempotency,
+      validate,
+      ...(provider.adapter.findCreate
+        ? {
+            lookup: (context) =>
+              safe(
+                () =>
+                  provider.adapter.findCreate?.(
+                    context.idempotencyKey,
+                    context,
+                  ) ?? Promise.resolve(null),
+              ),
+          }
+        : {}),
+      invoke: async (context) => {
+        const adapter = provider.adapter;
+        const method =
+          action === "create"
+            ? undefined
+            : action === "describe"
+              ? adapter.describe
+              : action === "start"
+                ? adapter.start
+                : action === "resumeMemory"
+                  ? adapter.resumeMemory
+                  : action === "stop"
+                    ? adapter.stop
+                    : action === "delete"
+                      ? adapter.delete
+                      : undefined;
+        if (action === "create") {
+          if (!adapter.create)
+            throw new SandboxProviderError({
+              code: "unsupported",
+              capability: "create",
+              outcome: "not_started",
+              retryable: false,
+            });
+          const description = await safe(
+            () => adapter.create?.(options, context) ?? Promise.resolve(null),
+          );
+          if (!description) throw new Error("Invalid provider data");
+          return description;
+        }
+        if (!method || !reference)
+          throw new SandboxProviderError({
+            code: "unsupported",
+            capability:
+              action === "get" || action === "observe" ? "describe" : action,
+            outcome: "not_started",
+            retryable: false,
+          });
+        const description = await safe(() =>
+          method.call(adapter, reference.providerId, context),
+        );
+        if (!description) throw new Error("Invalid provider data");
+        return description;
+      },
+    };
+  };
 
   #request({ sandbox, reference }: DescribeRequest) {
     return Object.freeze({
@@ -243,4 +465,43 @@ function isRequiredValidator(value: unknown): value is GenericValidator {
     "isOptional" in value &&
     value.isOptional === "required"
   );
+}
+
+function snapshotCreateOptions(
+  input: CreateOptions | undefined,
+): CreateOptions {
+  if (
+    input &&
+    Object.keys(input).some((key) => !["resources", "templateId"].includes(key))
+  )
+    throw new Error("Invalid create options");
+  const options: CreateOptions = {};
+  if (input?.templateId !== undefined) {
+    if (
+      typeof input.templateId !== "string" ||
+      !input.templateId ||
+      input.templateId.length > 1024
+    )
+      throw new Error("Invalid template ID");
+    options.templateId = input.templateId;
+  }
+  if (input?.resources) {
+    if (
+      Object.keys(input.resources).some(
+        (key) => !["cpuCount", "memoryMiB", "diskMiB"].includes(key),
+      )
+    )
+      throw new Error("Invalid resources");
+    const resources: MachineResources = {};
+    for (const key of ["cpuCount", "memoryMiB", "diskMiB"] as const) {
+      const value = input.resources[key];
+      if (value !== undefined) {
+        if (typeof value !== "number" || !Number.isFinite(value) || value <= 0)
+          throw new Error("Invalid resources");
+        resources[key] = value;
+      }
+    }
+    options.resources = Object.freeze(resources);
+  }
+  return Object.freeze(options);
 }
