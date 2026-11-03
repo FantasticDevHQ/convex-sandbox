@@ -254,21 +254,19 @@ test(
       "PASS: teardown preserves data, leaves sibling backend running, restart reacquires ports",
     );
     await ok(roots[0], "stop");
-    const blocker = net.createServer();
-    await new Promise((resolve) =>
-      blocker.listen(states[0].ports.cloud, "127.0.0.1", resolve),
-    );
-    try {
-      const r = await run(roots[0], ["start"]);
-      assert.notEqual(r.code, 0);
-      assert.match(r.output, /busy/);
-      assert.equal(blocker.listening, true);
-    } finally {
-      await new Promise((resolve) => blocker.close(resolve));
+    for (const port of [states[0].ports.cloud, states[0].ports.web]) {
+      const blocker = net.createServer();
+      await new Promise((resolve) => blocker.listen(port, "127.0.0.1", resolve));
+      try {
+        const r = await run(roots[0], ["start", "--frontend"]);
+        assert.notEqual(r.code, 0);
+        assert.match(r.output, /busy/);
+        assert.equal(blocker.listening, true);
+      } finally {
+        await new Promise((resolve) => blocker.close(resolve));
+      }
     }
-    console.log(
-      "PASS: occupied port causes explicit failure without killing its owner",
-    );
+    console.log("PASS: occupied backend and frontend ports fail without killing their owner");
     await ok(roots[0], "cleanup", "--yes");
     const cleanedEnv = await readFile(path.join(roots[0], backendPath, ".env.local"), "utf8");
     assert.doesNotMatch(cleanedEnv, /^(VITE_CONVEX_URL|CONVEX_DEPLOYMENT)=/m);

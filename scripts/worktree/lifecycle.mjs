@@ -231,6 +231,7 @@ export async function teardown(cleanup = false) {
         "CONVEX_URL",
         "CONVEX_SITE_URL",
         "NEXT_PUBLIC_CONVEX_URL",
+        ...(layout.frontendRuntime === "vite" ? ["VITE_CONVEX_URL"] : []),
         "NEXT_PUBLIC_CONVEX_SITE_URL",
         "NEXT_PUBLIC_SITE_URL",
         "PORT",
