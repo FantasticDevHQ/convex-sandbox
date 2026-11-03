@@ -204,7 +204,15 @@ test(
     await Promise.all(states.map(frontendReady));
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
-      env: { ...process.env, CI: "true" },
+      env: {
+        ...process.env,
+        CI: "true",
+        CONVEX_DEPLOYMENT: "prod:qualification-must-ignore",
+        CONVEX_DEPLOY_KEY: "invalid-qualification-key",
+        CONVEX_DEPLOYMENT_TOKEN: "invalid-qualification-token",
+        CONVEX_SELF_HOSTED_URL: "https://qualification.invalid",
+        CONVEX_SELF_HOSTED_ADMIN_KEY: "invalid-qualification-key",
+      },
       stdio: "inherit",
       timeout: 120000,
     });
