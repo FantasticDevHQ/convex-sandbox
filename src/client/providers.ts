@@ -1,3 +1,6 @@
+import { executionPreparer } from "./executionProvider.js";
+import { SandboxExecution } from "./execution.js";
+import type { ExecutionAdapter, ExecutionStore } from "../execution.js";
 import { SandboxLifecycle } from "./lifecycle.js";
 import type {
   CreateOptions,
@@ -30,6 +33,7 @@ export interface ProviderSandbox {
 
 /** An adapter lives in a trusted host action. Never store or send it over RPC. */
 export interface SandboxAdapter {
+  execution?: ExecutionAdapter;
   describe(
     providerId: string,
     context?: ProviderCallContext,
@@ -111,6 +115,18 @@ export function registerProvider<
     throw new Error(
       "Create requires explicit idempotency support and an implementation",
     );
+  if (registration.capabilities?.supported.includes("execute")) {
+    const execution = registration.adapter.execution;
+    if (
+      !execution ||
+      !["native", "none"].includes(execution.idempotency) ||
+      typeof execution.start !== "function" ||
+      typeof execution.status !== "function"
+    )
+      throw new Error(
+        "Execution requires start/status implementations and explicit idempotency support",
+      );
+  }
   for (const [key, extension] of Object.entries(
     registration.extensions ?? {},
   )) {
@@ -149,7 +165,12 @@ export type AuthorizeSandbox = (
       | "start"
       | "resumeMemory"
       | "stop"
-      | "delete";
+      | "delete"
+      | "execute"
+      | "executionStatus"
+      | "executionGet"
+      | "executionLogs"
+      | "cancelExecution";
   }>,
 ) => Promise<void>;
 
@@ -228,6 +249,13 @@ export class SandboxProviders {
     } catch (error) {
       throw normalizeProviderError(error);
     }
+  }
+
+  execution(store: ExecutionStore): SandboxExecution {
+    return new SandboxExecution(
+      store,
+      executionPreparer((name) => this.#provider(name), this.#authorize),
+    );
   }
 
   lifecycle(store: LifecycleStore): SandboxLifecycle {

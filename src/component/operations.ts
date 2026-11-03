@@ -1,6 +1,12 @@
+import { pruneExecution, findExecution } from "./executionHelpers.js";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { mutation, query, type QueryCtx } from "./_generated/server.js";
+import {
+  mutation,
+  query,
+  type QueryCtx,
+  type MutationCtx,
+} from "./_generated/server.js";
 import { sandboxKeyValidator, type SandboxKey } from "../contracts.js";
 import {
   capabilityValidator,
@@ -45,6 +51,7 @@ const mutates = (kind: string) =>
     "listFiles",
     "listTemplates",
     "getConnection",
+    "executionLogs",
   ].includes(kind);
 const terminal = (status: string) =>
   status === "succeeded" || status === "failed" || status === "cancelled";
@@ -57,68 +64,83 @@ export const begin = mutation({
     kind: capabilityValidator,
   },
   returns: operationRecordValidator,
-  handler: async (ctx, { sandbox, expectedVersion, operationId, kind }) => {
-    integer(expectedVersion);
-    const row = await mustSandbox(ctx, sandbox);
-    const existing = await findOperation(ctx, sandbox, operationId);
-    if (existing) {
-      if (existing.generation !== row.generation || existing.kind !== kind)
-        throw new Error("Operation identity conflict");
-      return operationRecord(existing);
-    }
-    if (row.version !== expectedVersion) throw new Error("Version conflict");
-    if (row.tombstone) throw new Error("Sandbox deleted");
-    if (row.activeOperationId) throw new Error("Operation active");
-    if (row.operationCount >= OPERATION_HISTORY_LIMIT) {
-      const oldest = await ctx.db
-        .query("operations")
-        .withIndex("by_scope_and_key_and_sequence", (q) =>
-          q.eq("scope", sandbox.scope).eq("key", sandbox.key),
-        )
-        .first();
-      if (!oldest || !terminal(oldest.status))
-        throw new Error("History capacity reached");
-      await ctx.db.delete(oldest._id);
-    }
-    const now = Date.now();
-    const value = {
-      ...sandbox,
-      operationId,
-      kind,
-      reference: row.reference,
-      generation: row.generation,
-      sequence: row.nextSequence + 1,
-      version: 1,
-      status: "pending" as const,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await ctx.db.insert("operations", value);
-    const requestedState =
-      kind === "start" || kind === "resumeMemory"
-        ? "running"
-        : kind === "stop"
-          ? "stopped"
-          : kind === "delete"
-            ? "deleted"
-            : row.requestedState;
-    await ctx.db.patch(row._id, {
-      activeOperationId: operationId,
-      requestedState,
-      ...(mutates(kind)
-        ? {
-            refreshSequence: row.refreshSequence + 1,
-            refresh: { status: "stale" as const },
-          }
-        : {}),
-      nextSequence: value.sequence,
-      operationCount: Math.min(row.operationCount + 1, OPERATION_HISTORY_LIMIT),
-      version: row.version + 1,
-      updatedAt: now,
-    });
-    return value;
-  },
+  handler: beginOperation,
 });
+export async function beginOperation(
+  ctx: MutationCtx,
+  {
+    sandbox,
+    expectedVersion,
+    operationId,
+    kind,
+  }: {
+    sandbox: SandboxKey;
+    expectedVersion: number;
+    operationId: string;
+    kind: import("../capabilities.js").Capability;
+  },
+) {
+  integer(expectedVersion);
+  const row = await mustSandbox(ctx, sandbox);
+  const existing = await findOperation(ctx, sandbox, operationId);
+  if (existing) {
+    if (existing.generation !== row.generation || existing.kind !== kind)
+      throw new Error("Operation identity conflict");
+    return operationRecord(existing);
+  }
+  if (row.version !== expectedVersion) throw new Error("Version conflict");
+  if (row.tombstone) throw new Error("Sandbox deleted");
+  if (row.activeOperationId) throw new Error("Operation active");
+  if (row.operationCount >= OPERATION_HISTORY_LIMIT) {
+    const oldest = await ctx.db
+      .query("operations")
+      .withIndex("by_scope_and_key_and_sequence", (q) =>
+        q.eq("scope", sandbox.scope).eq("key", sandbox.key),
+      )
+      .first();
+    if (!oldest || !terminal(oldest.status))
+      throw new Error("History capacity reached");
+    await pruneExecution(ctx, sandbox.scope, sandbox.key, oldest.operationId);
+    await ctx.db.delete(oldest._id);
+  }
+  const now = Date.now();
+  const value = {
+    ...sandbox,
+    operationId,
+    kind,
+    reference: row.reference,
+    generation: row.generation,
+    sequence: row.nextSequence + 1,
+    version: 1,
+    status: "pending" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await ctx.db.insert("operations", value);
+  const requestedState =
+    kind === "start" || kind === "resumeMemory"
+      ? "running"
+      : kind === "stop"
+        ? "stopped"
+        : kind === "delete"
+          ? "deleted"
+          : row.requestedState;
+  await ctx.db.patch(row._id, {
+    activeOperationId: operationId,
+    requestedState,
+    ...(mutates(kind)
+      ? {
+          refreshSequence: row.refreshSequence + 1,
+          refresh: { status: "stale" as const },
+        }
+      : {}),
+    nextSequence: value.sequence,
+    operationCount: Math.min(row.operationCount + 1, OPERATION_HISTORY_LIMIT),
+    version: row.version + 1,
+    updatedAt: now,
+  });
+  return value;
+}
 export const transition = mutation({
   args: {
     sandbox: sandboxKeyValidator,
@@ -137,6 +159,11 @@ export const transition = mutation({
     const row = await mustSandbox(ctx, sandbox);
     const op = await findOperation(ctx, sandbox, operationId);
     if (!op) throw new Error("Operation missing");
+    if (
+      op.kind === "execute" &&
+      (await findExecution(ctx, { sandbox, operationId }))
+    )
+      throw new Error("Use the execution state protocol");
     if (
       (op.leaseUntil !== undefined &&
         op.leaseUntil > 0 &&
