@@ -46,8 +46,8 @@ and old generations return false without changing observed state. A failed curre
 refresh preserves the last successful observation and records failed status with
 a common error code. `observedAt` is the last successful application time; it is
 not a provider timestamp. `observedSequence` and `refreshSequence` expose whether
-the last observation predates a new refresh. Pending work is not automatically
-expired; reconciliation is separate lifecycle work.
+the last observation predates a new refresh. The [lifecycle helper](lifecycle.md) adds versioned worker leases and bounded
+reconciliation. It never automatically repeats an uncertain SDK mutation.
 
 Mutating operations invalidate pending refresh tickets when they begin and on
 operation transitions. This prevents a read started before an operation phase

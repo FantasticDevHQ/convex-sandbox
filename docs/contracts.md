@@ -1,8 +1,8 @@
 # Common contracts
 
 These pre-1.0 contracts are experimental. Provider integration projects may refine
-them before release. The current dispatcher implements `describe` only. Lifecycle and
-execution dispatch arrive in later baseline work. The component registry now
+them before release. The provider dispatcher supports description and lifecycle operations.
+Execution dispatch remains later baseline work. See the [lifecycle guide](lifecycle.md). The component registry now
 persists operation tracking; see the [state guide](state.md).
 
 ## Identity and values
@@ -118,7 +118,8 @@ It makes no SDK call. Descriptors use `version: 1` and an explicit `supported`
 list. Omitting the descriptor preserves the minimal adapter contract by declaring
 only `describe`; an explicit empty list disables all operations. Names in this
 list describe provider support, not which dispatch methods this baseline has
-implemented. Only description dispatch and metadata discovery are implemented.
+implemented. Description dispatch, metadata discovery and the lifecycle methods documented
+in the [lifecycle guide](lifecycle.md) are implemented.
 
 The common names cover lifecycle operations, execution, bounded file access,
 template discovery/creation, disk snapshots, memory suspension/resumption and

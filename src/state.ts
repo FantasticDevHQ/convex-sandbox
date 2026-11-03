@@ -56,6 +56,8 @@ export const operationFields = {
   version: v.number(),
   status: trackedOperationStatusValidator,
   executionId: v.optional(v.string()),
+  leaseUntil: v.optional(v.number()),
+  observationSequence: v.optional(v.number()),
   errorCode: v.optional(providerErrorCodeValidator),
   createdAt: v.number(),
   updatedAt: v.number(),

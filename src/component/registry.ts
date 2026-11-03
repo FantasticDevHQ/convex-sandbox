@@ -38,6 +38,13 @@ export const ensure = mutation({
         throw new Error("Reference conflict");
       return registryRecord(existing);
     }
+    const claim = await ctx.db
+      .query("provisions")
+      .withIndex("by_scope_and_key", (q) =>
+        q.eq("scope", sandbox.scope).eq("key", sandbox.key),
+      )
+      .unique();
+    if (claim && claim.status !== "failed") throw new Error("Provision active");
     const value = {
       ...sandbox,
       reference,
