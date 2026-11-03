@@ -8,7 +8,7 @@
     "test": "pnpm build:lib && vitest run --maxWorkers=1",
     "typecheck": "pnpm build:lib && pnpm typecheck:lib && pnpm typecheck:example",
     "build": "pnpm build:lib && pnpm build:example",
-    "check:all": "pnpm lint && pnpm test:codegen && pnpm typecheck && pnpm test && pnpm build:example && pnpm test:package && pnpm test:example && pnpm test:pr-standard && pnpm test:worktree && pnpm test:worktree:integration",
+    "check:all": "pnpm lint && pnpm test:codegen && pnpm typecheck && pnpm test && pnpm build:example && pnpm test:package && pnpm test:docs && pnpm test:example && pnpm test:pr-standard && pnpm test:worktree && pnpm test:worktree:integration",
     "worktree:setup": "node scripts/worktree/cli.mjs setup",
     "worktree:start": "node scripts/worktree/cli.mjs start",
     "worktree:stop": "node scripts/worktree/cli.mjs stop",
@@ -28,7 +28,8 @@
     "lint": "biome lint --error-on-warnings .",
     "codegen": "node scripts/check-codegen.mjs",
     "test:codegen": "node --test tests/codegen.test.mjs",
-    "codegen:check": "node scripts/check-codegen.mjs --check"
+    "codegen:check": "node scripts/check-codegen.mjs --check",
+    "test:docs": "node --test --test-concurrency=1 tests/docs.test.mjs"
   },
   "peerDependencies": {
     "convex": "^1.49.0",
@@ -55,15 +56,8 @@
     "dist",
     "LICENSE",
     "README.md",
-    "docs/architecture/0001-adapter-boundary.md",
-    "docs/contracts.md",
-    "docs/state.md",
-    "docs/lifecycle.md",
-    "docs/execution.md",
-    "docs/files.md",
-    "docs/images.md",
-    "docs/security.md",
-    "docs/testing.md"
+    "docs",
+    "assets/brand/logo-mark.svg"
   ],
   "exports": {
     ".": {

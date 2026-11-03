@@ -92,11 +92,18 @@ test(
     const archive = join(root, archives[0]);
     const entries = run("tar", ["-tzf", archive]).trim().split("\n");
     assert.ok(entries.length > 20);
+    assert.ok(entries.includes("package/assets/brand/logo-mark.svg"));
+    assert.ok(entries.includes("package/docs/quickstart.md"));
+    assert.ok(entries.includes("package/docs/development.md"));
     for (const entry of entries)
       assert.match(
         entry,
-        /^package\/(dist\/|docs\/|package\.json$|README\.md$|LICENSE$)/,
+        /^package\/(dist\/|docs\/|assets\/brand\/logo-mark\.svg$|package\.json$|README\.md$|LICENSE$)/,
       );
+    assert.equal(
+      run("tar", ["-xOzf", archive, "package/assets/brand/logo-mark.svg"]),
+      await readFile(join(process.cwd(), "assets/brand/logo-mark.svg"), "utf8"),
+    );
     const manifest = JSON.parse(
       await readFile(join(process.cwd(), "package.json"), "utf8"),
     );

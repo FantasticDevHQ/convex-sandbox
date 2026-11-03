@@ -11,6 +11,7 @@
       "tests/**",
       "example/**",
       "scripts/check-codegen.mjs",
+      "scripts/check-docs.mjs",
       "!**/_generated"
     ]
   },

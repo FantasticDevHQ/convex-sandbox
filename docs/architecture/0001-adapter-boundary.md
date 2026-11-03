@@ -13,14 +13,15 @@ Use Better Stripe at commit `7dfda90f0e734e94c5541738a68e0a68536b92e9` as the
 [structural reference](https://github.com/FantasticDevHQ/better-stripe/tree/7dfda90f0e734e94c5541738a68e0a68536b92e9).
 It separates `src/client`, `src/component`, `src/react`, `src/testing` and a private
 `example` workspace. We retain the client/component/testing separation. React
-helpers and the Vite playground are follow-up tickets, rather than mandatory
-core dependencies. Stripe-specific workflows, dependencies and evidence assets
+helpers and the Vite playground were follow-up work at this initial decision.
+The playground now exists under `example`; React remains an optional application
+dependency rather than a core requirement. Stripe-specific workflows, dependencies and evidence assets
 are not copied. This repository is a pnpm workspace, not a Turborepo.
 
 - `src/client`: action-local adapter dispatch and projection to common values.
 - `src/component`: schema, transactional observation writes and reactive queries.
-- `src/testing`: offline component registration helpers, added as tests require.
-- `example/convex`: minimal host mount and internal simulated invocation.
+- `src/testing`: component registration helpers, simulator and conformance kit.
+- `example/convex`: host mount, internal proofs and local-only simulated demo.
 - `tests`: behavior and cross-component boundary verification.
 
 ## Invocation
@@ -44,7 +45,9 @@ environment names into its schema. Node-only SDKs belong in host action modules
 with `"use node"`; core and fetch-compatible adapters remain V8-compatible.
 Components cannot replace host authorization. Opaque scopes impose no account,
 bot or machine topology. Public host wrappers must resolve scope from trusted auth.
-The proof uses an internal synthetic fixture, not a public unauthenticated API.
+The original proof uses an internal synthetic fixture. The later public demo is
+explicitly local-only and is not production authentication. See the
+[quickstart](../quickstart.md) for the current integration flow.
 
 ## Limits of this proof
 
