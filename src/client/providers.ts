@@ -1,3 +1,5 @@
+import { SandboxFiles } from "./files.js";
+import type { FileAdapter, FileStore } from "../files.js";
 import { executionPreparer } from "./executionProvider.js";
 import { SandboxExecution } from "./execution.js";
 import type { ExecutionAdapter, ExecutionStore } from "../execution.js";
@@ -33,6 +35,7 @@ export interface ProviderSandbox {
 
 /** An adapter lives in a trusted host action. Never store or send it over RPC. */
 export interface SandboxAdapter {
+  files?: FileAdapter;
   execution?: ExecutionAdapter;
   describe(
     providerId: string,
@@ -170,7 +173,12 @@ export type AuthorizeSandbox = (
       | "executionStatus"
       | "executionGet"
       | "executionLogs"
-      | "cancelExecution";
+      | "cancelExecution"
+      | "readFile"
+      | "writeFile"
+      | "listFiles"
+      | "deleteFile"
+      | "transferFile";
   }>,
 ) => Promise<void>;
 
@@ -224,6 +232,14 @@ export class SandboxProviders {
         provider.capabilities ?? { version: 1, supported: ["describe"] },
       ),
     });
+  }
+
+  files(store: FileStore): SandboxFiles {
+    return new SandboxFiles(
+      store,
+      (name) => this.#provider(name),
+      this.#authorize,
+    );
   }
 
   async capabilities(input: DescribeRequest): Promise<Capabilities> {
