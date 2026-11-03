@@ -12,6 +12,7 @@
       "example/**",
       "scripts/check-codegen.mjs",
       "scripts/check-docs.mjs",
+      "scripts/release/**",
       "!**/_generated"
     ]
   },

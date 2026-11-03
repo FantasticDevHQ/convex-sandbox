@@ -32,7 +32,7 @@ pnpm pack --pack-destination /tmp
 From an existing Convex app with its own generated bindings, install the resulting tarball (replace the path with the printed filename):
 
 ```sh
-pnpm add convex /absolute/path/to/fantastic.dev-convex-sandbox-0.0.0.tgz
+pnpm add convex /absolute/path/to/fantastic.dev-convex-sandbox-0.1.0-rc.0.tgz
 ```
 
 This uses the distribution artifact without importing private source. Keep production secrets and deployments out of the local example. After a release, use its published version instead; this guide does not claim that a registry version exists now.

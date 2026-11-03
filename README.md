@@ -9,8 +9,8 @@ files and native images. Trusted host adapters call provider APIs; the component
 persists registry, operation and execution state for reactive queries and explicit
 recovery. It does not run an agent loop or choose a consumer's machine topology.
 
-The baseline is experimental, private during development and **not published to
-npm yet**. Boat, E2B and Daytona are separate [planned integrations](docs/integrations.md).
+The `0.1.0-rc.0` baseline candidate is experimental, remains private and is
+**not published to npm**. See [candidate preparation](docs/releasing.md). Boat, E2B and Daytona are separate [planned integrations](docs/integrations.md).
 The included provider is simulated: no real VM, shell or compute runs.
 
 ## Run the playground

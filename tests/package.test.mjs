@@ -1,3 +1,4 @@
+import { validateArtifactPaths } from "../scripts/release/artifact.mjs";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -95,11 +96,8 @@ test(
     assert.ok(entries.includes("package/assets/brand/logo-mark.svg"));
     assert.ok(entries.includes("package/docs/quickstart.md"));
     assert.ok(entries.includes("package/docs/development.md"));
-    for (const entry of entries)
-      assert.match(
-        entry,
-        /^package\/(dist\/|docs\/|assets\/brand\/logo-mark\.svg$|package\.json$|README\.md$|LICENSE$)/,
-      );
+    validateArtifactPaths(entries);
+    assert.ok(entries.includes("package/CHANGELOG.md"));
     assert.equal(
       run("tar", ["-xOzf", archive, "package/assets/brand/logo-mark.svg"]),
       await readFile(join(process.cwd(), "assets/brand/logo-mark.svg"), "utf8"),
@@ -154,6 +152,9 @@ test(
     const fixture = createSimulatedProvider({ onChange: async state => { checkpoint = state; } });
     const context = { idempotencyKey: "packed-create", signal: new AbortController().signal };
     const created = await fixture.provider.adapter.create({}, context);
+    const providers = new SandboxProviders({ authorize: async () => {} });
+    providers.register(fixture.provider);
+    assert.equal((await providers.describe({ sandbox: { scope: "packed-fixture", key: "machine" }, reference: { provider: fixture.provider.name, providerId: created.providerId } })).state, "running");
     const restored = createSimulatedProvider({ state: checkpoint });
     assert.equal((await restored.provider.adapter.findCreate("packed-create", context)).providerId, created.providerId);
     console.log("PASS: packed public exports, server helpers and durable simulator resolve outside the workspace without convex-test");
