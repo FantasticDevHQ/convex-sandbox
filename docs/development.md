@@ -95,3 +95,25 @@ All exported modules and tests are retained. Application-specific changes are:
 Keep these adaptations separate from upstream ownership, locking, cleanup and
 freshness modules. Reconcile them when updating the toolkit; a source link alone
 is not adoption. Real qualification results belong in PR evidence, not this guide.
+
+## Lint and generated bindings
+
+`pnpm lint` runs Biome's recommended rules with warnings treated as failures.
+It checks package and example source, tests and the codegen entry point. Generated
+bindings and the adopted toolkit are excluded. Biome parses TypeScript directly,
+so lint does not depend on a compiler-plugin compatibility range. Formatting
+remains a separate Prettier concern.
+
+After `pnpm worktree:setup` and `pnpm worktree:start`, run `pnpm codegen` to
+regenerate bindings. The command validates the checkout's local backend identity,
+removes inherited Convex cloud configuration and pins its validated anonymous
+deployment. Empty cloud selectors prevent dotenv files from overriding that choice.
+It explicitly generates `src/component` from TypeScript, rebuilds the package,
+then generates the consuming example. App codegen alone skips the package's
+published JavaScript component and cannot validate its source bindings.
+
+Commit regenerated files, then run `pnpm codegen:check` to regenerate and reject
+modified, deleted, staged or new binding files. The command writes generated
+files while checking. The full `pnpm check:all` runs this check inside the first
+disposable qualification checkout, so CI needs no cloud account or copied keys.
+Do not run codegen against an unmanaged deployment to satisfy this check.

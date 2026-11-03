@@ -4,7 +4,10 @@ import { RouterProvider } from "@tanstack/react-router";
 import { router } from "./router";
 import "./style.css";
 
-createRoot(document.getElementById("root")!).render(
+const root = document.getElementById("root");
+if (!root) throw new Error("Missing root element");
+
+createRoot(root).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>,

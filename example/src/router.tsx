@@ -63,7 +63,7 @@ function Overview() {
           </Link>
           <p className="scope-note">Scaffold · no live provider</p>
         </div>
-        <div className="code-window" aria-label="Adapter boundary example">
+        <section className="code-window" aria-label="Adapter boundary example">
           <div className="window-bar">
             <span>host / trusted action</span>
             <span className="window-dots" aria-hidden="true">
@@ -73,7 +73,7 @@ function Overview() {
           <pre>
             <code>
               <span className="code-muted">
-                // Adapters stay in the host action.
+                {"// Adapters stay in the host action."}
               </span>
               {"\n"}
               <span className="code-purple">import</span>{" "}
@@ -96,7 +96,7 @@ function Overview() {
             <span className="small-dot" /> Only serializable observations cross
             the boundary.
           </div>
-        </div>
+        </section>
       </section>
       <section className="flow-section" aria-labelledby="flow-title">
         <div className="section-label">

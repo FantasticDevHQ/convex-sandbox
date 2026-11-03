@@ -145,7 +145,7 @@ Metadata bodies accept LF, CRLF and lone CR line endings. If the metadata API or
 feedback update fails after the head is known, the enforcer attempts a failure
 status and rethrows the original error even if status publication also fails.
 
-## Bootstrap verification limits
+## Enforcement and verification limits
 
 This initial repository uses one CI job named `baseline`, which runs the root
 check:all command on UbiCloud. The metadata workflow activates only after its
@@ -153,9 +153,17 @@ trusted scripts land on the default branch. A new workflow in a PR is not proof
 of active enforcement. Verify branch rules separately before claiming merge
 blocking. Do not copy another repository's status requirements by name.
 
-Two-worktree real-backend qualification is tracked in CSB-3. This initial shell
-does not claim that qualification. Actual run results and review evidence belong
-in the PR, not in committed evidence reports.
+The root check command includes lint, library/example type checking, behavior
+and package tests, example browser tests, metadata validator/enforcer fixtures,
+worktree tests and two-worktree real-backend qualification. Qualification also
+regenerates the component and example bindings and rejects Git drift.
+
+The trusted metadata workflow is present on the default branch. Actual PR
+metadata validation is exercised on every PR event listed above. Repository
+rules and branch protection must still be verified independently. An absent
+required-status rule means failing checks do not establish merge blocking.
+Actual run results, runner identity and API verification belong in PR evidence,
+not in committed evidence reports.
 
 Policy sources were adapted from the shared Jib Factory standard at commit
 `89bebabdf024f9124ec0166f52f6e9217a7c7610`. The workflow, validator, enforcer
