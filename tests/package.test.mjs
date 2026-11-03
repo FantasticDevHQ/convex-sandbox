@@ -113,13 +113,18 @@ test(
         },
       }),
     );
-    run("pnpm", [
+    // A frozen source install caches package blobs, but not necessarily registry
+    // metadata. Provision this consumer explicitly with a fresh metadata cache,
+    // then prove a frozen offline reinstall without reusing node_modules.
+    const install = [
       "install",
-      "--offline",
       "--ignore-scripts",
-      "--no-frozen-lockfile",
       "--config.auto-install-peers=false",
-    ]);
+      `--config.cache-dir=${join(root, "pnpm-cache")}`,
+    ];
+    run("pnpm", [...install, "--no-frozen-lockfile"]);
+    await rm(join(root, "node_modules"), { recursive: true, force: true });
+    run("pnpm", [...install, "--offline", "--frozen-lockfile"]);
     await writeFile(
       join(root, "verify.mjs"),
       `
