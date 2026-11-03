@@ -68,8 +68,9 @@ database, untracked source or user credentials are copied.
 
 Each checkout installs frozen dependencies and runs the actual component and Vite
 frontend. The local Convex CLI invokes the mounted observations component with
-synthetic values under identical logical keys. No extra public probe endpoint or
-schema is added to the example. Qualification checks distinct credentials without
+synthetic values under identical logical keys. The local-only public example also
+uses synthetic data and private simulator checkpoints, as described in
+[example-backend.md](example-backend.md). Qualification checks distinct credentials without
 printing them, six reserved ports, isolated component rows, stable restart,
 frontend availability, teardown/reacquisition, busy-port refusal and cleanup that
 leaves the sibling running. It also persists distinct registry references and

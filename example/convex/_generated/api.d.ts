@@ -8,6 +8,10 @@
  * @module
  */
 
+import type * as demo from "../demo.js";
+import type * as demo_contracts from "../demo/contracts.js";
+import type * as demo_service from "../demo/service.js";
+import type * as demo_store from "../demo/store.js";
 import type * as proof from "../proof.js";
 
 import type {
@@ -17,6 +21,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  demo: typeof demo;
+  "demo/contracts": typeof demo_contracts;
+  "demo/service": typeof demo_service;
+  "demo/store": typeof demo_store;
   proof: typeof proof;
 }>;
 

@@ -104,3 +104,9 @@ const counts = simulated.faults.counts(); // Method counts only, no arguments/ou
 ```
 
 The same `instrumentAdapter(registration)` helper works with a future provider. It preserves method receivers, including prototype methods/private fields, and copies metadata arrays. Plans are FIFO per implemented method, with at most 32 queued faults. An after fault applies only if the underlying call succeeds; an underlying SDK exception wins. Counts distinguish attempts from dispatched SDK calls, not proven side effects. Core clients must reconcile uncertainty rather than retry automatically.
+
+## Checkpointing a simulator
+
+`createSimulatedProvider({ onChange })` optionally awaits an asynchronous checkpoint callback after each successful state mutation, before returning to the fault injector. Mutations are serialized; the callback receives a detached `SimulatedState`. Load it into a new instance with `{ state }` to preserve native correlation and synthetic files across action or backend restarts. The callback is a host storage hook, not a scheduler or production agent runtime.
+
+Quota/validation failures roll back before checkpointing. If the checkpoint rejects, the SDK reports a sanitized `unknown_outcome`: persistence may already have committed, so changed in-memory state is retained and the caller must reconcile rather than blindly retry. The host must fence concurrent writers; the [local example](example-backend.md) uses an epoch and expiring lease token. Pending commands expose output only after completion; cancellation before completion discards their planned output.

@@ -1,5 +1,5 @@
 // Adapted upstream qualification: exercise the installed component with the local CLI.
-// No public probe functions or test-only schema are deployed.
+// Internal probes and the public local-only example use synthetic data.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, realpath } from "node:fs/promises";
@@ -239,6 +239,9 @@ test(
     console.log("PASS: host authorization denies cross-scope SDK access and keeps output and master keys out of component records on both backends");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "proof:conformance", {}, true), { passed: 13, skipped: 0, total: 13 });
     console.log("PASS: all 13 exported adapter conformance cases pass through the public simulator and installed component on both backends");
+    for (const root of roots) execFileSync(process.execPath, ["example/scripts/qualify-backend.mjs"], {
+      cwd: root, stdio: "inherit", timeout: 60000,
+    });
     await writeObservation(roots[0], "alpha");
     await writeObservation(roots[1], "beta");
     const entries = await Promise.all(roots.map(readObservation));
@@ -308,6 +311,18 @@ test(
     assert.equal((await componentRpc(roots[0], "operations:get", imageHandle)).status, "succeeded");
     assert.equal((await componentRpc(roots[1], "operations:get", imageHandle)).status, "running");
     console.log("PASS: native image readiness resumes in a new host action after restart without crossing worktrees");
+    assert.equal((await componentRpc(roots[0], "demo:status", { profile: "persistent", operationId: "restart-lost" }, true)).state, "completed");
+    const demoLogs = await componentRpc(roots[0], "demo:logs", { profile: "persistent", operationId: "restart-lost", cursor: null }, true);
+    assert.equal(demoLogs.entries.map(entry => entry.text).join(""), "Hello from convex-sandbox.\n");
+    assert.equal((await componentRpc(roots[0], "demo:readFile", { profile: "persistent", path: "/workspace/qualification.txt" }, true)).text, "persisted local fixture");
+    assert.equal((await componentRpc(roots[1], "demo:execution", { profile: "persistent", operationId: "restart-lost" }, true)).state, "unknown");
+    const siblingInfo = await componentRpc(roots[1], "demo:info", {}, true);
+    const resetDemo = await componentRpc(roots[0], "demo:reset", {}, true);
+    assert.ok(resetDemo.epoch > siblingInfo.epoch);
+    assert.equal((await componentRpc(roots[0], "demo:list", {}, true)).page.length, 3);
+    assert.equal((await componentRpc(roots[0], "demo:files", { profile: "persistent" }, true)).some(file => file.path === "/workspace/qualification.txt"), false);
+    assert.equal((await componentRpc(roots[1], "demo:info", {}, true)).epoch, siblingInfo.epoch);
+    console.log("PASS: public example recovers unknown execution and files after restart; reset leaves sibling fixture untouched");
     const restored = await componentRpc(roots[0], "registry:get", { sandbox: identity });
     assert.equal(restored.reference.providerId, "alpha");
     assert.equal(restored.activeOperationId, "qualification-execution");
