@@ -148,7 +148,7 @@ test.each([
     }),
   );
   await expect(providers.describe({ sandbox, reference })).rejects.toThrow(
-    "Invalid provider description",
+    "Invalid provider data",
   );
 });
 
@@ -197,7 +197,7 @@ test("missing providers and adapter errors fail without retries", async () => {
     }),
   );
   await expect(providers.describe({ sandbox, reference })).rejects.toThrow(
-    "Adapter failed",
+    "Provider outcome is unknown",
   );
   expect(calls).toBe(1);
 });
