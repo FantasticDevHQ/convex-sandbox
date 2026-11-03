@@ -60,10 +60,10 @@ export function CommandPanel({
         onSubmit={(event) => {
           event.preventDefault();
           const id = crypto.randomUUID();
-          setOperationId(id);
-          void task.run("Run fixture", () =>
-            execute({ profile, operationId: id, scenario }),
-          );
+          void task.run("Run fixture", () => {
+            setOperationId(id);
+            return execute({ profile, operationId: id, scenario });
+          });
         }}
       >
         <label htmlFor="scenario">Command scenario</label>
@@ -343,7 +343,7 @@ export function FilesPanel({
         <pre>
           <code>
             {
-              "providers.files(createFileStore(ctx, components.sandbox))\n  .writeText({ sandbox, path, text, operationId });\n// authorizePath enforces the host file policy before SDK calls."
+              "providers.files({ ...createFileStore(ctx, components.sandbox),\n  authorizePath: access.authorizePath })\n  .writeText({ sandbox, path, text, operationId });\n// authorizePath enforces the host file policy before SDK calls."
             }
           </code>
         </pre>

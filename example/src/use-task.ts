@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { ConvexError } from "convex/values";
 
 const explanations: Record<string, string> = {
-  authorization: "Denied. This demo requires the managed local fixture.",
+  authorization: "Denied. The local fixture does not allow this operation or path.",
   authentication: "Denied. The local fixture identity is unavailable.",
   unsupported:
     "Unsupported by this simulated profile. Choose a profile with this capability.",

@@ -56,9 +56,9 @@ test("real local playground walkthrough, recovery and narrow layout", async ({
   await expect(page.getByLabel("File contents")).toHaveValue(
     "synthetic browser fixture",
   );
-  await page.getByLabel("File path").fill("/workspace/../private");
+  await page.getByLabel("File path").fill("/private/note.txt");
   await page.getByRole("button", { name: "Write file", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("Invalid input");
+  await expect(page.getByRole("alert")).toContainText("Denied");
   await page.getByRole("button", { name: "Dismiss" }).click();
   await page.getByLabel("File path").fill("/workspace/note.txt");
   await page
