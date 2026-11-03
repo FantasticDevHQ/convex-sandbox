@@ -1,3 +1,5 @@
+import { SandboxImages } from "./images.js";
+import type { ImageAdapter, ImageStore, ConnectionAdapter } from "../images.js";
 import { SandboxFiles } from "./files.js";
 import type { FileAdapter, FileStore } from "../files.js";
 import { executionPreparer } from "./executionProvider.js";
@@ -35,6 +37,8 @@ export interface ProviderSandbox {
 
 /** An adapter lives in a trusted host action. Never store or send it over RPC. */
 export interface SandboxAdapter {
+  images?: ImageAdapter;
+  connections?: ConnectionAdapter;
   files?: FileAdapter;
   execution?: ExecutionAdapter;
   describe(
@@ -178,7 +182,15 @@ export type AuthorizeSandbox = (
       | "writeFile"
       | "listFiles"
       | "deleteFile"
-      | "transferFile";
+      | "transferFile"
+      | "listTemplates"
+      | "snapshotDisk"
+      | "createTemplate"
+      | "fork"
+      | "restore"
+      | "getConnection"
+      | "imageStatus"
+      | "imageGet";
   }>,
 ) => Promise<void>;
 
@@ -232,6 +244,14 @@ export class SandboxProviders {
         provider.capabilities ?? { version: 1, supported: ["describe"] },
       ),
     });
+  }
+
+  images(store: ImageStore): SandboxImages {
+    return new SandboxImages(
+      store,
+      (name) => this.#provider(name),
+      this.#authorize,
+    );
   }
 
   files(store: FileStore): SandboxFiles {
@@ -323,6 +343,8 @@ export class SandboxProviders {
           retryable: false,
         });
     }
+    if (action === "create" && options.templateId !== undefined)
+      requireCapability(provider.capabilities, "createFromTemplate");
     if (action !== "get" && action !== "observe")
       requireCapability(provider.capabilities, action);
     const validate = (raw: unknown): ProviderObservation => {

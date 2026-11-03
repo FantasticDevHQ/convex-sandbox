@@ -79,7 +79,7 @@ export async function beginOperation(
     operationId: string;
     kind: import("../capabilities.js").Capability;
   },
-) {
+): Promise<import("../state.js").OperationRecord> {
   integer(expectedVersion);
   const row = await mustSandbox(ctx, sandbox);
   const existing = await findOperation(ctx, sandbox, operationId);
@@ -159,6 +159,7 @@ export const transition = mutation({
     const row = await mustSandbox(ctx, sandbox);
     const op = await findOperation(ctx, sandbox, operationId);
     if (!op) throw new Error("Operation missing");
+    if (op.nativeImage) throw new Error("Use the image state protocol");
     if (
       op.kind === "execute" &&
       (await findExecution(ctx, { sandbox, operationId }))

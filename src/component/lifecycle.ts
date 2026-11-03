@@ -187,6 +187,7 @@ export const claimOperation = mutation({
     integer(expectedVersion);
     const row = await mustSandbox(ctx, sandbox);
     const op = await findOperation(ctx, sandbox, operationId);
+    if (op?.nativeImage) throw new Error("Use the image state protocol");
     if (
       !op ||
       op.version !== expectedVersion ||
@@ -234,6 +235,7 @@ export const finishOperation = mutation({
     integer(expectedVersion);
     const row = await mustSandbox(ctx, sandbox);
     const op = await findOperation(ctx, sandbox, operationId);
+    if (op?.nativeImage) throw new Error("Use the image state protocol");
     if (
       !op ||
       op.version !== expectedVersion ||
