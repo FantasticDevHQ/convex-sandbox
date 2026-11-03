@@ -49,7 +49,8 @@ async function componentRpc(root, fn, args) {
     const s = await state(); await checkConfig(s, true);
     const result = spawnSync(process.execPath, [cli(), "run", "--env-file", path.join(dir, "convex.env"), "--component", "sandbox", process.argv[1], process.argv[2]], {cwd:backend, env:childEnv(s), encoding:"utf8"});
     if (result.status !== 0) throw new Error("Local component RPC failed: " + result.stderr.slice(-2000));
-    process.stdout.write(JSON.stringify(JSON.parse(result.stdout)));
+    const text = result.stdout.trim();
+    process.stdout.write(text ? JSON.stringify(JSON.parse(text)) : "null");
   `;
   const output = execFileSync(
     process.execPath,
@@ -269,6 +270,8 @@ test(
       "PASS: occupied port causes explicit failure without killing its owner",
     );
     await ok(roots[0], "cleanup", "--yes");
+    const cleanedEnv = await readFile(path.join(roots[0], backendPath, ".env.local"), "utf8");
+    assert.doesNotMatch(cleanedEnv, /^(VITE_CONVEX_URL|CONVEX_DEPLOYMENT)=/m);
     await assert.rejects(
       readFile(
         path.join(
