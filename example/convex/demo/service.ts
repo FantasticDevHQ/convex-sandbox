@@ -1,4 +1,4 @@
-import type { ActionCtx, QueryCtx } from "../_generated/server.js";
+import type { ActionCtx } from "../_generated/server.js";
 import { internal, components } from "../_generated/api.js";
 import {
   SandboxProviders,
@@ -24,7 +24,7 @@ import {
   type Scenario,
 } from "./contracts.js";
 
-export function accessFor(ctx: Pick<QueryCtx, "runQuery">, epoch: number) {
+export function accessFor(ctx: Pick<ActionCtx, "runQuery">, epoch: number) {
   return createHostAccess({
     authenticate: async () => ({
       subject: "local-fixture-only",
