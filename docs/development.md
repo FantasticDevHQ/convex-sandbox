@@ -134,3 +134,7 @@ Do not run codegen against an unmanaged deployment to satisfy this check.
 The real browser walkthrough blocks non-loopback HTTP requests. It reloads while a command is unknown, selects its persisted history entry, and reconciles it; it also renders a rejected command and recovers with a new scenario. Unit checks count native simulator executions across lost reply, reconciliation and replay, and verify that reset epoch scopes cannot access prior commands, output or files through the public demo API. Existing host authorization checks cover foreign scope/provider identities before SDK dispatch.
 
 Initial frozen dependency installation, origin freshness checks and the first backend binary download still need network access. The browser and synthetic provider need no external service or provider credentials. CI retains browser artifacts outside the repository; PR media is uploaded through GitHub attachments.
+
+## Checked documentation samples
+
+`pnpm test:docs` extracts TypeScript fences from the quickstart and adapter guide. Each fence names its intended `convex/` or `src/` location. The checker compiles all samples against built public package exports, actual generated example bindings and installed dependencies. Temporary source/config files stay outside the checkout and are removed on success/failure. A negative fixture verifies that an unavailable export fails compilation. This checks the marked samples only; it does not claim that every conceptual snippet in the focused reference guides is a complete application.

@@ -4,7 +4,7 @@
 
 <img src="../assets/brand/logo-mark.svg" width="64" alt="Fantastic.Dev" />
 
-A private React/Vite starter with TanStack Router. Run `pnpm dev:frontend` from the
+A private React/Vite example with TanStack Router. Run `pnpm dev:frontend` from the
 repository root after a frozen install. The library builds first. Vite chooses an
 available loopback port and prints its URL. `/` is the overview; `/integration`
 shows the host mount. Refresh and back navigation work on both routes.
