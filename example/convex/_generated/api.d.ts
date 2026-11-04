@@ -10,6 +10,7 @@
 
 import type * as boatExecutionProof from "../boatExecutionProof.js";
 import type * as boatFileProof from "../boatFileProof.js";
+import type * as boatImageProof from "../boatImageProof.js";
 import type * as boatLifecycleProof from "../boatLifecycleProof.js";
 import type * as boatLogProof from "../boatLogProof.js";
 import type * as boatProbe from "../boatProbe.js";
@@ -29,6 +30,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   boatExecutionProof: typeof boatExecutionProof;
   boatFileProof: typeof boatFileProof;
+  boatImageProof: typeof boatImageProof;
   boatLifecycleProof: typeof boatLifecycleProof;
   boatLogProof: typeof boatLogProof;
   boatProbe: typeof boatProbe;

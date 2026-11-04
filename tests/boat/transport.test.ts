@@ -45,6 +45,8 @@ test("configured account and key stay server-local while native observations are
     "writeFile",
     "listFiles",
     "deleteFile",
+    "fork",
+    "listTemplates",
   ]);
   expect(await provider.adapter.describe("machine/1", context())).toEqual({
     providerId: "machine/1",

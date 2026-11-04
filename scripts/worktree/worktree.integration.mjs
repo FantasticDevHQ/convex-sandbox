@@ -237,6 +237,8 @@ test(
     console.log("PASS: Boat history logs append once across polls; PID-only cancellation remains unsupported on both backends");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatFileProof:runtime", {}, true), { binary: true, utf8: true, bounded: true, denied: true, listPartial: true, deleted: true, transfersUnsupported: true, registrySafe: true });
     console.log("PASS: Boat native files preserve bounded binary/UTF-8, enforce host path policy and reject unbounded transfer URLs on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatImageProof:accept", {}, true), { pending: true, singleFork: true, catalogPending: true, safeInputs: true, unsupportedRestore: true });
+    console.log("PASS: Boat forks persist child identities with safe env/TTL; saved template catalog stays source-scoped and pending on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
@@ -369,6 +371,9 @@ test(
     assert.deepEqual(await componentRpc(roots[0], "boatLogProof:complete", {}, true), { noDuplicates: true, resumedOffsets: true, notCompletion: true, finishedLogs: true });
     assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-log-proof", key: "machine" }, operationId: "command" })).outputBytes, 9);
     console.log("PASS: Boat log cursors resume after restart without duplicate bytes or sibling crossover; log completion does not imply process exit");
+    assert.deepEqual(await componentRpc(roots[0], "boatImageProof:complete", {}, true), { ready: true, readOnly: true, sourceUnchanged: true });
+    assert.equal((await componentRpc(roots[1], "operations:get", { sandbox: { scope: "boat-image-proof", key: "source" }, operationId: "fork" })).status, "running");
+    console.log("PASS: Boat fork readiness resumes from the persisted child ID after restart without another POST, source rebinding or sibling crossover");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
     assert.equal(cachedExecution.state, "completed");
