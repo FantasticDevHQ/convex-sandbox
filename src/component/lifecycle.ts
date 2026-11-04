@@ -9,6 +9,7 @@ import {
   LIFECYCLE_LEASE_MS,
 } from "../lifecycle.js";
 import { operationRecordValidator } from "../state.js";
+import { projectNativeLifecycleJob } from "../lifecycleJobs.js";
 import {
   boundedString,
   validateIdentity,
@@ -139,6 +140,8 @@ export const finishCreate = mutation({
       });
     } else {
       const description = result.description;
+      if (description.lifecycleJob)
+        throw new Error("Native lifecycle job is invalid for creation");
       boundedString(description.providerId);
       validateResources(description.resources);
       if (await findSandbox(ctx, sandbox))
@@ -248,12 +251,27 @@ export const finishOperation = mutation({
       return false;
     if (!["start", "resumeMemory", "stop", "delete"].includes(op.kind))
       throw new Error("Invalid lifecycle operation");
+    let nativeLifecycle = op.nativeLifecycle;
+    if ("description" in result) {
+      if (result.description.providerId !== row.reference.providerId)
+        throw new Error("Reference conflict");
+      const job = result.description.lifecycleJob;
+      if (nativeLifecycle && !job)
+        throw new Error("Native lifecycle job identity required");
+      if (job) {
+        const projected = projectNativeLifecycleJob(job);
+        if (nativeLifecycle && projected.id !== nativeLifecycle.id)
+          throw new Error("Native lifecycle job identity conflict");
+        nativeLifecycle = projected;
+      }
+    }
     if (
       "description" in result &&
       row.refreshSequence !== op.observationSequence
     ) {
       await ctx.db.patch(op._id, {
         status: "unknown",
+        nativeLifecycle,
         leaseUntil: 0,
         version: op.version + 1,
         updatedAt: Date.now(),
@@ -276,8 +294,6 @@ export const finishOperation = mutation({
         });
     } else {
       const description = result.description;
-      if (description.providerId !== row.reference.providerId)
-        throw new Error("Reference conflict");
       validateResources(description.resources);
       if (row.tombstone && description.state !== "deleted") return false;
       const target =
@@ -303,6 +319,7 @@ export const finishOperation = mutation({
     }
     await ctx.db.patch(op._id, {
       status,
+      nativeLifecycle,
       errorCode,
       leaseUntil: 0,
       version: op.version + 1,

@@ -9,6 +9,7 @@ export * from "../execution.js";
 export * from "./execution.js";
 export * from "./lifecycleStore.js";
 export * from "../lifecycle.js";
+export { nativeLifecycleJobValidator, type NativeLifecycleJob } from "../lifecycleJobs.js";
 export * from "./lifecycle.js";
 export * from "../state.js";
 export * from "../capabilities.js";

@@ -91,6 +91,44 @@ or status reads, rather than block until the machine boots.
 
 ## Bounded reconciliation and events
 
+### Native lifecycle jobs
+
+An adapter's start, stop, delete or memory-resume result may include
+`lifecycleJob: { id: "opaque-native-job-id" }`. The operation stores the projected
+ID as optional `nativeLifecycle` metadata. It remains in the existing bounded
+history; there is no additional table or scheduler. IDs must be nonsecret opaque
+identifiers, not SDK objects or signed status URLs. Extra properties are discarded.
+Empty/oversized IDs and URL scheme/query/fragment forms are rejected. This is not
+a detector for arbitrary secrets, so the adapter must normalize its native ID.
+The public `NativeLifecycleJob` type and `nativeLifecycleJobValidator` describe
+the serializable shape; operation mutations enforce the remaining bounds.
+
+When `reconcile` reads an operation with a native handle, it passes
+`context.lifecycleJob = { id, kind }` to the adapter's **read-only** `describe`.
+Poll that exact native job and verify its resource identity. Return the matching
+`lifecycleJob` ID on every job-aware result, including terminal results. A missing
+or changed echo is rejected; the operation remains unresolved. Never resend the
+original mutation to discover its outcome. Creation uses its separate provisioning
+protocol and rejects this lifecycle-job metadata.
+
+A transitional observation still leaves the operation unfinished under the
+existing status rules. Publish `deleted` only after the provider confirms deletion
+completion, not merely request acceptance or a missing machine. A `404` can occur
+before background deletion finishes. Ordinary `refresh` remains machine
+observation; native-job completion uses operation-scoped `reconcile`.
+
+Job publication uses the existing operation lease, version, generation and physical
+reference checks. Once stored, its identity cannot change. If a newer observation
+supersedes a valid mutation result, the component preserves the accepted job ID
+while refusing its stale state. Generic operation transitions cannot complete a
+job owned by this protocol. A restarted host reconstructs its adapter and uses the
+same stored ID. No process-local map is required.
+
+If the reply or handle publication is lost before the ID is stored, the outcome
+can still remain unknown and need provider-specific read-only or operator recovery.
+The metadata does not create exactly-once effects, job cancellation, or a new
+automatic recovery loop. Old adapters without handles keep their existing behavior.
+
 `reconcile` supports lifecycle operations only. It never invokes create, start,
 resume, stop, delete or an execution command. It claims reconciliation work and
 reads describe. Defaults are three attempts, 250ms initial delay, 2s maximum

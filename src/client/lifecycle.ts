@@ -306,23 +306,35 @@ export class SandboxLifecycle {
         mode: "reconcile",
       });
       if (!claim) return this.store.getOperation(sandbox, operationId);
-      const result = row.tombstone
-        ? {
-            description: {
-              providerId: row.reference.providerId,
-              state: "deleted" as const,
-            },
-          }
-        : await attempt(
-            (context) => prepared.invoke(context),
-            operationKey(
-              sandbox,
-              operationId,
-              operation.kind,
-              operation.reference.provider,
-            ),
-            Math.min(settings.callTimeoutMs, remaining),
-          );
+      const result =
+        row.tombstone && !claim.nativeLifecycle
+          ? {
+              description: {
+                providerId: row.reference.providerId,
+                state: "deleted" as const,
+              },
+            }
+          : await attempt(
+              (context) =>
+                prepared.invoke({
+                  ...context,
+                  ...(claim.nativeLifecycle
+                    ? {
+                        lifecycleJob: Object.freeze({
+                          id: claim.nativeLifecycle.id,
+                          kind: operation.kind as LifecycleAction,
+                        }),
+                      }
+                    : {}),
+                }),
+              operationKey(
+                sandbox,
+                operationId,
+                operation.kind,
+                operation.reference.provider,
+              ),
+              Math.min(settings.callTimeoutMs, remaining),
+            );
       // Read failures do not establish the outcome of the original mutation.
       await this.store.finishOperation({
         sandbox,

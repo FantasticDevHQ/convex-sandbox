@@ -21,6 +21,10 @@ import {
 } from "./errors.js";
 import type { GenericValidator } from "convex/values";
 import { sandboxStateValidator } from "../contracts.js";
+import {
+  projectNativeLifecycleJob,
+  type NativeLifecycleJob,
+} from "../lifecycleJobs.js";
 import type {
   MachineResources,
   ProviderReference,
@@ -33,6 +37,8 @@ export interface ProviderSandbox {
   providerId: string;
   state: SandboxState;
   resources?: MachineResources;
+  /** Accepted lifecycle job identity only; not a credential or arbitrary metadata. */
+  lifecycleJob?: NativeLifecycleJob;
 }
 
 /** An adapter lives in a trusted host action. Never store or send it over RPC. */
@@ -369,16 +375,50 @@ export class SandboxProviders {
         { sandbox, reference: selected },
         raw,
       );
+      let lifecycleJob: NativeLifecycleJob | undefined;
+      const job =
+        raw && typeof raw === "object"
+          ? Reflect.get(raw, "lifecycleJob")
+          : undefined;
+      if (job !== undefined) {
+        try {
+          if (
+            !["start", "stop", "delete", "resumeMemory", "describe"].includes(
+              action,
+            )
+          )
+            throw new Error("Invalid lifecycle action");
+          lifecycleJob = projectNativeLifecycleJob(job);
+        } catch {
+          throw new SandboxProviderError({
+            code: "validation",
+            outcome: "unknown",
+            retryable: false,
+          });
+        }
+      }
       return {
         providerId: normalized.reference.providerId,
         state: normalized.state,
         ...(normalized.resources ? { resources: normalized.resources } : {}),
+        ...(lifecycleJob ? { lifecycleJob } : {}),
       };
     };
-    const safe = async (fn: () => Promise<ProviderSandbox | null>) => {
+    const safe = async (
+      fn: () => Promise<ProviderSandbox | null>,
+      jobId?: string,
+    ) => {
       try {
         const raw = await fn();
-        return raw === null ? null : validate(raw);
+        const result = raw === null ? null : validate(raw);
+        if (jobId !== undefined && result?.lifecycleJob?.id !== jobId) {
+          throw new SandboxProviderError({
+            code: "validation",
+            outcome: "unknown",
+            retryable: false,
+          });
+        }
+        return result;
       } catch (error) {
         throw normalizeProviderError(error);
       }
@@ -436,8 +476,9 @@ export class SandboxProviders {
             outcome: "not_started",
             retryable: false,
           });
-        const description = await safe(() =>
-          method.call(adapter, reference.providerId, context),
+        const description = await safe(
+          () => method.call(adapter, reference.providerId, context),
+          context.lifecycleJob?.id,
         );
         if (!description) throw new Error("Invalid provider data");
         return description;
