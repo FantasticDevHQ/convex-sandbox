@@ -228,6 +228,10 @@ test(
       stopped: true, resumed: true, pending: true, confirmation: true, noForcedStop: true,
     });
     console.log("PASS: Boat native stop/resume and confirmed asynchronous delete use shared job records on both anonymous backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatExecutionProof:accept", {}, true), {
+      stored: true, unknown: true, once: true,
+    });
+    console.log("PASS: Boat detached commands persist history identities; ambiguous starts never replay on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
@@ -354,6 +358,9 @@ test(
     });
     assert.equal((await componentRpc(roots[1], "operations:get", { sandbox: { scope: "boat-lifecycle-proof", key: "machine" }, operationId: "delete" })).status, "unknown");
     console.log("PASS: Boat deletion confirms its persisted job after restart without another DELETE; sibling deletion remains pending");
+    assert.deepEqual(await componentRpc(roots[0], "boatExecutionProof:complete", {}, true), { completed: true, unknown: true, readOnly: true });
+    assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-execution-proof", key: "known" }, operationId: "known" })).state, "running");
+    console.log("PASS: Boat command history reconciles after restart with one GET, no replay, and no sibling state crossover");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
     assert.equal(cachedExecution.state, "completed");

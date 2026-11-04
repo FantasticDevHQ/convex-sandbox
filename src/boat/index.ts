@@ -5,6 +5,7 @@ import { createBoatTransport } from "./transport.js";
 import type { BoatOptions } from "./options.js";
 import { projectBoatObservation } from "./observation.js";
 import { nativeCreateKey, provisionConfiguration } from "./provision.js";
+import { createBoatExecution } from "./execution.js";
 import { createBoatLifecycle } from "./lifecycle.js";
 
 export type { BoatOptions, BoatMachineType } from "./options.js";
@@ -18,10 +19,11 @@ export function createBoatProvider(options: BoatOptions) {
     createIdempotency: "native",
     capabilities: defineCapabilities({
       version: 1,
-      supported: ["create", "describe", "start", "stop", "delete"],
+      supported: ["create", "describe", "start", "stop", "delete", "execute"],
       persistence: { diskOnStop: "unknown", memoryOnStop: "discarded" },
     }),
     adapter: {
+      execution: createBoatExecution(transport),
       ...createBoatLifecycle(transport, configuration.ttlSeconds),
       async create(request, context) {
         if (

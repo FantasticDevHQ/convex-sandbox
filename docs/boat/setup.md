@@ -1,7 +1,7 @@
 # Experimental Boat adapter
 
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
-`create`, `describe`, `start`, `stop` and `delete`. Commands, files, images and
+`create`, `describe`, `start`, `stop`, `delete` and detached `execute`. Files, images and
 connections remain unsupported. It is not a live-qualified provider release.
 The playground continues to use the simulator.
 
@@ -130,6 +130,40 @@ restart without repeating DELETE. A missing job, lost reply or malformed respons
 remains unknown; 404 alone is never completion. Saved snapshots can remain
 independent of sandbox deletion under Boat's native policy.
 
+## Detached commands
+
+Use `providers.execution(createExecutionStore(ctx, components.sandbox))` after
+host authorization and start with a stable shared operation ID. The adapter uses
+native detached command start and command-history reads only. The durable handle
+is Boat's command ID, never a process ID. Start has no native idempotency key or
+authoritative lookup by our operation key. A lost reply or missing command ID
+therefore remains unknown; repeated start/status calls do not redispatch it.
+If a native ID is received but not persisted before a crash, operator recovery
+can still be necessary. There is no exactly-once execution claim.
+
+Shell input is intentional shell text. Argv input is translated to POSIX quoted
+literal tokens through `/usr/bin/env --` to select an external executable rather
+than a shell builtin. Executable names containing `=` are rejected because env
+would interpret them as assignments. The guest must provide `/usr/bin/env` and
+a POSIX-compatible shell. Relative cwd is passed as a native field; absolute cwd
+and parent traversal are unsupported. This validation is not a filesystem jail:
+symlinks and executed code remain subject to the guest's own permissions.
+
+Per-command env and timeoutMs are rejected before dispatch. The audited native
+request cannot represent env, and detached commands have no native runtime cap;
+the HTTP deadline does not terminate a process. Mapped command text is limited to
+64 KiB UTF-8 after quoting, with malformed Unicode rejected.
+
+A later status call verifies both command and sandbox IDs and detached mode.
+Exited commands with an integer exit code are completed, including nonzero exits
+(which the shared operation marks failed). Timed-out/killed commands are failed,
+without inventing a cancellation acknowledgement. Lost, ambiguous failed, future
+states and missing exit codes remain unknown. Missing/expired history is stale,
+not completion; native retention or disabled monitoring can remove history.
+Command identity persists across host restart, but VM stop/restart ends processes
+and does not resume command execution. Status projects no command text or output.
+Logs and cancellation remain unsupported pending their separate integration.
+
 ## Transport bounds and errors
 
 - Each adapter call has a five-second deadline, even when used directly without
@@ -181,3 +215,6 @@ shared store, then confirms deletion in a new action after backend restart. All
 HTTP replies are synthetic; no account key or billable resource is needed.
 
 See the [source and capability decision](decision.md) before adding operations.
+
+`boatExecutionProof` persists known and lost detached starts, then reconciles in
+a new action after restart without POST or sibling-backend state crossover.
