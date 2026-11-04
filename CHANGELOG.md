@@ -34,7 +34,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   Host scheduling and the separate signed-webhook ingress follow-up are documented.
   The public Boat factory is covered by baseline conformance over synthetic native
   HTTP, with explicit capability skips, dependency isolation and packed runtime/type
-  checks. Other Boat operations and live qualification remain pending.
+  checks. A Boat host guide includes a compiled, tested authenticated wrapper
+  with server-side credentials, owner binding resolution, explicit configuration
+  failure and dated capability limits. The runnable playground remains simulated.
+  Other Boat operations and live qualification remain pending.
 
 ### Fixed
 

@@ -20,3 +20,8 @@ managed anonymous backend.
 Browser tests start and close their own Vite server on an OS-assigned loopback
 port, use one worker and require no keys. Screenshots and video live outside the
 repository. Set `CSB_PLAYWRIGHT_OUTPUT` to choose an evidence directory.
+
+The [Boat host guide](../docs/boat/guide.md) contains an authenticated read-only
+consumer backend sample. It is checked documentation, not a mounted live endpoint
+or provider switch in this workbench. The playground remains explicitly simulated
+with missing or ambient Boat configuration and never reads a provider key.

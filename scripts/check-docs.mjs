@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 export async function collectSamples() {
   const samples = [];
-  for (const file of ["quickstart.md", "adapters.md"]) {
+  for (const file of ["quickstart.md", "adapters.md", "boat/guide.md"]) {
     const text = await readFile(path.join(root, "docs", file), "utf8");
     for (const match of text.matchAll(
       /^```(ts|tsx) ([^\n]+)\n([\s\S]*?)^```$/gm,
@@ -32,7 +32,7 @@ export async function collectSamples() {
   }
   return samples;
 }
-export async function checkSamples(samples) {
+export async function checkSamples(samples, evaluate) {
   if (!samples.length) throw new Error("No documentation samples");
   const temporary = await mkdtemp(path.join(tmpdir(), "sandbox-docs-"));
   try {
@@ -44,6 +44,7 @@ export async function checkSamples(samples) {
       "dir",
     );
     const files = [];
+    const sources = [];
     for (const [index, sample] of samples.entries()) {
       const base = path.dirname(path.join(root, "example", sample.location));
       const source = sample.source.replace(
@@ -58,6 +59,7 @@ export async function checkSamples(samples) {
       const name = `${index}${path.extname(sample.location)}`;
       await writeFile(path.join(temporary, name), source);
       files.push(name);
+      sources.push(source);
     }
     await writeFile(
       path.join(temporary, "tsconfig.json"),
@@ -89,6 +91,18 @@ export async function checkSamples(samples) {
       ],
       { cwd: temporary, encoding: "utf8", timeout: 60000 },
     );
+    // Execute only repository-owned checked samples inside the caller's isolated
+    // test process; output files remain in this owned temporary directory.
+    if (result.status === 0 && evaluate) {
+      const { stripTypeScriptTypes } = await import("node:module");
+      const executable = [];
+      for (const [index, source] of sources.entries()) {
+        const file = path.join(temporary, `${index}.mjs`);
+        await writeFile(file, stripTypeScriptTypes(source));
+        executable.push(file);
+      }
+      await evaluate(executable);
+    }
     return {
       status: result.status,
       output: (result.stdout ?? "") + (result.stderr ?? ""),
