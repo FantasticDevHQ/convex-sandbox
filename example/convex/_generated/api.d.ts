@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as boatConnectionProof from "../boatConnectionProof.js";
 import type * as boatExecutionProof from "../boatExecutionProof.js";
 import type * as boatFileProof from "../boatFileProof.js";
 import type * as boatImageProof from "../boatImageProof.js";
@@ -28,6 +29,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  boatConnectionProof: typeof boatConnectionProof;
   boatExecutionProof: typeof boatExecutionProof;
   boatFileProof: typeof boatFileProof;
   boatImageProof: typeof boatImageProof;
