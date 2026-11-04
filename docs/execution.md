@@ -129,3 +129,7 @@ execution cannot be evicted or completed through generic operation transitions;
 it must use the execution protocol. No unbounded output document or table scan
 is used. Provider log retention and resource cleanup are separate from cache
 retention; deleting the cache is not cancellation of a process.
+
+When the byte or chunk cap closes an unfinished native stream, cached output is
+marked truncated even if many small pages reached the chunk cap first. A native
+stream fully drained at exactly the cap does not gain a truncation flag.

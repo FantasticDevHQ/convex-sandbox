@@ -391,14 +391,15 @@ export const appendLogs = mutation({
       )
         throw new Error("Invalid log cursor");
       const output = await appendOutput(ctx, row, page.entries);
-      output.outputTruncated ||= page.truncated === true;
+      const atLimit =
+        output.outputBytes >= EXECUTION_LOG_BYTES ||
+        output.chunkCount >= EXECUTION_LOG_CHUNKS;
+      output.outputTruncated ||=
+        page.truncated === true || (!page.complete && atLimit);
       await ctx.db.patch(row._id, {
         ...output,
         providerCursor: page.nextCursor,
-        logsComplete:
-          page.complete ||
-          output.outputBytes >= EXECUTION_LOG_BYTES ||
-          output.chunkCount >= EXECUTION_LOG_CHUNKS,
+        logsComplete: page.complete || atLimit,
         logErrorCode: undefined,
         logLeaseUntil: 0,
         version: row.version + 1,

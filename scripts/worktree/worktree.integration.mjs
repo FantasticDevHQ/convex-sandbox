@@ -246,6 +246,8 @@ test(
       assert.deepEqual(result, { reversedReply: true, bounded: true, singleMutation: true, reactiveExternalStop: true, readOnlyRefresh: true });
     }
     console.log("PASS: Boat refresh fences reversed replies and bounded reconciliation; live component query subscription observes an external stop on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatConformanceProof:runtime", {}, true), { passed: 12, skipped: 1, total: 13, cancellationUnsupported: true });
+    console.log("PASS: public Boat adapter passes 12 baseline conformance cases over synthetic HTTP on both hosts; unsupported cancellation is explicitly skipped");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
