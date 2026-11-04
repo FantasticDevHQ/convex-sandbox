@@ -359,7 +359,7 @@ test(
     assert.equal((await componentRpc(roots[1], "operations:get", { sandbox: { scope: "boat-lifecycle-proof", key: "machine" }, operationId: "delete" })).status, "unknown");
     console.log("PASS: Boat deletion confirms its persisted job after restart without another DELETE; sibling deletion remains pending");
     assert.deepEqual(await componentRpc(roots[0], "boatExecutionProof:complete", {}, true), { completed: true, unknown: true, readOnly: true });
-    assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-execution-proof", key: "machine" }, operationId: "known" })).state, "running");
+    assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-execution-proof", key: "known" }, operationId: "known" })).state, "running");
     console.log("PASS: Boat command history reconciles after restart with one GET, no replay, and no sibling state crossover");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);

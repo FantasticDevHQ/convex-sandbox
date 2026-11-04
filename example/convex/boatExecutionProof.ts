@@ -8,7 +8,10 @@ import {
 } from "@fantastic.dev/convex-sandbox";
 
 const sandbox = { scope: "boat-execution-proof", key: "machine" };
-const handle = (operationId: string) => ({ sandbox, operationId });
+const handle = (operationId: string) => ({
+  sandbox: { ...sandbox, key: operationId },
+  operationId,
+});
 const json = (body: unknown) => new Response(JSON.stringify(body));
 function client(ctx: ActionCtx, fetch: typeof globalThis.fetch) {
   const providers = new SandboxProviders({ authorize: async () => {} });
@@ -38,10 +41,14 @@ export const accept = internalAction({
         commandId: "execution-history-id",
       });
     });
-    await ctx.runMutation(components.sandbox.registry.ensure, {
-      sandbox,
-      reference: { provider: "boat", providerId: "execution-vm" },
-    });
+    for (const operationId of ["known", "lost"])
+      await ctx.runMutation(components.sandbox.registry.ensure, {
+        sandbox: handle(operationId).sandbox,
+        reference: {
+          provider: "boat",
+          providerId: `execution-vm-${operationId}`,
+        },
+      });
     const known = await execution.start({
       ...handle("known"),
       input: { kind: "shell", command: "printf synthetic" },
@@ -79,7 +86,7 @@ export const complete = internalAction({
       reads++;
       if (
         !String(url).endsWith(
-          "/sandboxes/execution-vm/command-history/execution-history-id",
+          "/sandboxes/execution-vm-known/command-history/execution-history-id",
         )
       )
         throw new Error("Unexpected history identity");
@@ -87,7 +94,7 @@ export const complete = internalAction({
         ok: true,
         command: {
           commandId: "execution-history-id",
-          sandboxId: "execution-vm",
+          sandboxId: "execution-vm-known",
           mode: "detached",
           status: "exited",
           exitCode: 0,
