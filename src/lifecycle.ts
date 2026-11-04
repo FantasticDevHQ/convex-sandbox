@@ -1,6 +1,10 @@
 import { type Infer, v } from "convex/values";
 import { providerErrorCodeValidator } from "./capabilities.js";
 import {
+  nativeLifecycleJobValidator,
+  type NativeLifecycleJob,
+} from "./lifecycleJobs.js";
+import {
   machineResourcesValidator,
   sandboxStateValidator,
   type SandboxKey,
@@ -16,6 +20,7 @@ export const providerObservationValidator = v.object({
   providerId: v.string(),
   state: sandboxStateValidator,
   resources: v.optional(machineResourcesValidator),
+  lifecycleJob: v.optional(nativeLifecycleJobValidator),
 });
 export type ProviderObservation = Infer<typeof providerObservationValidator>;
 export const completionValidator = v.union(
@@ -62,6 +67,8 @@ export interface CreateOptions {
 export interface ProviderCallContext {
   idempotencyKey: string;
   signal: AbortSignal;
+  /** Only present for read-only reconciliation of an accepted lifecycle job. */
+  lifecycleJob?: Readonly<NativeLifecycleJob & { kind: LifecycleAction }>;
 }
 export type LifecycleAction = "start" | "stop" | "delete" | "resumeMemory";
 export interface LifecycleStore {

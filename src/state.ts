@@ -1,4 +1,5 @@
 import { nativeImageValidator } from "./images.js";
+import { nativeLifecycleJobValidator } from "./lifecycleJobs.js";
 import { type Infer, v } from "convex/values";
 import {
   capabilityValidator,
@@ -57,6 +58,7 @@ export const operationFields = {
   version: v.number(),
   status: trackedOperationStatusValidator,
   nativeImage: v.optional(nativeImageValidator),
+  nativeLifecycle: v.optional(nativeLifecycleJobValidator),
   executionId: v.optional(v.string()),
   leaseUntil: v.optional(v.number()),
   observationSequence: v.optional(v.number()),

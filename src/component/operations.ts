@@ -160,6 +160,8 @@ export const transition = mutation({
     const op = await findOperation(ctx, sandbox, operationId);
     if (!op) throw new Error("Operation missing");
     if (op.nativeImage) throw new Error("Use the image state protocol");
+    if (op.nativeLifecycle)
+      throw new Error("Use the native lifecycle state protocol");
     if (
       op.kind === "execute" &&
       (await findExecution(ctx, { sandbox, operationId }))

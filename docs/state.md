@@ -116,3 +116,9 @@ The old `observations` table remains the narrow boundary proof used by the start
 example. New registry/operation APIs do not mirror that table. Use the new records
 for lifecycle orchestration; the proof remains independently tested until the
 example's integration work replaces it.
+
+Lifecycle operations may retain optional `nativeLifecycle: { id }` metadata for
+an accepted provider job. The ID is immutable within its operation and survives
+host/backend restarts. It follows the same scope, binding generation, lease,
+version and 100-record history bounds. Generic operation transitions cannot bypass
+its lifecycle protocol. See [native lifecycle jobs](lifecycle.md#native-lifecycle-jobs).

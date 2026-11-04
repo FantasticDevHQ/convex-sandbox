@@ -220,6 +220,10 @@ test(
       pendingThenReady: true, unknownNotReplayed: true, resourcesProjected: true,
     });
     console.log("PASS: Boat provisioning uses shared claims, safe guest defaults and bounded stable keys; lost replies remain unknown without a repeated POST on both anonymous backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "nativeLifecycleProof:accept", {}, true), {
+      stored: true, pending: true, singleDispatch: true, jobRead: true,
+    });
+    console.log("PASS: generic native lifecycle jobs persist with their operation and reconcile by scoped read-only context on both anonymous backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
@@ -332,6 +336,15 @@ test(
     assert.equal(boatUnknown.status, "unknown");
     assert.equal(boatUnknown.idempotency, "native");
     console.log("PASS: Boat native binding and unknown creation survive anonymous backend restart in the shared component");
+    assert.deepEqual(await componentRpc(roots[0], "nativeLifecycleProof:complete", {}, true), {
+      completed: true, tombstone: true, jobRead: true, notRedispatched: true,
+    });
+    const siblingJob = await componentRpc(roots[1], "operations:get", {
+      sandbox: { scope: "native-lifecycle-proof", key: "machine" }, operationId: "delete",
+    });
+    assert.equal(siblingJob.status, "unknown");
+    assert.deepEqual(siblingJob.nativeLifecycle, { id: "fixture-native-job" });
+    console.log("PASS: native lifecycle job completes after anonymous backend restart without another mutation or crossing into its sibling");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
     assert.equal(cachedExecution.state, "completed");

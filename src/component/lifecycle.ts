@@ -9,6 +9,7 @@ import {
   LIFECYCLE_LEASE_MS,
 } from "../lifecycle.js";
 import { operationRecordValidator } from "../state.js";
+import { projectNativeLifecycleJob } from "../lifecycleJobs.js";
 import {
   boundedString,
   validateIdentity,
@@ -139,6 +140,8 @@ export const finishCreate = mutation({
       });
     } else {
       const description = result.description;
+      if (description.lifecycleJob)
+        throw new Error("Native lifecycle job is invalid for creation");
       boundedString(description.providerId);
       validateResources(description.resources);
       if (await findSandbox(ctx, sandbox))
@@ -206,7 +209,9 @@ export const claimOperation = mutation({
       status: mode === "execute" ? ("running" as const) : ("unknown" as const),
       version: op.version + 1,
       leaseUntil: Date.now() + LIFECYCLE_LEASE_MS,
-      observationSequence: row.refreshSequence + 1,
+      observationSequence: row.tombstone
+        ? row.refreshSequence
+        : row.refreshSequence + 1,
       updatedAt: Date.now(),
     };
     await ctx.db.patch(op._id, patch);
@@ -248,12 +253,27 @@ export const finishOperation = mutation({
       return false;
     if (!["start", "resumeMemory", "stop", "delete"].includes(op.kind))
       throw new Error("Invalid lifecycle operation");
+    let nativeLifecycle = op.nativeLifecycle;
+    if ("description" in result) {
+      if (result.description.providerId !== row.reference.providerId)
+        throw new Error("Reference conflict");
+      const job = result.description.lifecycleJob;
+      if (nativeLifecycle && !job)
+        throw new Error("Native lifecycle job identity required");
+      if (job) {
+        const projected = projectNativeLifecycleJob(job);
+        if (nativeLifecycle && projected.id !== nativeLifecycle.id)
+          throw new Error("Native lifecycle job identity conflict");
+        nativeLifecycle = projected;
+      }
+    }
     if (
       "description" in result &&
       row.refreshSequence !== op.observationSequence
     ) {
       await ctx.db.patch(op._id, {
         status: "unknown",
+        nativeLifecycle,
         leaseUntil: 0,
         version: op.version + 1,
         updatedAt: Date.now(),
@@ -267,7 +287,8 @@ export const finishOperation = mutation({
     let status: "succeeded" | "failed" | "unknown" = "unknown";
     let errorCode: Infer<typeof providerErrorCodeValidator> | undefined;
     if ("errorCode" in result) {
-      status = result.notStarted ? "failed" : "unknown";
+      // A retained job proves acceptance; a failed status read cannot un-start it.
+      status = result.notStarted && !nativeLifecycle ? "failed" : "unknown";
       errorCode = result.errorCode;
       if (!row.tombstone)
         await ctx.db.patch(row._id, {
@@ -276,10 +297,19 @@ export const finishOperation = mutation({
         });
     } else {
       const description = result.description;
-      if (description.providerId !== row.reference.providerId)
-        throw new Error("Reference conflict");
       validateResources(description.resources);
-      if (row.tombstone && description.state !== "deleted") return false;
+      if (row.tombstone && description.state !== "deleted") {
+        // Keep deletion monotonic without holding a completed read's lease.
+        await ctx.db.patch(op._id, {
+          status: "unknown",
+          nativeLifecycle,
+          errorCode: undefined,
+          leaseUntil: 0,
+          version: op.version + 1,
+          updatedAt: Date.now(),
+        });
+        return false;
+      }
       const target =
         op.kind === "delete"
           ? description.state === "deleted"
@@ -303,6 +333,7 @@ export const finishOperation = mutation({
     }
     await ctx.db.patch(op._id, {
       status,
+      nativeLifecycle,
       errorCode,
       leaseUntil: 0,
       version: op.version + 1,

@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Optional durable native lifecycle job handles in shared operations, with scoped
+  read-only reconciliation after restart and protection against stale state or
+  changed job identity. No provider-specific state or additional scheduler.
+
 - Experimental optional server-only Boat adapter with shared-claim creation,
   safe private guest defaults, explicit account configuration, bounded stable
   native keys, abort/deadline/response bounds and safe errors. Start/stop/delete
