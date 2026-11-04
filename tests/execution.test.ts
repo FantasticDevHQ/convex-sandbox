@@ -549,3 +549,31 @@ test("native cancellation uses a different idempotency key from command start", 
   expect(startKey).not.toBe("");
   expect(cancelKey).not.toBe(startKey);
 });
+
+test.each([false, true])(
+  "chunk-count closure marks an unfinished stream truncated (native complete=%s)",
+  async (complete) => {
+    let pages = 0;
+    const f = fixture(
+      adapter({
+        logs: async () => ({
+          entries: [{ stream: "stdout", text: "x".repeat(1024) }],
+          nextCursor: String(++pages),
+          complete: complete && pages === 32,
+        }),
+      }),
+    );
+    await f.setup();
+    await f.client.start({ ...handle, input });
+    for (let i = 0; i < 32; i++) await f.client.syncLogs(handle);
+    expect(await f.client.get(handle)).toMatchObject({
+      outputBytes: 32768,
+      outputTruncated: !complete,
+    });
+    expect((await f.client.logs({ ...handle, cursor: null })).truncated).toBe(
+      !complete,
+    );
+    await f.client.syncLogs(handle);
+    expect(pages).toBe(32);
+  },
+);

@@ -32,7 +32,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   metadata. Shared refresh qualification covers native reply ordering, rebind
   generations and polling budgets, with a live local query-subscription proof.
   Host scheduling and the separate signed-webhook ingress follow-up are documented.
-  Other Boat operations and live qualification remain pending.
+  The public Boat factory is covered by baseline conformance over synthetic native
+  HTTP, with explicit capability skips, dependency isolation and packed runtime/type
+  checks. Other Boat operations and live qualification remain pending.
+
+### Fixed
+
+- Mark unfinished execution output truncated when the shared chunk cap closes it
+  before the byte cap, while preserving a fully drained stream at the exact cap.
 
 ## [0.1.0-rc.0] - 2026-11-03
 

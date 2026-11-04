@@ -353,6 +353,10 @@ is reported as stale rather than inferred to be confirmed deletion.
 
 ## Verification and next steps
 
+The [offline conformance guide](conformance.md) records the baseline case matrix,
+explicit cancellation skip, optional dependency boundaries and packed runtime/type
+checks. These checks use synthetic native HTTP and do not imply live support.
+
 `tests/boat/transport.test.ts` covers host configuration, projection, aborts,
 deadline/body bounds, lost replies and safe status errors using injected fetch.
 Package tests reject browser imports and block SDK resolution from core/testing.

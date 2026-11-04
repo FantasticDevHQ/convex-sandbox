@@ -176,5 +176,29 @@ test(
     );
     const output = run(process.execPath, ["verify.mjs"]);
     assert.match(output, /PASS: packed public exports/);
+    run(process.execPath, ["--input-type=module", "-e", `
+      import assert from 'node:assert/strict';
+      await assert.rejects(import('@fantastic.dev/convex-sandbox/boat'), error => error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('@boatdev/sdk'));
+    `]);
+    const consumer = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+    consumer.dependencies["@boatdev/sdk"] = manifest.devDependencies["@boatdev/sdk"];
+    await writeFile(join(root, "package.json"), JSON.stringify(consumer));
+    run("pnpm", [...install, "--no-frozen-lockfile"]);
+    run(process.execPath, ["--input-type=module", "-e", `
+      import assert from 'node:assert/strict';
+      import { createBoatProvider } from '@fantastic.dev/convex-sandbox/boat';
+      const boat = createBoatProvider({apiKey:'synthetic-packed-key',fetch:async()=>new Response(JSON.stringify({ok:true,sandbox:{id:'packed-vm',state:'ready'}}))});
+      assert.equal((await boat.adapter.describe('packed-vm')).state,'running');
+      console.log('PASS: packed optional Boat entry uses injected HTTP after exact SDK installation');
+    `]);
+    await writeFile(join(root, "verify.ts"), `
+      import { createBoatProvider, type BoatOptions } from '@fantastic.dev/convex-sandbox/boat';
+      import { SandboxProviders, type ProviderRegistration } from '@fantastic.dev/convex-sandbox';
+      const options: BoatOptions = {apiKey:'synthetic-types-key',ttlSeconds:60};
+      const provider: ProviderRegistration = createBoatProvider(options);
+      new SandboxProviders({authorize:async()=>{}}).register(provider);
+    `);
+    run(process.execPath, [join(process.cwd(), "node_modules/typescript/bin/tsc"), "--noEmit", "--strict", "--skipLibCheck", "--target", "ES2022", "--module", "NodeNext", "--moduleResolution", "NodeNext", "verify.ts"]);
+
   },
 );
