@@ -134,3 +134,68 @@ export const complete = internalAction({
     };
   },
 });
+
+export const encoding = internalAction({
+  args: {},
+  returns: v.object({ utf8: v.boolean(), boundaryReread: v.boolean() }),
+  handler: async () => {
+    let terminal = false;
+    const offsets: number[] = [];
+    const provider = createBoatProvider({
+      apiKey: "synthetic-encoding-proof",
+      fetch: async (url) => {
+        const u = new URL(String(url)),
+          stream = u.searchParams.get("stream"),
+          offset = Number(u.searchParams.get("offset"));
+        if (stream === "stdout") offsets.push(offset);
+        const all =
+          stream === "stdout"
+            ? new TextEncoder().encode("\ufeff😀")
+            : new Uint8Array();
+        const available = terminal ? all : all.subarray(0, 5);
+        const data = available.subarray(offset);
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "encoding-id",
+            stream,
+            offset,
+            nextOffset: available.length,
+            size: available.length,
+            encoding: "base64",
+            data: btoa(String.fromCharCode(...data)),
+            done: terminal,
+          }),
+        );
+      },
+    });
+    const logs = provider.adapter.execution?.logs;
+    if (!logs) throw new Error("Missing log adapter");
+    const context = {
+      idempotencyKey: "synthetic-encoding",
+      signal: new AbortController().signal,
+    };
+    const first = await logs(
+      "encoding-vm",
+      "encoding-id",
+      { cursor: null, maxEntries: 16, maxBytes: 16384 },
+      context,
+    );
+    terminal = true;
+    const last = await logs(
+      "encoding-vm",
+      "encoding-id",
+      { cursor: first.nextCursor, maxEntries: 16, maxBytes: 16384 },
+      context,
+    );
+    return {
+      utf8:
+        [...first.entries, ...last.entries].map((e) => e.text).join("") ===
+          "\ufeff😀" &&
+        !first.truncated &&
+        !last.truncated &&
+        last.complete,
+      boundaryReread: offsets.join(",") === "0,3",
+    };
+  },
+});

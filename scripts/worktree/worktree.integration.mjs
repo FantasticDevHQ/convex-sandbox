@@ -232,6 +232,7 @@ test(
       stored: true, unknown: true, once: true,
     });
     console.log("PASS: Boat detached commands persist history identities; ambiguous starts never replay on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLogProof:encoding", {}, true), { utf8: true, boundaryReread: true });
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLogProof:accept", {}, true), { cached: true, repeatedRead: true, cancellationUnsupported: true });
     console.log("PASS: Boat history logs append once across polls; PID-only cancellation remains unsupported on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
