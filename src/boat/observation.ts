@@ -1,4 +1,3 @@
-import type { SandboxInfoResponse } from "@boatdev/sdk";
 import type { SandboxState } from "../contracts.js";
 import { SandboxProviderError } from "../client/errors.js";
 import { hasControlCharacters } from "./transport.js";
@@ -18,7 +17,7 @@ const states: Record<string, SandboxState> = {
 };
 
 export async function projectBoatObservation(
-  response: Promise<SandboxInfoResponse>,
+  response: Promise<unknown>,
   effect: "read" | "write",
   expectedId?: string,
 ) {
@@ -28,14 +27,22 @@ export async function projectBoatObservation(
       outcome: effect === "write" ? "unknown" : "failed",
       retryable: false,
     });
-  let result: SandboxInfoResponse;
+  let raw: unknown;
   try {
-    result = await response;
+    raw = await response;
   } catch (error) {
     if (error instanceof SyntaxError) throw invalid();
     throw error;
   }
-  const sandbox = result?.sandbox;
+  const result =
+    raw && typeof raw === "object"
+      ? (raw as Record<string, unknown>)
+      : undefined;
+  const value = result?.sandbox;
+  const sandbox =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : undefined;
   if (
     result?.ok !== true ||
     !sandbox ||

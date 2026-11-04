@@ -224,6 +224,10 @@ test(
       stored: true, pending: true, singleDispatch: true, jobRead: true,
     });
     console.log("PASS: generic native lifecycle jobs persist with their operation and reconcile by scoped read-only context on both anonymous backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLifecycleProof:accept", {}, true), {
+      stopped: true, resumed: true, pending: true, confirmation: true, noForcedStop: true,
+    });
+    console.log("PASS: Boat native stop/resume and confirmed asynchronous delete use shared job records on both anonymous backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
@@ -345,6 +349,11 @@ test(
     assert.equal(siblingJob.status, "unknown");
     assert.deepEqual(siblingJob.nativeLifecycle, { id: "fixture-native-job" });
     console.log("PASS: native lifecycle job completes after anonymous backend restart without another mutation or crossing into its sibling");
+    assert.deepEqual(await componentRpc(roots[0], "boatLifecycleProof:complete", {}, true), {
+      completed: true, tombstone: true, notRedispatched: true,
+    });
+    assert.equal((await componentRpc(roots[1], "operations:get", { sandbox: { scope: "boat-lifecycle-proof", key: "machine" }, operationId: "delete" })).status, "unknown");
+    console.log("PASS: Boat deletion confirms its persisted job after restart without another DELETE; sibling deletion remains pending");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
     assert.equal(cachedExecution.state, "completed");

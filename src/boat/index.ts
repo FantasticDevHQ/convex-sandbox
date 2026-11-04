@@ -1,10 +1,11 @@
 import { registerProvider } from "../client/providers.js";
 import { defineCapabilities } from "../capabilities.js";
 import { SandboxProviderError } from "../client/errors.js";
-import { createBoatTransport, hasControlCharacters } from "./transport.js";
+import { createBoatTransport } from "./transport.js";
 import type { BoatOptions } from "./options.js";
 import { projectBoatObservation } from "./observation.js";
 import { nativeCreateKey, provisionConfiguration } from "./provision.js";
+import { createBoatLifecycle } from "./lifecycle.js";
 
 export type { BoatOptions, BoatMachineType } from "./options.js";
 
@@ -17,9 +18,11 @@ export function createBoatProvider(options: BoatOptions) {
     createIdempotency: "native",
     capabilities: defineCapabilities({
       version: 1,
-      supported: ["create", "describe"],
+      supported: ["create", "describe", "start", "stop", "delete"],
+      persistence: { diskOnStop: "unknown", memoryOnStop: "discarded" },
     }),
     adapter: {
+      ...createBoatLifecycle(transport, configuration.ttlSeconds),
       async create(request, context) {
         if (
           request.templateId !== undefined ||
@@ -52,23 +55,6 @@ export function createBoatProvider(options: BoatOptions) {
             "write",
           );
         });
-      },
-      async describe(id, context) {
-        if (
-          typeof id !== "string" ||
-          !id ||
-          id.length > 1024 ||
-          hasControlCharacters(id)
-        ) {
-          throw new SandboxProviderError({
-            code: "validation",
-            outcome: "not_started",
-            retryable: false,
-          });
-        }
-        return transport.call("read", context, (api, init) =>
-          projectBoatObservation(api.get({ sandboxId: id }, init), "read", id),
-        );
       },
     },
   });
