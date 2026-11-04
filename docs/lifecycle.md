@@ -124,6 +124,11 @@ while refusing its stale state. Generic operation transitions cannot complete a
 job owned by this protocol. A restarted host reconstructs its adapter and uses the
 same stored ID. No process-local map is required.
 
+A status-read failure cannot turn an accepted job into a not-started operation or
+release its active reservation. If an ordinary observation already recorded a
+tombstone, reconciliation still polls the stored job. Pending reads release their
+lease without resurrecting the machine, so a later read can confirm completion.
+
 If the reply or handle publication is lost before the ID is stored, the outcome
 can still remain unknown and need provider-specific read-only or operator recovery.
 The metadata does not create exactly-once effects, job cancellation, or a new

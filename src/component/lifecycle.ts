@@ -209,7 +209,9 @@ export const claimOperation = mutation({
       status: mode === "execute" ? ("running" as const) : ("unknown" as const),
       version: op.version + 1,
       leaseUntil: Date.now() + LIFECYCLE_LEASE_MS,
-      observationSequence: row.refreshSequence + 1,
+      observationSequence: row.tombstone
+        ? row.refreshSequence
+        : row.refreshSequence + 1,
       updatedAt: Date.now(),
     };
     await ctx.db.patch(op._id, patch);
@@ -285,7 +287,8 @@ export const finishOperation = mutation({
     let status: "succeeded" | "failed" | "unknown" = "unknown";
     let errorCode: Infer<typeof providerErrorCodeValidator> | undefined;
     if ("errorCode" in result) {
-      status = result.notStarted ? "failed" : "unknown";
+      // A retained job proves acceptance; a failed status read cannot un-start it.
+      status = result.notStarted && !nativeLifecycle ? "failed" : "unknown";
       errorCode = result.errorCode;
       if (!row.tombstone)
         await ctx.db.patch(row._id, {
@@ -295,7 +298,18 @@ export const finishOperation = mutation({
     } else {
       const description = result.description;
       validateResources(description.resources);
-      if (row.tombstone && description.state !== "deleted") return false;
+      if (row.tombstone && description.state !== "deleted") {
+        // Keep deletion monotonic without holding a completed read's lease.
+        await ctx.db.patch(op._id, {
+          status: "unknown",
+          nativeLifecycle,
+          errorCode: undefined,
+          leaseUntil: 0,
+          version: op.version + 1,
+          updatedAt: Date.now(),
+        });
+        return false;
+      }
       const target =
         op.kind === "delete"
           ? description.state === "deleted"

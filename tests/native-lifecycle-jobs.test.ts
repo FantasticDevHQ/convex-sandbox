@@ -283,13 +283,11 @@ test("creation rejects lifecycle job metadata instead of binding a partial resul
       }),
     },
   });
-  await providers
-    .lifecycle(f.store)
-    .create({
-      sandbox: created,
-      provider: reference.provider,
-      operationId: "create",
-    });
+  await providers.lifecycle(f.store).create({
+    sandbox: created,
+    provider: reference.provider,
+    operationId: "create",
+  });
   expect(await f.store.getProvision(created)).toMatchObject({
     status: "unknown",
     errorCode: "validation",
@@ -313,6 +311,66 @@ test("creation rejects lifecycle job metadata instead of binding a partial resul
       },
     }),
   ).rejects.toThrow("creation");
+});
+
+test("an accepted job cannot be released by a contradictory not-started read error", async () => {
+  const f = await fixture();
+  const op = await f
+    .client()
+    .run({ sandbox, action: "delete", operationId: "delete" });
+  const claim = await f.store.claimOperation({
+    sandbox,
+    operationId: "delete",
+    expectedVersion: op?.version ?? -1,
+    mode: "reconcile",
+  });
+  await f.store.finishOperation({
+    sandbox,
+    operationId: "delete",
+    expectedVersion: claim?.version ?? -1,
+    result: { errorCode: "stale_resource", notStarted: true },
+  });
+  expect(await f.store.getOperation(sandbox, "delete")).toMatchObject({
+    status: "unknown",
+    nativeLifecycle: { id: "native-job" },
+    leaseUntil: 0,
+  });
+  expect((await f.store.get(sandbox))?.activeOperationId).toBe("delete");
+  expect(f.mutations()).toBe(1);
+});
+
+test("a tombstoned machine still polls its accepted job and releases pending read leases", async () => {
+  const f = await fixture();
+  await f.client().run({ sandbox, action: "delete", operationId: "delete" });
+  const ticket = await f.store.beginRefresh(sandbox);
+  await f.store.finishRefresh({
+    sandbox,
+    ...ticket,
+    result: { state: "deleted" },
+  });
+  const pending = await f
+    .client()
+    .reconcile({ sandbox, operationId: "delete", policy: { maxAttempts: 1 } });
+  expect(pending).toMatchObject({ status: "unknown", leaseUntil: 0 });
+  expect((await f.store.get(sandbox))?.tombstone).toBe(true);
+  f.complete();
+  expect(
+    await f
+      .client()
+      .reconcile({
+        sandbox,
+        operationId: "delete",
+        policy: { maxAttempts: 1 },
+      }),
+  ).toMatchObject({
+    status: "succeeded",
+    nativeLifecycle: { id: "native-job" },
+  });
+  expect(f.contexts.at(-1)?.lifecycleJob).toEqual({
+    id: "native-job",
+    kind: "delete",
+  });
+  expect(f.mutations()).toBe(1);
 });
 
 test("a job-aware read must return matching job identity before confirming deletion", async () => {
