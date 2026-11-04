@@ -65,7 +65,7 @@ provenance.
 
 The upstream [lifecycle implementation](https://github.com/ariana-dot-dev/boat-convex/blob/168ecde17e4d118400f5121132aaecd61e22d416/src/component/lifecycle.ts)
 owns sandbox records and schedules settling with `ctx.scheduler.runAfter`.
-Its [transport](https://github.com/ariana-dot-dev/boat-convex/blob/168ecde17e4d118400f5121132aaecd61e22d416/src/component/boat.ts)
+Its [idempotent POST helper](https://github.com/ariana-dot-dev/boat-convex/blob/168ecde17e4d118400f5121132aaecd61e22d416/src/component/lifecycle.ts#L81-L93)
 retries `idempotency_in_progress` POSTs with two-second waits up to ten retries.
 That policy competes with the shared five-second request deadline and uncertain
 outcome handling. Use this implementation as reference rather than adopting its
