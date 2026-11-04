@@ -15,6 +15,7 @@ import type * as boatImageProof from "../boatImageProof.js";
 import type * as boatLifecycleProof from "../boatLifecycleProof.js";
 import type * as boatLogProof from "../boatLogProof.js";
 import type * as boatProbe from "../boatProbe.js";
+import type * as boatReconcileProof from "../boatReconcileProof.js";
 import type * as demo from "../demo.js";
 import type * as demo_contracts from "../demo/contracts.js";
 import type * as demo_service from "../demo/service.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   boatLifecycleProof: typeof boatLifecycleProof;
   boatLogProof: typeof boatLogProof;
   boatProbe: typeof boatProbe;
+  boatReconcileProof: typeof boatReconcileProof;
   demo: typeof demo;
   "demo/contracts": typeof demo_contracts;
   "demo/service": typeof demo_service;

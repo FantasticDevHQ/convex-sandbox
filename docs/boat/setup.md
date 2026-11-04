@@ -314,6 +314,13 @@ explains the missing enforced expiry for desktop, preview and SSH and the lack o
 a separate browser mapping. Access requests perform no native setup; observation
 projection omits native bearer URLs. Machine auto-stop is not connection expiry.
 
+## Host refresh and scheduling
+
+Use existing shared lifecycle refresh/reconcile hooks. The [reconciliation guide](reconciliation.md)
+explains request ordering, generation fences, polling budgets and optional host
+scheduling. The adapter installs no settle loop. Authenticated native webhook
+routing is tracked separately and is not implemented by this factory.
+
 ## Transport bounds and errors
 
 - Each adapter call has a five-second deadline, even when used directly without
