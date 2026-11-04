@@ -16,7 +16,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   safe private guest defaults, explicit account configuration, bounded stable
   native keys, abort/deadline/response bounds and safe errors. Native stop, disk
   resume and asynchronous deletion use shared lifecycle jobs with restart recovery.
-  Other Boat operations and live qualification remain pending.
+  Detached commands use durable history IDs, literal argv translation and read-only
+  reconciliation; ambiguous starts never redispatch. Per-command env and runtime
+  timeouts are explicitly unsupported. Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 
