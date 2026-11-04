@@ -307,6 +307,13 @@ Restore also remains unsupported: recover power-cycles the VM, and creating from
 an image changes physical identity. The adapter performs neither substitute and
 adds no artifact deletion, retention policy or cross-provider portability claim.
 
+## Connection boundary
+
+All connection kinds remain explicitly unsupported. The [per-kind native audit](connections.md)
+explains the missing enforced expiry for desktop, preview and SSH and the lack of
+a separate browser mapping. Access requests perform no native setup; observation
+projection omits native bearer URLs. Machine auto-stop is not connection expiry.
+
 ## Transport bounds and errors
 
 - Each adapter call has a five-second deadline, even when used directly without

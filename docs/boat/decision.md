@@ -138,7 +138,7 @@ after its adapter and qualification exist. Paths refer to the pinned OpenAPI;
 | `snapshotDisk` | Unsupported: saved capture lacks immutable in-flight job correlation, and background/stop capture is not an explicit snapshot operation. |
 | `suspendMemory` | Unsupported; reviewed stop/resume does not preserve process RAM. |
 | `resumeMemory` | Unsupported; never substitute disk resume. |
-| `getConnection` | Initially unsupported. Desktop, port hosting and SSH exist, but reviewed endpoints do not establish the short enforced expiry the common contract requires. Audit each kind separately. No native browser connection mapping established. |
+| `getConnection` | Explicitly unsupported after the [per-kind audit](connections.md): desktop and stable hosted-port URLs have no documented enforced lifetime; SSH key setup has no expiring handle; no separate browser mapping is established. No fabricated expiry, native access setup or durable bearer metadata. |
 
 ## Recovery and security constraints
 

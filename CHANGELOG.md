@@ -26,7 +26,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   URLs remain unsupported. Native forks retain new physical IDs and reconcile
   readiness after restart; the bounded saved-template catalog preserves mutable
   names and source-scoped readiness. Capture mutations and in-place restore remain
-  unsupported where native job identity or semantics cannot be preserved. Other Boat operations and live qualification remain pending.
+  unsupported where native job identity or semantics cannot be preserved. The
+  per-kind connection audit keeps access unsupported without native enforced
+  expiry; regression/runtime fixtures verify no setup dispatch or durable bearer
+  metadata. Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 
