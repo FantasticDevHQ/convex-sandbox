@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
+    "@boatdev/sdk": "1.13.0",
     "@playwright/test": "1.64.1",
     "@types/node": "^22.0.0",
     "convex": "1.49.0",

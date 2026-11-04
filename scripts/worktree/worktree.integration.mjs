@@ -206,6 +206,11 @@ test(
     );
     await Promise.all(roots.map((root) => ok(root, "start", "--frontend")));
     await Promise.all(states.map(frontendReady));
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:runtime", {}, true), {
+      injectedFetch: true, requestInputs: true, detachedCommand: true,
+      abortForwarded: true, lostReplyNotRetried: true, httpErrorsNotRetried: true,
+    });
+    console.log("PASS: pinned Boat SDK bundles and runs in anonymous Convex V8 with synthetic fetch, abort propagation and no mutation replay");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {

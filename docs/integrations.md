@@ -4,6 +4,10 @@ The baseline wraps sandbox APIs behind common typed contracts. It does not choos
 
 ## Boat
 
+The [transport decision and capability audit](boat/decision.md) selects the official
+SDK's low-level API with injected fetch, subject to an anonymous Convex runtime
+gate. This is implementation preparation; a live Boat adapter is not yet shipped.
+
 Wrap existing Boat APIs and audit its existing Convex component before designing replacements:
 
 - [Convex component directory](https://www.convex.dev/components/boatdev/convex)

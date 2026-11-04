@@ -13,6 +13,7 @@
       "scripts/check-codegen.mjs",
       "scripts/check-docs.mjs",
       "scripts/release/**",
+      "scripts/boat/**",
       "!**/_generated"
     ]
   },
