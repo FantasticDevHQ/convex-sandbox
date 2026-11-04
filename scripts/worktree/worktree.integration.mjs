@@ -241,6 +241,11 @@ test(
     console.log("PASS: Boat forks persist child identities with safe env/TTL; saved template catalog stays source-scoped and pending on both backends");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatConnectionProof:runtime", {}, true), { unsupportedKinds: true, noAccessDispatch: true, observationSafe: true, recordsSafe: true });
     console.log("PASS: Boat connection kinds fail before native access setup; secret-bearing observations never enter shared records on both backends");
+    for (const root of roots) {
+      const result = JSON.parse(execFileSync(process.execPath, ["scripts/boat/qualify-refresh.mjs"], { cwd: root, encoding: "utf8", timeout: 45000 }));
+      assert.deepEqual(result, { reversedReply: true, bounded: true, singleMutation: true, reactiveExternalStop: true, readOnlyRefresh: true });
+    }
+    console.log("PASS: Boat refresh fences reversed replies and bounded reconciliation; live component query subscription observes an external stop on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {

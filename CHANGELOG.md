@@ -29,7 +29,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   unsupported where native job identity or semantics cannot be preserved. The
   per-kind connection audit keeps access unsupported without native enforced
   expiry; regression/runtime fixtures verify no setup dispatch or durable bearer
-  metadata. Other Boat operations and live qualification remain pending.
+  metadata. Shared refresh qualification covers native reply ordering, rebind
+  generations and polling budgets, with a live local query-subscription proof.
+  Host scheduling and the separate signed-webhook ingress follow-up are documented.
+  Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 

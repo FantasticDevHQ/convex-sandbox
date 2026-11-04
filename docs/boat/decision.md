@@ -140,6 +140,14 @@ after its adapter and qualification exist. Paths refer to the pinned OpenAPI;
 | `resumeMemory` | Unsupported; never substitute disk resume. |
 | `getConnection` | Explicitly unsupported after the [per-kind audit](connections.md): desktop and stable hosted-port URLs have no documented enforced lifetime; SSH key setup has no expiring handle; no separate browser mapping is established. No fabricated expiry, native access setup or durable bearer metadata. |
 
+## Shared observations and native webhooks
+
+[Explicit refresh/reconciliation](reconciliation.md) use shared sequence/generation
+fences and host-chosen budgets. The pinned API documents HMAC-signed, at-least-once
+lifecycle webhooks with out-of-order delivery; authenticated tenant routing and
+replay handling are an optional follow-up, not installed ingress or a second
+settle loop. Event state is not written directly to the registry.
+
 ## Recovery and security constraints
 
 - Create keys are account-scoped and retained for 24 hours with matching-body
