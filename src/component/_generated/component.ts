@@ -505,6 +505,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               provider: string;
             };
           };
+          nativeLifecycle?: { id: string };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -638,6 +639,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               provider: string;
             };
           };
+          nativeLifecycle?: { id: string };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -757,6 +759,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               provider: string;
             };
           };
+          nativeLifecycle?: { id: string };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -783,6 +786,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           result:
             | {
                 description: {
+                  lifecycleJob?: { id: string };
                   providerId: string;
                   resources?: {
                     cpuCount?: number;
@@ -829,6 +833,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           result:
             | {
                 description: {
+                  lifecycleJob?: { id: string };
                   providerId: string;
                   resources?: {
                     cpuCount?: number;
@@ -1109,6 +1114,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               provider: string;
             };
           };
+          nativeLifecycle?: { id: string };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -1203,6 +1209,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 provider: string;
               };
             };
+            nativeLifecycle?: { id: string };
             observationSequence?: number;
             operationId: string;
             reference: { provider: string; providerId: string };
@@ -1285,6 +1292,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               provider: string;
             };
           };
+          nativeLifecycle?: { id: string };
           observationSequence?: number;
           operationId: string;
           reference: { provider: string; providerId: string };
@@ -1379,6 +1387,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                 provider: string;
               };
             };
+            nativeLifecycle?: { id: string };
             observationSequence?: number;
             operationId: string;
             reference: { provider: string; providerId: string };
