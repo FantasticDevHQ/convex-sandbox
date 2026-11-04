@@ -60,7 +60,8 @@ const failure = new Promise((_, reject) => {
 });
 let closing = false,
   buffer = "";
-const exit = new Promise((resolve) => child.once("exit", resolve));
+// Failed spawning emits error/close without necessarily emitting exit.
+const closed = new Promise((resolve) => child.once("close", resolve));
 child.once("error", () => fail(new Error("Owned query watcher failed")));
 child.once("exit", () => {
   if (!closing) fail(new Error("Owned query watcher exited early"));
@@ -107,6 +108,6 @@ try {
   closing = true;
   child.kill("SIGTERM");
   const killTimer = setTimeout(() => child.kill("SIGKILL"), 2000);
-  await exit;
+  await closed;
   clearTimeout(killTimer);
 }
