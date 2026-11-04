@@ -140,6 +140,8 @@ Initial frozen dependency installation, origin freshness checks and the first ba
 `pnpm test:docs` extracts TypeScript fences from the quickstart and adapter guide. Each fence names its intended `convex/` or `src/` location. The checker compiles all samples against built public package exports, actual generated example bindings and installed dependencies. Temporary source/config files stay outside the checkout and are removed on success/failure. A negative fixture verifies that an unavailable export fails compilation. This checks the marked samples only; it does not claim that every conceptual snippet in the focused reference guides is a complete application.
 
 `pnpm test:boat:live-guard` tests the offline admission and durable resource inventory
-for a future opt-in Boat live runner. It performs no provider calls and is included
-in `check:all`. See [live verification preparation](boat/live-verification.md) for
-approval limits, unresolved cleanup reporting and the remaining live runner work.
+for the opt-in Boat live runner. It performs no provider calls and is included
+in `check:all`. See [opt-in live verification](boat/live-verification.md) for
+approval limits, unresolved cleanup reporting and the remaining live qualification work. `pnpm test:boat:live` exercises the
+actual adapter through synthetic HTTP responses and tests CLI refusal paths; it
+never contacts Boat.

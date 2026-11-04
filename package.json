@@ -8,7 +8,7 @@
     "test": "pnpm build:lib && vitest run --maxWorkers=1",
     "typecheck": "pnpm build:lib && pnpm typecheck:lib && pnpm typecheck:example",
     "build": "pnpm build:lib && pnpm build:example",
-    "check:all": "pnpm lint && pnpm test:codegen && pnpm typecheck && pnpm test && pnpm test:boat:live-guard && pnpm build:example && pnpm test:package && pnpm test:docs && pnpm test:release && pnpm test:example && pnpm test:pr-standard && pnpm test:worktree && pnpm test:worktree:integration",
+    "check:all": "pnpm lint && pnpm test:codegen && pnpm typecheck && pnpm test && pnpm test:boat:live-guard && pnpm test:boat:live && pnpm build:example && pnpm test:package && pnpm test:docs && pnpm test:release && pnpm test:example && pnpm test:pr-standard && pnpm test:worktree && pnpm test:worktree:integration",
     "worktree:setup": "node scripts/worktree/cli.mjs setup",
     "worktree:start": "node scripts/worktree/cli.mjs start",
     "worktree:stop": "node scripts/worktree/cli.mjs stop",
@@ -32,7 +32,9 @@
     "test:docs": "node --test --test-concurrency=1 tests/docs.test.mjs tests/boat/docs.test.mjs",
     "test:release": "node --test --test-concurrency=1 tests/release.test.mjs",
     "release:candidate": "pnpm build:lib && node scripts/release/candidate.mjs",
-    "test:boat:live-guard": "node --test --test-concurrency=1 tests/boat/live-guard.test.mjs"
+    "test:boat:live-guard": "node --test --test-concurrency=1 tests/boat/live-guard.test.mjs",
+    "test:boat:live": "pnpm build:lib && node --test --test-concurrency=1 tests/boat/live-runner.test.mjs tests/boat/live-cli.test.mjs",
+    "boat:live": "node scripts/boat/live-cli.mjs"
   },
   "peerDependencies": {
     "convex": "^1.49.0",
