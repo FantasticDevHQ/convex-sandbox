@@ -69,7 +69,9 @@ export function createBoatProvider(options: BoatOptions) {
           }
           return {
             providerId: id,
-            state: states[result.sandbox.state] ?? "unknown",
+            state: Object.hasOwn(states, result.sandbox.state)
+              ? states[result.sandbox.state]
+              : "unknown",
           };
         });
       },

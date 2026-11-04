@@ -186,6 +186,20 @@ test.each([
   expect(JSON.stringify(error)).not.toContain(apiKey);
 });
 
+test.each(["constructor", "toString", "__proto__", "future-native-state"])(
+  "unrecognized state %s projects to unknown",
+  async (state) => {
+    const provider = createBoatProvider({
+      apiKey,
+      fetch: async () => json({ ok: true, sandbox: { id: "m", state } }),
+    });
+    expect(await provider.adapter.describe("m", context())).toEqual({
+      providerId: "m",
+      state: "unknown",
+    });
+  },
+);
+
 test("oversized or malformed observations never escape projection", async () => {
   for (const body of [
     "x".repeat(1024 * 1024 + 1),
