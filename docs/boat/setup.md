@@ -1,8 +1,8 @@
-# Experimental Boat observation adapter
+# Experimental Boat adapter
 
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
-`describe` only. Provisioning, lifecycle mutations, commands, files, images and
-connections remain unsupported. It is not a live-qualified provider release.
+`create` and `describe`. Start/stop/delete, commands, files, images and connections
+remain unsupported. It is not a live-qualified provider release.
 The playground continues to use the simulator.
 
 Install the exact audited SDK alongside the component when using this entry:
@@ -28,11 +28,13 @@ import { createBoatProvider } from "@fantastic.dev/convex-sandbox/boat";
 const boat = createBoatProvider({
   apiKey: process.env.BOAT_API_KEY!,
   org: "personal",
+  machineType: "small",
+  ttlSeconds: 3600,
 });
 // Register boat in the existing SandboxProviders configured with host authorization.
 ```
 
-Use an existing provider binding authorized by the application. A provider ID,
+Use an application-authorized logical key or existing binding. A provider ID,
 wallet name, credential or tenant scope supplied by a browser is not authorization.
 The factory does not query account credentials, import secrets into guests, or
 change Boat's active organization. Configuration is captured at construction.
@@ -47,6 +49,53 @@ it does not create a per-user authorization boundary.
 `fetch` may be supplied only by trusted host code for instrumentation/testing.
 It must not replay mutations or log credentials. The adapter always injects fetch
 into the SDK, disallows redirects, and excludes SDK retry/polling middleware.
+
+## Create through the shared lifecycle client
+
+Register the configured Boat provider in an application-owned `SandboxProviders`
+with real `authorize` and `authorizeCreate` policies. Construct its lifecycle
+client with `createLifecycleStore(ctx, components.sandbox)` and call
+`lifecycle.create({ sandbox, provider: "boat", operationId })`. Derive `sandbox`
+from verified ownership and keep the operation ID stable for the same request.
+Do not call the raw adapter's create method as a replacement for shared claims.
+See [the lifecycle contract](../lifecycle.md).
+
+Concurrent requests for one logical key use the shared reservation and produce
+one native POST. A returned native ID is bound with its observed state, which may
+still be starting. A successful creation claim means the ID was obtained, not
+that the machine is ready. Use shared `refresh(sandbox)` to observe readiness.
+
+Host configuration selects `small`, `default`, `large` or `xlarge`; default is
+`small`. The provider enforces plan eligibility. `ttlSeconds` is an integer from
+1 through 2592000, default 3600. It requests an auto-stop deadline after creation,
+not an inactivity timeout or a guaranteed maximum lifetime. There is no disabled
+auto-stop option in this initial entry. Generic `CreateOptions.resources` requests
+and templates are rejected rather than silently ignored or translated using an
+unverified size table.
+
+Creation explicitly sets `noEnv: true`, `visibility: "private"` and
+`snapshots: true`. It passes no account environment, guest credentials, setup
+script, repository list or agent prompt. This version exposes no account-secret
+inheritance override. Snapshot capture/retention still depends on Boat and account
+policy; no disk or memory persistence guarantee is advertised here.
+
+Boat limits native idempotency keys to 255 characters. The adapter maps the shared
+operation key to `csb-boat-v1-` followed by its SHA-256 UTF-8 digest, preserving a
+bounded deterministic identity without putting raw tenant values in the header.
+Keep this mapping and host size/deadline configuration stable for an operation.
+Trusted scopes/operation identities must be unique within the provider account;
+namespace application/deployment identities when sharing credentials across apps.
+Native create idempotency is scoped to the account, matching body and a 24-hour
+retention window. It is not an unlimited exactly-once guarantee.
+
+There is no audited authoritative read-only lookup by native key, so `findCreate`
+is absent. After a lost, timed-out or malformed successful create reply, shared
+reconciliation retains unknown and does not repeat POST, even after key expiry.
+A new operation cannot bypass an active unknown creation. Resolve it explicitly
+through approved host/operator recovery rather than a name match, list scan or
+another creation attempt. Restart recovery relies on the shared persistent store,
+not adapter memory. Native IDs acquired before a crash can still require operator
+recovery if their binding was not persisted.
 
 ## Bounds and errors
 
@@ -69,7 +118,10 @@ into the SDK, disallows redirects, and excludes SDK retry/polling middleware.
 - Observation maps init/provisioning/provisioned/cloning to starting,
   ready/idle/running to running, archiving to stopping, archived to stopped,
   and error/cancelled to error. Future state strings map to unknown.
-  Extra fields, error text and resource-size guesses are omitted.
+  Extra fields and error text are omitted. Explicit native `vcpu` is projected to
+  `cpuCount`. Memory/disk remain unknown: the reviewed memory field is labeled GB,
+  without an established GB/GiB conversion, and no explicit disk allocation field
+  is mapped. No resource value is guessed from the machine class.
 
 The adapter adds no table, operation ledger, scheduler or recovery loop. Shared
 registry and operation clients keep their existing ownership. A missing sandbox
@@ -84,5 +136,11 @@ The internal `boatProbe:transport` action uses the public entry with synthetic
 fetch and runs on both owned anonymous Convex backends during qualification,
 including the packed-package backend. No live credentials or Boat resources are
 needed. Live qualification remains a separate explicitly budgeted gate.
+
+`tests/boat/provision.test.ts` also uses the actual shared component to check
+concurrent claims, safe creation and missing-lookup recovery beyond key expiry.
+`boatProbe:provision` exercises the public factory and store bridge on both
+anonymous backends with synthetic HTTP. These internal qualification fixtures
+expect a fresh disposable backend; they do not operate existing Boat machines.
 
 See the [source and capability decision](decision.md) before adding operations.

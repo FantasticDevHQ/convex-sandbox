@@ -10,7 +10,7 @@ Use official `@boatdev/sdk` low-level `BoatApi` methods in a separate server-onl
 optional adapter entry. Inject host-owned fetch and account configuration, forward
 the shared call's abort signal, and exclude middleware that retries requests.
 Keep the SDK out of the core runtime dependency graph. It is an optional peer
-for the [experimental observation entry](setup.md), with a development pin for
+for the [experimental adapter entry](setup.md), with a development pin for
 the compatibility probe. Core consumers need no Boat dependency or credentials.
 
 Keep the shared component's registry, claims, authorization boundary, deadlines,
@@ -117,7 +117,7 @@ after its adapter and qualification exist. Paths refer to the pinned OpenAPI;
 
 | Capability | Native API or explicit limitation |
 | --- | --- |
-| `create` | `POST /sandboxes`; stable shared `Idempotency-Key`, `noEnv: true`, host-owned wallet/size policy. |
+| `create` | `POST /sandboxes`; a versioned SHA-256 mapping of the shared key fits the native 255-character `Idempotency-Key` limit; `noEnv: true`, host-owned wallet/size policy. |
 | `describe` | `GET /sandboxes/{id}`; project known state and reported resources, leave missing fields unknown. |
 | `start` | `POST /sandboxes/{id}/resume`; observe readiness separately. |
 | `stop` | `POST /sandboxes/{id}/stop`, stop status and sandbox observation; preserve pending state. |

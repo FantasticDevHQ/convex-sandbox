@@ -7,15 +7,9 @@ import {
 import type { ProviderCallContext } from "../lifecycle.js";
 import { SandboxProviderError } from "../client/errors.js";
 import type { ProviderErrorData } from "../capabilities.js";
+import type { BoatOptions } from "./options.js";
 
-export interface BoatOptions {
-  /** Read from trusted server configuration, never browser input. */
-  apiKey: string;
-  /** Explicit wallet scope, default personal. Never changes the active wallet. */
-  org?: string;
-  /** Host-owned fetch implementation. No SDK middleware or automatic retries. */
-  fetch?: typeof fetch;
-}
+export type { BoatOptions } from "./options.js";
 
 const responseLimit = 1024 * 1024;
 export function hasControlCharacters(value: string) {
@@ -101,6 +95,7 @@ export function createBoatTransport(options: BoatOptions) {
       headers: { "X-Boat-Org": org },
       middleware: [],
       fetchApi: async (url, init) => {
+        if (init?.signal?.aborted) throw failure("timeout", "not_started");
         const response = await fetch(url, { ...init, redirect: "error" });
         if (!response.ok) {
           // Status-only classification: error text is neither parsed nor retained.

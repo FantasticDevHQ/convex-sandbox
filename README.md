@@ -12,9 +12,9 @@ recovery. It does not run an agent loop or choose a consumer's machine topology.
 The `0.1.0-rc.0` baseline candidate is experimental, remains private and is
 **not published to npm**. See [candidate preparation](docs/releasing.md). Boat, E2B and Daytona are separate [planned integrations](docs/integrations.md).
 The playground uses a simulated provider: no real VM, shell or compute runs.
-An [experimental Boat observation entry](docs/boat/setup.md) supports `describe`
-with server-owned configuration; other Boat operations and live qualification
-remain pending.
+An [experimental Boat entry](docs/boat/setup.md) supports safe `create` and
+`describe` through shared claims and server-owned configuration. Other Boat
+operations and live qualification remain pending.
 
 ## Run the playground
 
