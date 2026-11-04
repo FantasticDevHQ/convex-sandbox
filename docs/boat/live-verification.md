@@ -58,15 +58,44 @@ commit or upload them as PR evidence.
 3. `deleting(providerId)` records an attempted deletion before sending it. Only
    confirmed owned IDs are accepted. A second deletion attempt is refused.
 4. `deletionAccepted(providerId, jobId)` records the accepted native deletion job.
-5. `deleted(providerId, jobId)` is allowed only after the caller has independently
-   validated the native job's ID, sandbox target, kind and completed status.
-   This bookkeeping call does not verify provider evidence itself.
+5. `nativeDeletionVerified(providerId, jobId)` records completion only after the
+   caller has independently validated the native job's ID, sandbox target, kind
+   and completed status. This bookkeeping call does not contact the provider.
+   It records the audited deletion contract digest with the completion event.
 
 Deletion remains available after the admission deadline. Counts never reset
-when machines are deleted. The inventory never exposes a fully cleaned state.
-Even after confirmed VM deletion it reports
-`vm-deleted-snapshots-unverified`, because the current adapter enables native
-snapshots and VM deletion alone does not prove removal of those artifacts.
+when machines are deleted. A newly confirmed native deletion is recorded as
+`native-deletion-completed`, covering the owned sandbox's machine, snapshots and
+content records under the contract below. Legacy `deleted` events retain their
+original `vm-deleted-snapshots-unverified` state. Reading an old journal does not
+upgrade its proof or replay a mutation. An unknown contract digest is rejected.
+
+## Native deletion contract
+
+The [pinned Boat OpenAPI](https://docs.boat.dev/openapi/boat-v1.yaml), audited on
+2026-11-04 with SHA-256
+`9f2abcf0735ba6230fba1b40ac9a11fe9022348997152821f3b99a1f7c2421fc`,
+documents `deleteSandbox` as deleting the sandbox machine, its snapshots and its
+content records. The returned deletion operation must reach `completed`. Saved
+snapshots and other shared artifacts are independent. Its `DeletionOperation`
+schema also explains that data referenced by a later snapshot, fork or saved
+snapshot can remain until those readers are deleted.
+
+The fixed smoke sequence creates no saved snapshots, reusable templates or
+external sharing links. Its only additional resource is an explicitly tracked
+owned fork, deleted before the parent. The runner therefore uses the existing
+sandbox-deletion jobs for native resource cleanup. It issues no extra snapshot
+deletes and never sweeps account-wide artifacts. Tests assert the complete native
+mutation sequence so adding an independent artifact requires revisiting this
+cleanup contract.
+
+`cleanupVerified: true` means every owned intent has a matching completed native
+delete job recorded under that pinned contract, with no cleanup or inventory
+failure in the run. `cleanupScope` names the sandbox machines, snapshots and
+content records. It does not mean physical erasure of all shared bytes, removal
+of unrelated saved artifacts, or independently verified zero billing.
+`physicalDataErasureVerified` stays `false`. A changed upstream deletion contract
+requires a new audit before recording equivalent proof.
 
 After a restart, `readInventory(file)` reconstructs the recorded state without
 network access or replaying mutations. Existing inventories cannot be reopened
@@ -152,17 +181,21 @@ without credentials or provider calls and cannot replay provisioning or deletion
 A malformed/truncated journal remains an unresolved operator investigation.
 Keep all reports private; redact account/resource IDs before posting evidence.
 
-Exit code `1` means refusal or failed verification, and `2` means smoke checks
-passed but cleanup is unresolved. Read-only inventory inspection also returns `2`
-when any fixture was reserved. `0` is available for successful read-only plan
-validation or an empty inventory report. A live run currently cannot return `0`,
-because native snapshot cleanup remains unverified even after all matching VM
-deletion jobs complete.
+Exit code `1` means refusal or failed verification. `2` means smoke checks
+passed but native resource cleanup is unresolved. A live run returns `0` and
+`qualification: "smoke-passed"` only when its checks and scoped native cleanup
+both pass. This describes that run's approved configuration, including any
+explicitly skipped fork check, rather than a provider-wide release declaration.
+
+Read-only inspection returns `0` when its recorded native cleanup is complete or
+its inventory is empty, and `2` for unresolved or legacy fixture records. It still
+reports `qualification: "unverified"`, because smoke check results are not stored
+in the inventory and no provider revalidation occurs. Successful plan validation
+also returns `0`; it does not authorize provisioning.
 
 Cancellation, transfers, image capture/restore, memory preservation and expiring
 connections remain unsupported. The runner checks that they are absent from
-capabilities and never invokes unsafe native substitutes. Snapshot artifact
-cleanup, actual live evidence and explicit resolution of all unresolved resources
-remain release gates. Provider-assisted read-only resolution is needed for a lost
+capabilities and never invokes unsafe native substitutes. Actual live evidence
+and explicit resolution of all unresolved native resources remain release gates. Provider-assisted read-only resolution is needed for a lost
 creation reply when no authoritative idempotency lookup exists. No live run or
 provider-support declaration is authorized by this document.

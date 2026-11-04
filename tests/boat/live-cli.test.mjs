@@ -179,11 +179,49 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGKILL"]) {
       assert.equal(result.status, 1);
       const report = JSON.parse(result.stdout);
       assert.equal(report.checksPassed, false);
-      assert.equal(
-        report.fixtures[0].cleanup,
-        "vm-deleted-snapshots-unverified",
-      );
+      assert.equal(report.fixtures[0].cleanup, "native-deletion-completed");
       assert.equal(report.fixtures[0].deletionJobId, "synthetic-delete-job");
     }
   });
 }
+
+test("actual CLI returns smoke success only with completed owned deletion jobs", async (t) => {
+  const f = await fixture(t);
+  f.plan.maxMachines = 2;
+  await writeFile(f.planPath, JSON.stringify(f.plan));
+  const loader = path.join(f.dir, "complete-preload.mjs");
+  const wireURL = new URL("./live-fixture.mjs", import.meta.url).href;
+  await writeFile(
+    loader,
+    `
+    import { fakeBoatHTTP } from ${JSON.stringify(wireURL)};
+    const wire = fakeBoatHTTP(${JSON.stringify(f.plan)});
+    globalThis.fetch = wire.fetch;
+  `,
+  );
+  const result = f.executeWith(
+    loader,
+    { BOAT_API_KEY: "synthetic-cli-key" },
+    "--live",
+    f.planPath,
+    f.inventory,
+    "--approved-run",
+    f.plan.runId,
+  );
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.qualification, "smoke-passed");
+  assert.equal(report.cleanupVerified, true);
+  assert.equal(report.physicalDataErasureVerified, false);
+  assert.equal(report.fixtures.length, 2);
+  assert.ok(
+    report.fixtures.every(
+      (item) => item.cleanup === "native-deletion-completed",
+    ),
+  );
+  assert.doesNotMatch(result.stdout, /synthetic-cli-key|synthetic-private/);
+  const inspected = f.execute("--report", f.inventory);
+  assert.equal(inspected.status, 0);
+  assert.equal(JSON.parse(inspected.stdout).cleanupVerified, true);
+  assert.equal(JSON.parse(inspected.stdout).qualification, "unverified");
+});

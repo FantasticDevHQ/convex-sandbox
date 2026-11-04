@@ -161,6 +161,12 @@ settle loop. Event state is not written directly to the registry.
   `snapshots: false`, retention policy and forced-stop failures can remove disk
   recovery. Reject incompatible settings or disclose limits; never promise
   unconditional retention.
+- The pinned `deleteSandbox` contract includes the machine, its snapshots and
+  content records once its matching deletion job completes. Saved snapshots and
+  other shared readers remain independent; completion does not prove physical
+  erasure of shared bytes. The [live smoke runner](live-verification.md) creates
+  no independent saved artifacts and deletes all tracked forks, so it uses these
+  existing native jobs without an extra snapshot-delete implementation.
 - `ttlSeconds` is a deadline after create/resume, not inactivity detection. Do not
   populate common `idleTimeoutMs` from it.
 - `noEnv: true` prevents account environment/credential inheritance for guests.

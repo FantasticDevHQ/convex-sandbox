@@ -9,6 +9,8 @@ import {
   createInventory,
   readInventory,
   validateApproval,
+  inventoryCleanupComplete,
+  BOAT_CLEANUP_SCOPE,
 } from "./live-guard.mjs";
 
 const unsupported = [
@@ -373,8 +375,8 @@ export async function runLive({
               cleanupController.signal,
               10,
             );
-          inventory.deleted(item.providerId, item.deletionJobId);
-          item.cleanup = "vm-deleted-snapshots-unverified";
+          inventory.nativeDeletionVerified(item.providerId, item.deletionJobId);
+          item.cleanup = "native-deletion-completed";
         } catch {
           failures.push({
             stage: "cleanup",
@@ -407,17 +409,31 @@ export async function runLive({
     inventoryReadable = false;
     failures.push({ stage: "inventory", reason: "inventory-unreadable" });
   }
+  const cleanupVerified =
+    inventoryReadable &&
+    !failures.some((failure) =>
+      ["cleanup", "inventory"].includes(failure.stage),
+    ) &&
+    inventoryCleanupComplete(fixtures);
   return {
     runId: approval.runId,
     checksPassed,
-    cleanupVerified: inventoryReadable && fixtures.length === 0,
+    cleanupVerified,
+    cleanupScope: BOAT_CLEANUP_SCOPE,
+    physicalDataErasureVerified: false,
     inventoryReadable,
     checks,
     skipped,
     unsupported,
     fixtures,
     failures,
-    qualification: "unverified",
-    snapshotCleanup: "not-verified",
+    qualification:
+      checksPassed && cleanupVerified ? "smoke-passed" : "unverified",
+    snapshotCleanup:
+      fixtures.length === 0
+        ? "not-created"
+        : cleanupVerified
+          ? "covered-by-native-deletion"
+          : "unverified",
   };
 }

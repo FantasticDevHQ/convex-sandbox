@@ -305,3 +305,54 @@ test("restart retains an unresolved creation even without a native ID", async (t
     },
   ]);
 });
+
+test("native deletion proof records the audited contract without upgrading legacy completion", async (t) => {
+  const { inventory, file } = await fixture(t);
+  const first = inventory.reserve(approval().accountId, "create");
+  inventory.created(first, "owned-one");
+  const second = inventory.reserve(approval().accountId, "create");
+  inventory.created(second, "owned-two");
+  inventory.deleting("owned-one");
+  inventory.deletionAccepted("owned-one", "delete-one");
+  inventory.deleted("owned-one", "delete-one");
+  inventory.deleting("owned-two");
+  inventory.deletionAccepted("owned-two", "delete-two");
+  assert.equal(typeof inventory.nativeDeletionVerified, "function");
+  assert.throws(
+    () => inventory.nativeDeletionVerified("owned-two", "wrong-job"),
+    /job/,
+  );
+  inventory.nativeDeletionVerified("owned-two", "delete-two");
+  const rows = readInventory(file).creations;
+  assert.equal(rows[0].cleanup, "vm-deleted-snapshots-unverified");
+  assert.equal(rows[0].cleanupContract, undefined);
+  assert.equal(rows[1].cleanup, "native-deletion-completed");
+  assert.equal(
+    rows[1].cleanupContract,
+    "sha256:9f2abcf0735ba6230fba1b40ac9a11fe9022348997152821f3b99a1f7c2421fc",
+  );
+  const { inventoryCleanupComplete } =
+    await import("../../scripts/boat/live-guard.mjs");
+  assert.equal(inventoryCleanupComplete(rows), false);
+  assert.equal(inventoryCleanupComplete([rows[1]]), true);
+});
+
+test("unknown contract digest cannot promote a journal to native cleanup completion", async (t) => {
+  const { file, inventory } = await fixture(t);
+  const intent = inventory.reserve(approval().accountId, "create");
+  inventory.created(intent, "owned-one");
+  inventory.deleting("owned-one");
+  inventory.deletionAccepted("owned-one", "delete-one");
+  inventory.nativeDeletionVerified("owned-one", "delete-one");
+  inventory.close();
+  const { writeFile } = await import("node:fs/promises");
+  const original = await readFile(file, "utf8");
+  await writeFile(
+    file,
+    original.replace(
+      '"contract":"sha256:9f2abcf0735ba6230fba1b40ac9a11fe9022348997152821f3b99a1f7c2421fc"',
+      '"contract":"sha256:unknown"',
+    ),
+  );
+  assert.throws(() => readInventory(file), /cleanup remains unresolved/);
+});
