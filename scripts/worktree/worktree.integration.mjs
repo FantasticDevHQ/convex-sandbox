@@ -232,6 +232,9 @@ test(
       stored: true, unknown: true, once: true,
     });
     console.log("PASS: Boat detached commands persist history identities; ambiguous starts never replay on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLogProof:encoding", {}, true), { utf8: true, boundaryReread: true });
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLogProof:accept", {}, true), { cached: true, repeatedRead: true, cancellationUnsupported: true });
+    console.log("PASS: Boat history logs append once across polls; PID-only cancellation remains unsupported on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
@@ -361,6 +364,9 @@ test(
     assert.deepEqual(await componentRpc(roots[0], "boatExecutionProof:complete", {}, true), { completed: true, unknown: true, readOnly: true });
     assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-execution-proof", key: "known" }, operationId: "known" })).state, "running");
     console.log("PASS: Boat command history reconciles after restart with one GET, no replay, and no sibling state crossover");
+    assert.deepEqual(await componentRpc(roots[0], "boatLogProof:complete", {}, true), { noDuplicates: true, resumedOffsets: true, notCompletion: true, finishedLogs: true });
+    assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-log-proof", key: "machine" }, operationId: "command" })).outputBytes, 9);
+    console.log("PASS: Boat log cursors resume after restart without duplicate bytes or sibling crossover; log completion does not imply process exit");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
     assert.equal(cachedExecution.state, "completed");

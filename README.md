@@ -14,8 +14,9 @@ The `0.1.0-rc.0` baseline candidate is experimental, remains private and is
 The playground uses a simulated provider: no real VM, shell or compute runs.
 An [experimental Boat entry](docs/boat/setup.md) supports safe `create` and
 `describe`, stop, disk resume and asynchronous deletion through shared claims and
-server-owned configuration, plus durable detached command history. Other Boat
-operations and live qualification remain pending.
+server-owned configuration, plus durable detached command history and bounded
+logs. PID-only command cancellation remains unsupported. Other Boat operations
+and live qualification remain pending.
 
 ## Run the playground
 
