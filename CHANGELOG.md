@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added
+
+- Experimental optional server-only Boat observation adapter with explicit account
+  configuration, abort/deadline/response bounds and safe errors. Provisioning and
+  other Boat operations remain unsupported pending their integration work.
+
 ## [0.1.0-rc.0] - 2026-11-03
 
 Prepared release candidate; not published to npm. The package remains private

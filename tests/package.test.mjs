@@ -40,11 +40,25 @@ test("server helpers fail browser imports while Convex resolution remains availa
   assert.equal(convex.status, 0, convex.stderr);
 });
 
+test("Boat entry resolves on the server and fails browser imports", async () => {
+  const { createBoatProvider } = await import("@fantastic.dev/convex-sandbox/boat");
+  assert.equal(typeof createBoatProvider, "function");
+  for (const convex of [false, true]) {
+    const result = spawnSync(process.execPath, [
+      "--conditions=browser", ...(convex ? ["--conditions=convex"] : []),
+      "--input-type=module", "-e",
+      "await import('@fantastic.dev/convex-sandbox/boat')",
+    ], { encoding: "utf8" });
+    if (convex) assert.equal(result.status, 0, result.stderr);
+    else { assert.notEqual(result.status, 0); assert.match(result.stderr, /server-only/); }
+  }
+});
+
 test("core and testing entry graphs do not load React or test-runner runtime dependencies", () => {
   const code = `
     import { registerHooks } from "node:module";
     registerHooks({ resolve(specifier, context, next) {
-      if (/^(react(?:$|\\/)|react-dom(?:$|\\/)|vitest(?:$|\\/)|convex-test(?:$|\\/))/.test(specifier)) throw new Error("Forbidden runtime dependency");
+      if (/^(@boatdev\\/sdk(?:$|\\/)|react(?:$|\\/)|react-dom(?:$|\\/)|vitest(?:$|\\/)|convex-test(?:$|\\/))/.test(specifier)) throw new Error("Forbidden runtime dependency");
       const result = next(specifier, context);
       if (process.argv[2] === "core" && result.url.includes("/dist/testing/")) throw new Error("Core loaded test fixtures");
       return result;

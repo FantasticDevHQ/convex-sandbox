@@ -9,8 +9,9 @@ Source review date: 2026-11-04.
 Use official `@boatdev/sdk` low-level `BoatApi` methods in a separate server-only
 optional adapter entry. Inject host-owned fetch and account configuration, forward
 the shared call's abort signal, and exclude middleware that retries requests.
-Keep the SDK out of the core runtime dependency graph. The development dependency
-in this change exists only for the compatibility probe.
+Keep the SDK out of the core runtime dependency graph. It is an optional peer
+for the [experimental observation entry](setup.md), with a development pin for
+the compatibility probe. Core consumers need no Boat dependency or credentials.
 
 Keep the shared component's registry, claims, authorization boundary, deadlines,
 operation history and reconciliation. Do not mount `@boatdev/convex` inside it.

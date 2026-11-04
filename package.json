@@ -35,7 +35,8 @@
   },
   "peerDependencies": {
     "convex": "^1.49.0",
-    "convex-test": "^0.0.66"
+    "convex-test": "^0.0.66",
+    "@boatdev/sdk": "1.13.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
@@ -85,10 +86,19 @@
       "convex": "./dist/server/index.js",
       "browser": "./dist/server/browser.js",
       "default": "./dist/server/index.js"
+    },
+    "./boat": {
+      "types": "./dist/boat/index.d.ts",
+      "convex": "./dist/boat/index.js",
+      "browser": "./dist/boat/browser.js",
+      "default": "./dist/boat/index.js"
     }
   },
   "peerDependenciesMeta": {
     "convex-test": {
+      "optional": true
+    },
+    "@boatdev/sdk": {
       "optional": true
     }
   },
