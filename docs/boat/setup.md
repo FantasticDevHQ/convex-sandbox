@@ -1,5 +1,9 @@
 # Experimental Boat adapter
 
+For a compiled, authenticated consumer wrapper and a dated capability matrix,
+start with the [Boat host guide](guide.md). This page records detailed native
+semantics and configuration limits.
+
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
 `create`, `describe`, `start`, `stop`, `delete`, detached `execute` and
 `executionLogs`, plus bounded `readFile`, `writeFile`, `listFiles` and `deleteFile`.

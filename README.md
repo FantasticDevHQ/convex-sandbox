@@ -18,6 +18,8 @@ server-owned configuration, plus durable detached command history and bounded
 logs, bounded inline files, native fork readiness and a source-scoped template
 catalog. PID-only command cancellation and unbounded direct file transfers remain
 unsupported. Other Boat operations and live qualification remain pending.
+The [authenticated Boat host guide](docs/boat/guide.md) includes a compiled read-only
+consumer wrapper and a dated capability matrix.
 
 ## Run the playground
 

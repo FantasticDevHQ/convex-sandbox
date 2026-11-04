@@ -29,7 +29,7 @@
     "codegen": "node scripts/check-codegen.mjs",
     "test:codegen": "node --test tests/codegen.test.mjs",
     "codegen:check": "node scripts/check-codegen.mjs --check",
-    "test:docs": "node --test --test-concurrency=1 tests/docs.test.mjs",
+    "test:docs": "node --test --test-concurrency=1 tests/docs.test.mjs tests/boat/docs.test.mjs",
     "test:release": "node --test --test-concurrency=1 tests/release.test.mjs",
     "release:candidate": "pnpm build:lib && node scripts/release/candidate.mjs"
   },
