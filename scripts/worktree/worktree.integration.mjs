@@ -211,6 +211,10 @@ test(
       abortForwarded: true, lostReplyNotRetried: true, httpErrorsNotRetried: true,
     });
     console.log("PASS: pinned Boat SDK bundles and runs in anonymous Convex V8 with synthetic fetch, abort propagation and no mutation replay");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:transport", {}, true), {
+      projection: true, accountScoped: true, aborted: true, noRawErrors: true,
+    });
+    console.log("PASS: optional public Boat adapter entry projects observations, scopes the account and handles aborts without leaking raw errors on both anonymous backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
