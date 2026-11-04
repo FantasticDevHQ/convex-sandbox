@@ -7,7 +7,8 @@ The baseline wraps sandbox APIs behind common typed contracts. It does not choos
 The [transport decision and capability audit](boat/decision.md) selects the official
 SDK's low-level API with injected fetch, subject to an anonymous Convex runtime
 gate. An [experimental server-only entry](boat/setup.md) implements `create` and
-`describe`, stop, disk resume and asynchronous deletion through shared claims;
+`describe`, stop, disk resume and asynchronous deletion through shared claims, plus detached commands and bounded history logs. PID-only
+cancellation remains explicitly unsupported;
 other operations and live qualification remain pending.
 
 Wrap existing Boat APIs and audit its existing Convex component before designing replacements:

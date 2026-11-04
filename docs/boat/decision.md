@@ -122,9 +122,9 @@ after its adapter and qualification exist. Paths refer to the pinned OpenAPI;
 | `start` | `POST /sandboxes/{id}/resume`; observe readiness separately. |
 | `stop` | `POST /sandboxes/{id}/stop`, stop status and sandbox observation; preserve pending state. |
 | `delete` | `DELETE /sandboxes/{id}` with `X-Ascii-Confirm-Delete`, then deletion-operation and sandbox status. Acceptance is not completion. |
-| `execute` | `POST /sandboxes/{id}/commands`, `detached: true`; retain native process/command IDs. Validate shell/argv translation. |
-| `cancelExecution` | `DELETE /sandboxes/{id}/commands/{processId}`; acknowledgement is separate from confirmed exit. |
-| `executionLogs` | Command status byte/next offsets; history/log endpoints for durable IDs. Old agents can return `agent_outdated`; no fabricated gap-free cursor. |
+| `execute` | `POST /sandboxes/{id}/commands`, `detached: true`; persist the native durable command ID, never PID as handle. Explicit shell text and literal argv translation; unsupported inputs rejected. |
+| `cancelExecution` | PID-only `DELETE /sandboxes/{id}/commands/{processId}` has no command-ID/generation precondition. Explicitly unsupported to avoid PID-reuse races; no acknowledgement or exit is fabricated. |
+| `executionLogs` | Implemented experimental durable history/log offsets with bounded base64 reads, identity-bound cursors and UTF-8 boundary handling. No PID tail fallback or fabricated cursor after missing offsets/conflicts such as `agent_outdated`. |
 | `readFile` | `GET /sandboxes/{id}/files`; audit byte/encoding bounds before enabling arbitrary offset reads. No shell fallback. |
 | `writeFile` | `PUT /sandboxes/{id}/files`; bounded native content/encoding after host path policy. |
 | `listFiles` | `GET /sandboxes/{id}/files/list`; no native cursor in this spec. Bound response bytes, disclose partial results or reject unsupported pagination. |

@@ -5,6 +5,7 @@ import type {
   ExecutionAdapter,
   ExecutionSnapshot,
 } from "../execution.js";
+import { createBoatLogs } from "./logs.js";
 import { decode, identity, invalid, object } from "./protocol.js";
 import type { createBoatTransport } from "./transport.js";
 
@@ -66,6 +67,7 @@ export function createBoatExecution(
 ): ExecutionAdapter {
   return {
     idempotency: "none",
+    logs: createBoatLogs(transport),
     async start(providerId, input, context) {
       identity(providerId);
       const commandRequestBody = commandRequest(input);

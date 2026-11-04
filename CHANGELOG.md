@@ -18,7 +18,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   resume and asynchronous deletion use shared lifecycle jobs with restart recovery.
   Detached commands use durable history IDs, literal argv translation and read-only
   reconciliation; ambiguous starts never redispatch. Per-command env and runtime
-  timeouts are explicitly unsupported. Other Boat operations and live qualification remain pending.
+  timeouts are explicitly unsupported. Bounded history logs persist native byte
+  offsets with UTF-8 boundary handling and explicit gaps. PID-only cancellation
+  remains unsupported because the API lacks an atomic command identity guard.
+  Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 

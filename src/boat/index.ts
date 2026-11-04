@@ -19,7 +19,15 @@ export function createBoatProvider(options: BoatOptions) {
     createIdempotency: "native",
     capabilities: defineCapabilities({
       version: 1,
-      supported: ["create", "describe", "start", "stop", "delete", "execute"],
+      supported: [
+        "create",
+        "describe",
+        "start",
+        "stop",
+        "delete",
+        "execute",
+        "executionLogs",
+      ],
       persistence: { diskOnStop: "unknown", memoryOnStop: "discarded" },
     }),
     adapter: {

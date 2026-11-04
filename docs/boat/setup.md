@@ -1,7 +1,8 @@
 # Experimental Boat adapter
 
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
-`create`, `describe`, `start`, `stop`, `delete` and detached `execute`. Files, images and
+`create`, `describe`, `start`, `stop`, `delete`, detached `execute` and
+`executionLogs`. Files, images and
 connections remain unsupported. It is not a live-qualified provider release.
 The playground continues to use the simulator.
 
@@ -162,7 +163,49 @@ states and missing exit codes remain unknown. Missing/expired history is stale,
 not completion; native retention or disabled monitoring can remove history.
 Command identity persists across host restart, but VM stop/restart ends processes
 and does not resume command execution. Status projects no command text or output.
-Logs and cancellation remain unsupported pending their separate integration.
+See the bounded history-log support and cancellation limitation below.
+
+## History logs and cancellation limits
+
+Call shared `execution.syncLogs(handle)` to cache a bounded page, then authorized
+`execution.logs` to read it. Output is potentially sensitive; use the protected
+host wrappers and the existing output authorization policy. Command status does
+not implicitly fetch output. The history route reads stdout and stderr by durable
+command ID even while the VM is stopped; running detached output can lag by about
+30 seconds. Stream order is preserved within each stream, without claiming a
+combined chronological ordering.
+
+Each call makes at most two GETs within one five-second deadline. It requests
+base64 with a byte limit, verifies command/stream/offset/size and byte counts,
+and advances a versioned, identity-bound cursor in the existing shared store.
+Offsets survive action and backend restart. No PID lookup or tail fallback is
+used. Retries after a failed page reread from the last committed cursor; output
+and offsets are published together only after both reads succeed. A conflict such
+as agent_outdated remains an explicit log error, with no output/cursor advance.
+The status-only error policy does not expose the native error-body subcode.
+Missing offset fields also fail validation rather than inventing append cursors.
+
+UTF-8 suffixes split at a read boundary are left at their native byte position
+for the next read. Only complete characters are emitted until the stream is done;
+invalid terminal bytes are replaced and flagged truncated. A provider retention
+gap marks truncation. Backward offsets are rejected. The cursor contains only an
+identity digest and two offsets, with no output, environment or credentials.
+Native base64 bytes are exact; the text cache is a bounded UTF-8 view, not a binary
+archive. BOM characters are preserved, including at page boundaries.
+
+A page reads at most 1024 native bytes per stream. Decoded replacement expansion
+is budgeted before reading, yielding at most two entries of at most 3072 UTF-8
+bytes each. Low-level callers must request 2–16 entries and 24–16384 bytes; the
+shared client uses 16 and 16384. The existing shared cache retains at most 64 KiB
+and 32 chunks, then marks output truncated. Page completion means both log streams
+are drained and ended, independently of execution state or cancellation.
+
+Cancellation remains explicitly unsupported. The audited API accepts only a PID
+and has no atomic command-ID or generation precondition. A history check followed
+by DELETE would still risk stopping an unrelated process after PID reuse. The
+adapter does not advertise cancelExecution, issue DELETE, or fabricate an
+acknowledgement or final state. Generic acknowledgement-versus-completion handling
+remains unchanged for providers that can cancel safely.
 
 ## Transport bounds and errors
 
@@ -218,3 +261,6 @@ See the [source and capability decision](decision.md) before adding operations.
 
 `boatExecutionProof` persists known and lost detached starts, then reconciles in
 a new action after restart without POST or sibling-backend state crossover.
+
+`boatLogProof` caches history output, then resumes native offsets after backend
+restart without duplicated bytes, sibling changes or an inferred process exit.
