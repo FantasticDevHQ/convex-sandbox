@@ -14,8 +14,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 - Experimental optional server-only Boat adapter with shared-claim creation,
   safe private guest defaults, explicit account configuration, bounded stable
-  native keys, abort/deadline/response bounds and safe errors. Start/stop/delete
-  and other Boat operations remain unsupported pending their integration work.
+  native keys, abort/deadline/response bounds and safe errors. Native stop, disk
+  resume and asynchronous deletion use shared lifecycle jobs with restart recovery.
+  Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 

@@ -1,8 +1,8 @@
 # Experimental Boat adapter
 
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
-`create` and `describe`. Start/stop/delete, commands, files, images and connections
-remain unsupported. It is not a live-qualified provider release.
+`create`, `describe`, `start`, `stop` and `delete`. Commands, files, images and
+connections remain unsupported. It is not a live-qualified provider release.
 The playground continues to use the simulator.
 
 Install the exact audited SDK alongside the component when using this entry:
@@ -97,7 +97,40 @@ another creation attempt. Restart recovery relies on the shared persistent store
 not adapter memory. Native IDs acquired before a crash can still require operator
 recovery if their binding was not persisted.
 
-## Bounds and errors
+## Stop, resume and deletion
+
+Use shared `lifecycle.run` and bounded `lifecycle.reconcile` for mutations. Stop
+calls the native stop endpoint with `force: false`; there is no forced-stop option
+or fallback to delete. Pending/failing stops remain transitional. The raw SDK
+response is used because SDK 1.13.0's action model omits a top-level stop handle;
+both top-level and nested stop IDs are validated, and conflicting IDs are rejected.
+Accepted handles are persisted before further status reads. Historical completed
+or superseded stops are checked against the current VM, so an externally resumed
+machine is not reported stopped from an old job alone.
+
+Start calls Boat's disk resume endpoint, preserves the current native size and
+requests the host-configured auto-stop deadline. It sends `noEnv: true`: Boat can
+scrub inherited owner secrets from a restored machine, a one-way native safety
+setting. This entry targets no-env guests; authorize imported bindings with that
+behavior in mind. It does not replace per-sandbox env or select another account
+environment. Request acceptance remains starting until a later readiness read.
+
+Stop ends running processes and discards RAM. Normal native stop saves disk, but
+snapshot/retention/account settings affect recovery. Capabilities therefore report
+`memoryOnStop: "discarded"` and `diskOnStop: "unknown"`, with no retention SLA.
+Memory suspend/resume is unsupported. Auto-stop remains a deadline, not inactivity
+detection, and no preservation claim follows merely from a successful stop.
+
+Delete sends `X-Ascii-Confirm-Delete` for the bound VM and stores the returned job
+ID in the shared operation. Pending, processing and blocked deletion remain
+unfinished even though sandbox lookup may already return 404. Only the native
+job's completed status, matching both job ID and sandbox target/kind, permits a
+deletion observation and retained tombstone. Read-only reconciliation works after
+restart without repeating DELETE. A missing job, lost reply or malformed response
+remains unknown; 404 alone is never completion. Saved snapshots can remain
+independent of sandbox deletion under Boat's native policy.
+
+## Transport bounds and errors
 
 - Each adapter call has a five-second deadline, even when used directly without
   a shared lifecycle client. Caller aborts reach the HTTP signal and response
@@ -142,5 +175,9 @@ concurrent claims, safe creation and missing-lookup recovery beyond key expiry.
 `boatProbe:provision` exercises the public factory and store bridge on both
 anonymous backends with synthetic HTTP. These internal qualification fixtures
 expect a fresh disposable backend; they do not operate existing Boat machines.
+
+`boatLifecycleProof` covers native stop, resume and pending deletion with the
+shared store, then confirms deletion in a new action after backend restart. All
+HTTP replies are synthetic; no account key or billable resource is needed.
 
 See the [source and capability decision](decision.md) before adding operations.
