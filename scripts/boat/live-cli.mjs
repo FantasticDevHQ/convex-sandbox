@@ -1,6 +1,11 @@
 // Explicit maintainer command. Read-only modes never load the SDK or read keys.
 import { readFileSync, lstatSync } from "node:fs";
-import { validateApproval, readInventory } from "./live-guard.mjs";
+import {
+  validateApproval,
+  readInventory,
+  inventoryCleanupComplete,
+  BOAT_CLEANUP_SCOPE,
+} from "./live-guard.mjs";
 
 const args = process.argv.slice(2);
 const [mode, file, inventoryPath, flag, acknowledgedRun] = args;
@@ -25,13 +30,17 @@ try {
     });
   } else if (mode === "--report" && args.length === 2) {
     const state = readInventory(file);
+    const cleanupVerified = inventoryCleanupComplete(state.creations);
     print({
       runId: state.approval.runId,
+      cleanupVerified,
+      cleanupScope: BOAT_CLEANUP_SCOPE,
+      physicalDataErasureVerified: false,
       fixtures: state.creations,
       qualification: "unverified",
       readOnly: true,
     });
-    process.exitCode = state.creations.length ? 2 : 0;
+    process.exitCode = cleanupVerified ? 0 : 2;
   } else if (
     mode === "--live" &&
     args.length === 5 &&

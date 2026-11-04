@@ -10,6 +10,12 @@ import {
 } from "node:fs";
 import path from "node:path";
 
+// Pinned OpenAPI audit: deleteSandbox includes its snapshots and content records.
+export const BOAT_DELETION_CONTRACT =
+  "sha256:9f2abcf0735ba6230fba1b40ac9a11fe9022348997152821f3b99a1f7c2421fc";
+export const BOAT_CLEANUP_SCOPE =
+  "owned-native-sandboxes-snapshots-and-content-records";
+
 const fields = [
   "version",
   "runId",
@@ -126,14 +132,22 @@ function apply(state, event) {
       )
         fail("Invalid deletion job");
       item.deletionJobId = event.jobId;
-    } else if (event.type === "deleted") {
+    } else if (
+      event.type === "deleted" ||
+      event.type === "nativeDeletionVerified"
+    ) {
       if (
         item.cleanup !== "pending" ||
         !id(event.jobId) ||
         item.deletionJobId !== event.jobId
       )
         fail("Unverified deletion job");
-      item.cleanup = "vm-deleted-snapshots-unverified";
+      if (event.type === "nativeDeletionVerified") {
+        if (event.contract !== BOAT_DELETION_CONTRACT)
+          fail("Unknown deletion contract");
+        item.cleanup = "native-deletion-completed";
+        item.cleanupContract = event.contract;
+      } else item.cleanup = "vm-deleted-snapshots-unverified";
     } else fail("Invalid inventory event");
   }
   return next;
@@ -233,6 +247,16 @@ export function createInventory(file, rawApproval, clock = Date.now) {
     deleted(providerId, jobId) {
       record({ type: "deleted", providerId, jobId });
     },
+    // Caller must verify the native sandbox job ID, target and completed status.
+    // This records the audited resource-deletion contract, not physical erasure.
+    nativeDeletionVerified(providerId, jobId) {
+      record({
+        type: "nativeDeletionVerified",
+        providerId,
+        jobId,
+        contract: BOAT_DELETION_CONTRACT,
+      });
+    },
     close,
   };
 }
@@ -256,4 +280,19 @@ export function readInventory(file) {
   } catch {
     fail("Inventory unreadable or invalid; cleanup remains unresolved");
   }
+}
+
+/** Recorded native-resource completion only. Legacy and ambiguous rows stay unresolved. */
+export function inventoryCleanupComplete(creations) {
+  return (
+    Array.isArray(creations) &&
+    creations.every(
+      (item) =>
+        item &&
+        id(item.providerId) &&
+        id(item.deletionJobId) &&
+        item.cleanup === "native-deletion-completed" &&
+        item.cleanupContract === BOAT_DELETION_CONTRACT,
+    )
+  );
 }
