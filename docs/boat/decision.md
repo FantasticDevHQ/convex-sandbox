@@ -130,12 +130,12 @@ after its adapter and qualification exist. Paths refer to the pinned OpenAPI;
 | `listFiles` | Native one-level listing, at most 100 projected entries; explicit partial without cursor, supplied pagination unsupported. |
 | `deleteFile` | Native nonrecursive DELETE after host path policy, confirmed by matching successful path. |
 | `transferFile` | Explicitly unsupported: native download/upload URLs expire but have no enforced byte bound. Do not mint a handle or invent maxBytes metadata. |
-| `listTemplates` | `GET /saved-snapshots`; native names/IDs and readiness. Audit catalog bounds and permissions. |
-| `createTemplate` | `POST /saved-snapshots`, poll `GET /saved-snapshots/{name}`; host-controlled name, asynchronous readiness and replacement semantics. |
+| `listTemplates` | Implemented bounded saved-name catalog scoped to the bound source ID; native mutable names and explicit readiness, no invented pagination. |
+| `createTemplate` | Unsupported: replaceable native names lack an immutable save-job/generation ID while saving; name polling alone cannot correlate the original capture. |
 | `createFromTemplate` | `POST /sandboxes` with native `from`; new physical identity and explicit safe environment policy. |
-| `fork` | `POST /sandboxes/{id}/fork`; new physical identity, no automatic destination binding. |
+| `fork` | Implemented native POST with finite TTL, noEnv and empty env; persist child identity, read-only readiness, no automatic destination binding. |
 | `restore` | Unsupported. `recover` power-cycles, not restore of a chosen image into the existing machine. Create-from-image changes identity. |
-| `snapshotDisk` | Candidate: native saved snapshot plus readiness polling, only if stable artifact identity and shared disk-snapshot semantics hold. Background capture alone is not an explicit snapshot operation. |
+| `snapshotDisk` | Unsupported: saved capture lacks immutable in-flight job correlation, and background/stop capture is not an explicit snapshot operation. |
 | `suspendMemory` | Unsupported; reviewed stop/resume does not preserve process RAM. |
 | `resumeMemory` | Unsupported; never substitute disk resume. |
 | `getConnection` | Initially unsupported. Desktop, port hosting and SSH exist, but reviewed endpoints do not establish the short enforced expiry the common contract requires. Audit each kind separately. No native browser connection mapping established. |

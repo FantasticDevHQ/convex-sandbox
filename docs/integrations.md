@@ -7,7 +7,7 @@ The baseline wraps sandbox APIs behind common typed contracts. It does not choos
 The [transport decision and capability audit](boat/decision.md) selects the official
 SDK's low-level API with injected fetch, subject to an anonymous Convex runtime
 gate. An [experimental server-only entry](boat/setup.md) implements `create` and
-`describe`, stop, disk resume and asynchronous deletion through shared claims, plus detached commands, bounded history logs and inline files. PID-only
+`describe`, stop, disk resume and asynchronous deletion through shared claims, plus detached commands, bounded history logs, inline files, native forks and a source-scoped saved template catalog. PID-only
 cancellation and unbounded native file-transfer URLs remain explicitly unsupported;
 other operations and live qualification remain pending.
 

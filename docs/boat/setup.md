@@ -3,7 +3,9 @@
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
 `create`, `describe`, `start`, `stop`, `delete`, detached `execute` and
 `executionLogs`, plus bounded `readFile`, `writeFile`, `listFiles` and `deleteFile`.
-Direct transfers, images and connections remain unsupported. It is not a live-qualified provider release.
+Native `fork` and source-scoped `listTemplates` are also available. Direct transfers,
+image capture/restore and connections remain unsupported.
+It is not a live-qualified provider release.
 The playground continues to use the simulator.
 
 Install the exact audited SDK alongside the component when using this entry:
@@ -253,6 +255,58 @@ metadata cannot constrain an upload or a changed download. The adapter mints no
 URLs, proxies no content, adds no bucket/storage sync, and leaves the common
 contract unchanged. There is no supported bearer handle to persist or expose.
 
+## Forks and saved template catalog
+
+Use the shared `providers.images(createImageStore(ctx, components.sandbox))`
+client after host authorization. A fork uses the native fork API with a bounded,
+stable digest of the shared image-operation key in Idempotency-Key. It sends
+noEnv: true, env: {} and the configured finite ttlSeconds. This avoids inherited
+account keys and per-sandbox environment variables, but a fork still copies source
+disk data and inherits native settings such as machine size and monitoring.
+Authorize that native copy and its resulting compute/storage costs explicitly in
+your host policy. The adapter does not run an agent or rewrite guest files.
+
+The returned child sandbox ID is persisted immediately in a versioned native
+image-job handle, bound to the source ID, before any readiness read. A later
+status action reads that child only. Starting states remain pending; running
+states confirm a ready result with the new physical provider reference. Native
+error states fail the fork; missing, stopped or unknown states retain uncertainty.
+The initial 202 is never treated as ready. Source and child identities must be
+different, and reply identities must match. No source registry rebinding or
+automatic destination binding occurs; the host owns destination authorization,
+registration and orphan cleanup. A fork's disk readiness implies no RAM restore.
+
+A lost or malformed initial reply remains unknown with no inferred find lookup
+or repeated POST, even though Boat supports native fork idempotency. A crash
+between acquiring and publishing the child identity can still need operator
+recovery. Shared operation retention and native idempotency windows are not an
+unlimited exactly-once guarantee. Restart recovery reads the persisted child ID,
+not adapter process memory or a name/list scan.
+
+`listTemplates` calls the native saved-snapshot catalog and exposes only entries
+whose sourceSandboxId matches the authorized bound VM. The host must still
+authorize listing; this is not a provider-global catalog for arbitrary consumers.
+References retain the native saved name and kind template. These names are
+mutable: re-saving replaces the artifact. A reference does not pin an immutable
+artifact, guarantee retention, or enable createFromTemplate in this entry.
+Saving maps to pending, failed to failed, and ready requires a valid native
+snapshotId. Missing artifacts or future statuses remain unknown. URLs, error
+text, account allowance and other sources' entries are omitted.
+
+The catalog is capped at 100 projected entries, bounded by the HTTP response
+limit. Native saved-snapshot listing has no pagination: clipping is partial with
+nextCursor null, and supplied cursors fail unsupported before HTTP. It can fail
+on a large account response rather than fabricate a gap-free continuation.
+
+snapshotDisk and createTemplate mutations remain unsupported. The audited saved
+capture API can replace a name and provides no immutable capture-job/generation
+ID while saving. A name alone, or the undocumented generation semantics of its
+createdAt, cannot establish that the original request completed after replacement.
+Background/stop disk captures are not substituted for explicit snapshotDisk.
+Restore also remains unsupported: recover power-cycles the VM, and creating from
+an image changes physical identity. The adapter performs neither substitute and
+adds no artifact deletion, retention policy or cross-provider portability claim.
+
 ## Transport bounds and errors
 
 - Each adapter call has a five-second deadline, even when used directly without
@@ -314,3 +368,7 @@ restart without duplicated bytes, sibling changes or an inferred process exit.
 `boatFileProof` runs the public factory and shared file-store bridge with synthetic
 HTTP on both anonymous/packed hosts, including full 64 KiB binary encoding, UTF-8
 partials, denied paths, list filtering, nonrecursive delete and transfer rejection.
+
+`boatImageProof` persists a pending child identity and checks source-scoped
+catalog readiness, then confirms the child in a new action after backend restart
+without another fork POST, source rebinding or sibling state changes.

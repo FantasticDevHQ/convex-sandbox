@@ -7,6 +7,7 @@ import { projectBoatObservation } from "./observation.js";
 import { nativeCreateKey, provisionConfiguration } from "./provision.js";
 import { createBoatFiles, BOAT_INLINE_FILE_LIMIT } from "./files.js";
 import { createBoatExecution } from "./execution.js";
+import { createBoatImages } from "./images.js";
 import { createBoatLifecycle } from "./lifecycle.js";
 
 export type { BoatOptions, BoatMachineType } from "./options.js";
@@ -32,11 +33,14 @@ export function createBoatProvider(options: BoatOptions) {
         "writeFile",
         "listFiles",
         "deleteFile",
+        "fork",
+        "listTemplates",
       ],
       limits: { maxFileBytes: BOAT_INLINE_FILE_LIMIT },
       persistence: { diskOnStop: "unknown", memoryOnStop: "discarded" },
     }),
     adapter: {
+      images: createBoatImages(transport, configuration.ttlSeconds),
       files: createBoatFiles(transport),
       execution: createBoatExecution(transport),
       ...createBoatLifecycle(transport, configuration.ttlSeconds),

@@ -23,7 +23,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   remains unsupported because the API lacks an atomic command identity guard.
   Native inline files use a 64 KiB byte bound, host path policy, nonrecursive
   deletion and explicit partial directory listings. Unbounded native transfer
-  URLs remain unsupported. Other Boat operations and live qualification remain pending.
+  URLs remain unsupported. Native forks retain new physical IDs and reconcile
+  readiness after restart; the bounded saved-template catalog preserves mutable
+  names and source-scoped readiness. Capture mutations and in-place restore remain
+  unsupported where native job identity or semantics cannot be preserved. Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 
