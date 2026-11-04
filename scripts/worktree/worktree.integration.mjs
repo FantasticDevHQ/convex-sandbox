@@ -235,6 +235,8 @@ test(
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLogProof:encoding", {}, true), { utf8: true, boundaryReread: true });
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatLogProof:accept", {}, true), { cached: true, repeatedRead: true, cancellationUnsupported: true });
     console.log("PASS: Boat history logs append once across polls; PID-only cancellation remains unsupported on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatFileProof:runtime", {}, true), { binary: true, utf8: true, bounded: true, denied: true, listPartial: true, deleted: true, transfersUnsupported: true, registrySafe: true });
+    console.log("PASS: Boat native files preserve bounded binary/UTF-8, enforce host path policy and reject unbounded transfer URLs on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {

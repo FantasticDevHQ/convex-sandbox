@@ -15,7 +15,8 @@ The playground uses a simulated provider: no real VM, shell or compute runs.
 An [experimental Boat entry](docs/boat/setup.md) supports safe `create` and
 `describe`, stop, disk resume and asynchronous deletion through shared claims and
 server-owned configuration, plus durable detached command history and bounded
-logs. PID-only command cancellation remains unsupported. Other Boat operations
+logs and bounded inline files. PID-only command cancellation and unbounded direct
+file transfers remain unsupported. Other Boat operations
 and live qualification remain pending.
 
 ## Run the playground

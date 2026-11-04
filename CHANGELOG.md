@@ -21,7 +21,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
   timeouts are explicitly unsupported. Bounded history logs persist native byte
   offsets with UTF-8 boundary handling and explicit gaps. PID-only cancellation
   remains unsupported because the API lacks an atomic command identity guard.
-  Other Boat operations and live qualification remain pending.
+  Native inline files use a 64 KiB byte bound, host path policy, nonrecursive
+  deletion and explicit partial directory listings. Unbounded native transfer
+  URLs remain unsupported. Other Boat operations and live qualification remain pending.
 
 ## [0.1.0-rc.0] - 2026-11-03
 

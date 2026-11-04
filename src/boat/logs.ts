@@ -1,4 +1,5 @@
 import type { ExecutionAdapter, ProviderLogPage } from "../execution.js";
+import { decodeBase64 } from "./encoding.js";
 import { decode, identity, invalid } from "./protocol.js";
 import type { createBoatTransport } from "./transport.js";
 
@@ -120,24 +121,12 @@ export function createBoatLogs(
           reply.nextOffset < reply.offset ||
           reply.nextOffset > reply.size ||
           typeof reply.done !== "boolean" ||
-          (reply.done && reply.nextOffset !== reply.size) ||
-          typeof reply.data !== "string" ||
-          reply.data.length > 4 * Math.ceil(limit / 3) ||
-          !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
-            reply.data,
-          )
+          (reply.done && reply.nextOffset !== reply.size)
         )
           throw invalid("read");
-        const binary = atob(reply.data);
-        if (
-          btoa(binary) !== reply.data ||
-          binary.length > limit ||
-          reply.nextOffset - reply.offset !== binary.length
-        )
+        const bytes = decodeBase64(reply.data, limit, "read");
+        if (reply.nextOffset - reply.offset !== bytes.length)
           throw invalid("read");
-        const bytes = Uint8Array.from(binary, (character) =>
-          character.charCodeAt(0),
-        );
         const consumed = reply.done ? bytes.length : prefixLength(bytes);
         const prefix = bytes.subarray(0, consumed);
         let text: string;

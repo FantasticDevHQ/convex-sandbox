@@ -2,8 +2,8 @@
 
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
 `create`, `describe`, `start`, `stop`, `delete`, detached `execute` and
-`executionLogs`. Files, images and
-connections remain unsupported. It is not a live-qualified provider release.
+`executionLogs`, plus bounded `readFile`, `writeFile`, `listFiles` and `deleteFile`.
+Direct transfers, images and connections remain unsupported. It is not a live-qualified provider release.
 The playground continues to use the simulator.
 
 Install the exact audited SDK alongside the component when using this entry:
@@ -207,6 +207,52 @@ adapter does not advertise cancelExecution, issue DELETE, or fabricate an
 acknowledgement or final state. Generic acknowledgement-versus-completion handling
 remains unchanged for providers that can cancel safely.
 
+## Bounded inline files
+
+Use `providers.files` with `createFileStore(ctx, components.sandbox)` and a
+mandatory host authorizePath policy, as shown in [the file contract](../files.md).
+The shared client authorizes the sandbox and path before HTTP dispatch, checks
+bindings before returning, and applies the policy to each listed child. Calling
+the low-level adapter bypasses host authorization; keep it inside trusted code.
+The adapter also requires canonical absolute paths under `/home/user` or `/tmp`.
+Boat retains its own canonicalized-path restrictions. A narrower host policy is
+lexical and does not establish a symlink jail inside those provider roots; use
+native guest permissions/isolation for that boundary. Returned paths must match
+the requested path or listed child, otherwise the result fails conservatively.
+
+This entry declares limits.maxFileBytes as 65536 bytes for inline files. Native
+Boat allows 5 MiB, but the smaller adapter limit fits its bounded JSON transport.
+Read requests always use native base64 and fetch a whole file, validate its exact
+size/encoding, then slice the requested offset and maxBytes locally. This is not
+native ranged streaming. Every continuation reads the file again and can observe
+changes; no snapshot consistency is promised. Files above 64 KiB are rejected
+rather than represented as successfully clipped whole-file reads. A very large
+reply can hit the existing 1 MiB HTTP-body limit before its file size is decoded.
+Offsets past EOF are rejected; at EOF a complete empty read is valid. Shared text
+reads preserve BOM and UTF-8 partial-character boundaries.
+
+Writes send exact base64 bytes and require successful matching path/encoding/size
+before reporting complete. Lost or malformed mutation replies remain unknown,
+with no automatic retries or file-operation deduplication guarantee. File data
+and operation keys are not persisted in component records. Delete is native and
+nonrecursive; deleting the provider roots is rejected. Symlink deletion follows
+Boat's native semantics, deleting the link rather than its target.
+
+Listing requests one native directory, with at most 100 projected entries. Boat
+has no native pagination cursor. If the native response is truncated, has more
+entries than requested, or host policy filters children, partial is true and
+nextCursor is null. Supplied cursors fail unsupported before HTTP; callers can
+request a narrower directory rather than assume another page exists. The native
+listing and the HTTP response remain bounded; an oversized response fails rather
+than creating a fake continuation.
+
+Direct transferFile and both upload/download directions remain unsupported.
+Boat's path-bound signed GET/PUT URLs have native expiry but explicitly no size
+limit. The common contract requires an enforced byte bound; inventing maxBytes
+metadata cannot constrain an upload or a changed download. The adapter mints no
+URLs, proxies no content, adds no bucket/storage sync, and leaves the common
+contract unchanged. There is no supported bearer handle to persist or expose.
+
 ## Transport bounds and errors
 
 - Each adapter call has a five-second deadline, even when used directly without
@@ -264,3 +310,7 @@ a new action after restart without POST or sibling-backend state crossover.
 
 `boatLogProof` caches history output, then resumes native offsets after backend
 restart without duplicated bytes, sibling changes or an inferred process exit.
+
+`boatFileProof` runs the public factory and shared file-store bridge with synthetic
+HTTP on both anonymous/packed hosts, including full 64 KiB binary encoding, UTF-8
+partials, denied paths, list filtering, nonrecursive delete and transfer rejection.
