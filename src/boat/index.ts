@@ -1,36 +1,58 @@
 import { registerProvider } from "../client/providers.js";
 import { defineCapabilities } from "../capabilities.js";
-import type { SandboxState } from "../contracts.js";
 import { SandboxProviderError } from "../client/errors.js";
-import {
-  createBoatTransport,
-  hasControlCharacters,
-  type BoatOptions,
-} from "./transport.js";
+import { createBoatTransport, hasControlCharacters } from "./transport.js";
+import type { BoatOptions } from "./options.js";
+import { projectBoatObservation } from "./observation.js";
+import { nativeCreateKey, provisionConfiguration } from "./provision.js";
 
-export type { BoatOptions } from "./transport.js";
+export type { BoatOptions, BoatMachineType } from "./options.js";
 
-const states: Record<string, SandboxState> = {
-  init: "starting",
-  provisioning: "starting",
-  provisioned: "starting",
-  cloning: "starting",
-  ready: "running",
-  idle: "running",
-  running: "running",
-  archiving: "stopping",
-  archived: "stopped",
-  error: "error",
-  cancelled: "error",
-};
-
-/** Construct inside a trusted host action. This initial entry supports observation only. */
+/** Construct inside a trusted host action. Use shared lifecycle clients for claims. */
 export function createBoatProvider(options: BoatOptions) {
   const transport = createBoatTransport(options);
+  const configuration = provisionConfiguration(options);
   return registerProvider({
     name: "boat",
-    capabilities: defineCapabilities({ version: 1, supported: ["describe"] }),
+    createIdempotency: "native",
+    capabilities: defineCapabilities({
+      version: 1,
+      supported: ["create", "describe"],
+    }),
     adapter: {
+      async create(request, context) {
+        if (
+          request.templateId !== undefined ||
+          (request.resources && Object.keys(request.resources).length)
+        ) {
+          throw new SandboxProviderError({
+            code: "unsupported",
+            capability: "create",
+            outcome: "not_started",
+            retryable: false,
+          });
+        }
+        return transport.call("write", context, async (api, init) => {
+          const idempotencyKey = await nativeCreateKey(context.idempotencyKey);
+          return projectBoatObservation(
+            api.create(
+              {
+                org: configuration.org,
+                idempotencyKey,
+                createSandboxRequest: {
+                  type: configuration.machineType,
+                  ttlSeconds: configuration.ttlSeconds,
+                  noEnv: true,
+                  snapshots: true,
+                  visibility: "private",
+                },
+              },
+              init,
+            ),
+            "write",
+          );
+        });
+      },
       async describe(id, context) {
         if (
           typeof id !== "string" ||
@@ -44,36 +66,9 @@ export function createBoatProvider(options: BoatOptions) {
             retryable: false,
           });
         }
-        return transport.call("read", context, async (api, init) => {
-          const result = await api
-            .get({ sandboxId: id }, init)
-            .catch((error) => {
-              if (error instanceof SyntaxError)
-                throw new SandboxProviderError({
-                  code: "validation",
-                  outcome: "failed",
-                  retryable: false,
-                });
-              throw error;
-            });
-          if (
-            result?.ok !== true ||
-            result.sandbox?.id !== id ||
-            typeof result.sandbox.state !== "string"
-          ) {
-            throw new SandboxProviderError({
-              code: "validation",
-              outcome: "failed",
-              retryable: false,
-            });
-          }
-          return {
-            providerId: id,
-            state: Object.hasOwn(states, result.sandbox.state)
-              ? states[result.sandbox.state]
-              : "unknown",
-          };
-        });
+        return transport.call("read", context, (api, init) =>
+          projectBoatObservation(api.get({ sandboxId: id }, init), "read", id),
+        );
       },
     },
   });

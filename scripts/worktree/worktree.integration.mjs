@@ -215,6 +215,11 @@ test(
       projection: true, accountScoped: true, aborted: true, noRawErrors: true,
     });
     console.log("PASS: optional public Boat adapter entry projects observations, scopes the account and handles aborts without leaking raw errors on both anonymous backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:provision", {}, true), {
+      createdOnce: true, safeDefaults: true, stableKey: true,
+      pendingThenReady: true, unknownNotReplayed: true, resourcesProjected: true,
+    });
+    console.log("PASS: Boat provisioning uses shared claims, safe guest defaults and bounded stable keys; lost replies remain unknown without a repeated POST on both anonymous backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
@@ -315,6 +320,18 @@ test(
       "Repeated setup must preserve managed configuration",
     );
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
+    const boatBinding = await componentRpc(roots[0], "registry:get", {
+      sandbox: { scope: "boat-provision-proof", key: "created" },
+    });
+    assert.equal(boatBinding.reference.providerId, "synthetic-boat-machine");
+    assert.equal(boatBinding.observedState, "running");
+    assert.deepEqual(boatBinding.resources, { cpuCount: 2 });
+    const boatUnknown = await componentRpc(roots[0], "lifecycle:getProvision", {
+      sandbox: { scope: "boat-provision-proof", key: "lost" },
+    });
+    assert.equal(boatUnknown.status, "unknown");
+    assert.equal(boatUnknown.idempotency, "native");
+    console.log("PASS: Boat native binding and unknown creation survive anonymous backend restart in the shared component");
     const commandHandle = { sandbox: { scope: "internal-fixture", key: "execution-proof" }, operationId: "command" };
     const cachedExecution = await componentRpc(roots[0], "execution:get", commandHandle);
     assert.equal(cachedExecution.state, "completed");

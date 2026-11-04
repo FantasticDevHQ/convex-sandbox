@@ -8,9 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
-- Experimental optional server-only Boat observation adapter with explicit account
-  configuration, abort/deadline/response bounds and safe errors. Provisioning and
-  other Boat operations remain unsupported pending their integration work.
+- Experimental optional server-only Boat adapter with shared-claim creation,
+  safe private guest defaults, explicit account configuration, bounded stable
+  native keys, abort/deadline/response bounds and safe errors. Start/stop/delete
+  and other Boat operations remain unsupported pending their integration work.
 
 ## [0.1.0-rc.0] - 2026-11-03
 
