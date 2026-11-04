@@ -125,11 +125,11 @@ after its adapter and qualification exist. Paths refer to the pinned OpenAPI;
 | `execute` | `POST /sandboxes/{id}/commands`, `detached: true`; persist the native durable command ID, never PID as handle. Explicit shell text and literal argv translation; unsupported inputs rejected. |
 | `cancelExecution` | PID-only `DELETE /sandboxes/{id}/commands/{processId}` has no command-ID/generation precondition. Explicitly unsupported to avoid PID-reuse races; no acknowledgement or exit is fabricated. |
 | `executionLogs` | Implemented experimental durable history/log offsets with bounded base64 reads, identity-bound cursors and UTF-8 boundary handling. No PID tail fallback or fabricated cursor after missing offsets/conflicts such as `agent_outdated`. |
-| `readFile` | `GET /sandboxes/{id}/files`; audit byte/encoding bounds before enabling arbitrary offset reads. No shell fallback. |
-| `writeFile` | `PUT /sandboxes/{id}/files`; bounded native content/encoding after host path policy. |
-| `listFiles` | `GET /sandboxes/{id}/files/list`; no native cursor in this spec. Bound response bytes, disclose partial results or reject unsupported pagination. |
-| `deleteFile` | `DELETE /sandboxes/{id}/files`; explicit native file operation after path policy. |
-| `transferFile` | Native `files/download-url` and `files/upload-url`; enable only after validating direction, enforced byte cap and expiry. |
+| `readFile` | Native whole-file base64 read, capped at 64 KiB by this adapter; local bounded offset slicing, no native Range or shell fallback. |
+| `writeFile` | Native base64 PUT capped at 64 KiB, after host path policy; validate returned path/encoding/size. |
+| `listFiles` | Native one-level listing, at most 100 projected entries; explicit partial without cursor, supplied pagination unsupported. |
+| `deleteFile` | Native nonrecursive DELETE after host path policy, confirmed by matching successful path. |
+| `transferFile` | Explicitly unsupported: native download/upload URLs expire but have no enforced byte bound. Do not mint a handle or invent maxBytes metadata. |
 | `listTemplates` | `GET /saved-snapshots`; native names/IDs and readiness. Audit catalog bounds and permissions. |
 | `createTemplate` | `POST /saved-snapshots`, poll `GET /saved-snapshots/{name}`; host-controlled name, asynchronous readiness and replacement semantics. |
 | `createFromTemplate` | `POST /sandboxes` with native `from`; new physical identity and explicit safe environment policy. |
