@@ -239,6 +239,8 @@ test(
     console.log("PASS: Boat native files preserve bounded binary/UTF-8, enforce host path policy and reject unbounded transfer URLs on both backends");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatImageProof:accept", {}, true), { pending: true, singleFork: true, catalogPending: true, safeInputs: true, unsupportedRestore: true });
     console.log("PASS: Boat forks persist child identities with safe env/TTL; saved template catalog stays source-scoped and pending on both backends");
+    for (const root of roots) assert.deepEqual(await componentRpc(root, "boatConnectionProof:runtime", {}, true), { unsupportedKinds: true, noAccessDispatch: true, observationSafe: true, recordsSafe: true });
+    console.log("PASS: Boat connection kinds fail before native access setup; secret-bearing observations never enter shared records on both backends");
     execFileSync(process.execPath, ["scripts/check-codegen.mjs", "--check"], {
       cwd: roots[0],
       env: {
