@@ -66,6 +66,7 @@ export function fakeBoatHTTP(approval, options = {}) {
       machines.set(id, {
         state: options.neverReady ? "provisioning" : "ready",
         files: new Map(),
+        guestFailures: options.guestFailures ?? 0,
       });
       options.acceptedCreate?.();
       return json({ sandbox: { id, state: machines.get(id).state } });
@@ -79,7 +80,11 @@ export function fakeBoatHTTP(approval, options = {}) {
       assert.deepEqual(body.env, {});
       if (options.lostFork) throw new Error("synthetic-private-key-and-body");
       const child = `owned-${++number}`;
-      machines.set(child, { state: "ready", files: new Map(machine.files) });
+      machines.set(child, {
+        state: "ready",
+        files: new Map(machine.files),
+        guestFailures: options.forkGuestFailures ?? 0,
+      });
       return json({ id: child, sandbox: { id: child, state: "provisioning" } });
     }
     if (p[2] === "stop") {
@@ -134,6 +139,10 @@ export function fakeBoatHTTP(approval, options = {}) {
       assert.ok(
         target === "/tmp" || target === `/tmp/csb-live-${approval.runId}.txt`,
       );
+      if (machine.guestFailures > 0) {
+        if (p[3] === "list") machine.guestFailures--;
+        return json({ private: "synthetic-private-agent-not-ready" }, 503);
+      }
       if (options.failFiles)
         return json({ private: "synthetic-private-key-and-body" }, 403);
       if (p[3] === "list")

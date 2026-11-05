@@ -146,6 +146,7 @@ for (const signal of ["SIGINT", "SIGTERM", "SIGKILL"]) {
           return json({operation:{id:'synthetic-delete-job',kind:'sandbox',targetId:'synthetic-owned-vm',status:'completed'}});
         }
         if (p === '/api/v1/sandboxes/synthetic-owned-vm') return json({sandbox:{id:'synthetic-owned-vm',state:'ready'}});
+        if (p === '/api/v1/sandboxes/synthetic-owned-vm/files/list') return json({success:true,path:'/tmp',files:[],truncated:false});
         if (p === '/api/v1/sandboxes/synthetic-owned-vm/files' && init.method === 'PUT') {
           process.kill(process.pid, ${JSON.stringify(signal)});
           await new Promise((resolve) => setTimeout(resolve, 20));
