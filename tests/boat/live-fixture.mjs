@@ -167,7 +167,7 @@ export function fakeBoatHTTP(approval, options = {}) {
       const bytes = machine.files.get(target);
       return json({
         success: true,
-        path: target,
+        path: `../..${target}`,
         encoding: "base64",
         size: bytes.length,
         ...(method === "GET" ? { content: bytes.toString("base64") } : {}),
