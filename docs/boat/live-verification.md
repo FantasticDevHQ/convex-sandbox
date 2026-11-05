@@ -148,6 +148,14 @@ The reviewed estimate must allow up to two starts for one-machine mode or three
 starts for two-machine mode, including resume. It must account for storage and
 unresolved charges. This runner neither quotes prices nor enforces a dollar cap.
 
+A VM running observation is not proof that its guest file service is available.
+Before the parent's first file write and the fork's file read, the runner probes
+the owned machine's `/tmp` directory through the bounded read-only file API. It
+retries only normalized timeout, capacity, rate-limit or unknown-outcome read
+failures, within the same work deadline and at most 30 attempts. Permission and
+validation errors stop immediately. This never retries a file write or another
+mutation. `guestReadinessRetries` reports the number of transient reads.
+
 Ordinary status polls have at most 30 reads each. Log retrieval has at most eight
 bounded pages and retains at most 4096 bytes of the generated sentinel output in
 memory. It never emits raw command output, account profiles, API error text or
@@ -170,7 +178,8 @@ maintainer tool and its tests.
 
 The final JSON report lists every recorded creation intent, confirmed native VM
 ID, accepted deletion job and unresolved cleanup state. It projects fixed failure
-stages rather than retaining exceptions or native bodies. If writing a confirmed
+stages and, when available, a validated normalized `errorCode`, rather than
+retaining exceptions, provider-code strings or native bodies. If writing a confirmed
 ID fails, the current process retains that ID in its final report and stops native
 work when the inventory refuses subsequent transitions. A crash between receiving
 a reply and recording it can still lose that reply. A lost creation reply with no

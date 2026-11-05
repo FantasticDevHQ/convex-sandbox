@@ -299,3 +299,38 @@ test("smoke creates no independent snapshot artifacts and deletes only its two o
     ],
   );
 });
+
+test("VM-ready observation waits for guest file readiness before any write", async (t) => {
+  const f = await fixture(t, { guestFailures: 2, forkGuestFailures: 1 });
+  const report = await f.run();
+  assert.equal(report.checksPassed, true, JSON.stringify(report));
+  const writeAt = f.calls.findIndex((c) => c.method === "PUT");
+  assert.equal(
+    f.calls
+      .slice(0, writeAt)
+      .filter((c) => c.p[1] === "owned-1" && c.p[3] === "list").length,
+    3,
+  );
+  assert.equal(f.calls.filter((c) => c.method === "PUT").length, 1);
+  assert.equal(report.guestReadinessRetries, 3);
+  assert.equal(report.cleanupVerified, true);
+});
+
+test("guest readiness exhaustion dispatches no file writes and still cleans the owned VM", async (t) => {
+  const f = await fixture(t, { guestFailures: 100 });
+  const report = await f.run();
+  assert.equal(report.checksPassed, false);
+  assert.equal(f.calls.filter((c) => c.method === "PUT").length, 0);
+  assert.equal(f.calls.filter((c) => c.p[3] === "list").length, 30);
+  assert.equal(report.cleanupVerified, true);
+});
+
+test("terminal guest permission errors are reported safely without retries", async (t) => {
+  const f = await fixture(t, { failFiles: true });
+  const report = await f.run();
+  assert.equal(report.failures[0].stage, "guest-file-readiness");
+  assert.equal(report.failures[0].errorCode, "authorization");
+  assert.equal(f.calls.filter((c) => c.p[3] === "list").length, 1);
+  assert.equal(f.calls.filter((c) => c.method === "PUT").length, 0);
+  assert.doesNotMatch(JSON.stringify(report), /synthetic-private/);
+});

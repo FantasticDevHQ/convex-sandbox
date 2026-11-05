@@ -3,6 +3,7 @@ import path from "node:path";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
+import { SandboxProviderError } from "@fantastic.dev/convex-sandbox";
 import { createBoatProvider } from "@fantastic.dev/convex-sandbox/boat";
 import { createBoatTransport } from "../../dist/boat/transport.js";
 import {
@@ -69,7 +70,8 @@ export async function runLive({
   let stage = "preflight",
     adapter,
     checksPassed = false,
-    lastNow = startedAt;
+    lastNow = startedAt,
+    guestReadinessRetries = 0;
   function context(key, signal = workSignal, lifecycleJob) {
     return {
       idempotencyKey: key,
@@ -97,6 +99,35 @@ export async function runLive({
       if (index + 1 < attempts) await pause(signal);
     }
     throw new Error("Live polling exhausted");
+  }
+  async function guestFileReady(providerId) {
+    await poll(
+      () =>
+        work("guest-file-readiness", async () => {
+          try {
+            await adapter.files.list(
+              providerId,
+              "/tmp",
+              { cursor: null, maxEntries: 1 },
+              context("guest-file-readiness"),
+            );
+            return true;
+          } catch (error) {
+            if (
+              error instanceof SandboxProviderError &&
+              ["timeout", "capacity", "rate_limit", "unknown_outcome"].includes(
+                error.data.code,
+              )
+            ) {
+              guestReadinessRetries++;
+              return false;
+            }
+            throw error;
+          }
+        }),
+      (ready) => ready,
+      workSignal,
+    );
   }
   function reserve(kind, parentId) {
     const intentId = inventory.reserve(approval.accountId, kind, parentId);
@@ -173,6 +204,8 @@ export async function runLive({
       workSignal,
     );
     checks.push("create-and-describe");
+    await guestFileReady(machine);
+    checks.push("guest-file-readiness");
     const file = `/tmp/csb-live-${approval.runId}.txt`;
     const bytes = new TextEncoder().encode(`csb-live:${approval.runId}\n`);
     const write = await work("file-write", () =>
@@ -303,6 +336,8 @@ export async function runLive({
           result.result.machine?.providerId === child.id,
         workSignal,
       );
+      await guestFileReady(child.id);
+      checks.push("fork-guest-file-readiness");
       await readFile(child.id);
       checks.push("fork-file-copy");
     } else skipped.push("fork-budget");
@@ -335,8 +370,14 @@ export async function runLive({
     );
     checks.push("stop-and-resume");
     checksPassed = true;
-  } catch {
-    failures.push({ stage, reason: "verification-failed" });
+  } catch (error) {
+    failures.push({
+      stage,
+      reason: "verification-failed",
+      ...(error instanceof SandboxProviderError
+        ? { errorCode: error.data.code }
+        : {}),
+    });
   } finally {
     clearTimeout(workTimer);
     controller.abort();
@@ -422,6 +463,7 @@ export async function runLive({
     cleanupScope: BOAT_CLEANUP_SCOPE,
     physicalDataErasureVerified: false,
     inventoryReadable,
+    guestReadinessRetries,
     checks,
     skipped,
     unsupported,
