@@ -14,7 +14,7 @@ const context = () => ({
   idempotencyKey: "synthetic-file-operation",
   signal: new AbortController().signal,
 });
-async function fixture() {
+async function fixture(policyRoot = "/tmp/project") {
   const calls: Array<{ url: URL; init: RequestInit }> = [];
   const state = {
     data: Buffer.from([0, 255, 1, 10]),
@@ -22,6 +22,8 @@ async function fixture() {
     truncated: false,
     deny: "",
     lost: false,
+    relativeReadWrite: false,
+    echo: undefined as unknown,
     files: [
       { name: "file.bin", path, isDir: false, isSymlink: false, size: 4 },
       {
@@ -61,6 +63,17 @@ async function fixture() {
           size: state.data.length,
           content: state.data.toString("base64"),
         };
+      if (
+        state.relativeReadWrite &&
+        !u.pathname.endsWith("/list") &&
+        init.method !== "DELETE" &&
+        typeof requestedPath === "string"
+      ) {
+        reply.path = requestedPath.startsWith("/tmp/")
+          ? `../..${requestedPath}`
+          : requestedPath.slice("/home/user/".length);
+      }
+      if (state.echo !== undefined) reply.path = state.echo;
       if (state.corrupt === "path") reply.path = "/tmp/foreign";
       if (state.corrupt === "size") reply.size = state.data.length + 1;
       if (state.corrupt === "encoding") reply.encoding = "utf8";
@@ -78,8 +91,7 @@ async function fixture() {
       t,
       c,
       ({ path: requested }) =>
-        (requested === "/tmp/project" ||
-          requested.startsWith("/tmp/project/")) &&
+        (requested === policyRoot || requested.startsWith(`${policyRoot}/`)) &&
         requested !== state.deny,
     );
   await t.mutation(c.registry.ensure, {
@@ -281,10 +293,78 @@ test("provider roots and canonical path syntax are enforced even through the low
     "/tmp/../etc",
     "/tmp/%2e%2e/secret",
     "relative",
+    "../../tmp/project/file.bin",
     "/tmp/a\\b",
   ])
     await expect(
       read("file-vm", denied, { offset: 0, maxBytes: 4 }, context()),
     ).rejects.toMatchObject({ data: { outcome: "not_started" } });
   expect(f.calls).toHaveLength(0);
+});
+
+test.each(["/tmp/project", "/home/user/project"])(
+  "read/write accept only the exact workdir-relative echo for %s without changing requests",
+  async (root) => {
+    const f = await fixture(root),
+      requested = `${root}/file.bin`;
+    f.state.relativeReadWrite = true;
+    const read = await f.client.read({ sandbox, path: requested });
+    expect([...new Uint8Array(read.data)]).toEqual([0, 255, 1, 10]);
+    expect(
+      await f.client.write({
+        sandbox,
+        path: requested,
+        operationId: "relative-write",
+        data: new Uint8Array([1, 2]).buffer,
+      }),
+    ).toEqual({ bytesWritten: 2, partial: false });
+    expect(f.calls[0].url.searchParams.get("path")).toBe(requested);
+    expect(JSON.parse(String(f.calls[1].init.body)).path).toBe(requested);
+  },
+);
+
+test.each([
+  ["/tmp/project", "tmp/project/file.bin"],
+  ["/tmp/project", "../../../tmp/project/file.bin"],
+  ["/tmp/project", "../../tmp/project/other.bin"],
+  ["/tmp/project", "../../tmp/project/../project/file.bin"],
+  ["/tmp/project", "../../tmp/project/%2e%2e/file.bin"],
+  ["/tmp/project", "/tmp/project/../project/file.bin"],
+  ["/tmp/project", "https://example.invalid/file.bin"],
+  ["/tmp/project", "..\\..\\tmp\\project\\file.bin"],
+  ["/home/user/project", "../../tmp/project/file.bin"],
+  ["/home/user/project", "../user/project/file.bin"],
+])(
+  "foreign or noncanonical file echo is rejected: %s / %s",
+  async (root, echo) => {
+    const f = await fixture(root),
+      requested = `${root}/file.bin`;
+    f.state.echo = echo;
+    await expect(
+      f.client.read({ sandbox, path: requested }),
+    ).rejects.toMatchObject({ data: { code: "validation" } });
+    await expect(
+      f.client.write({
+        sandbox,
+        path: requested,
+        operationId: "wrong-echo",
+        data: new ArrayBuffer(0),
+      }),
+    ).rejects.toMatchObject({
+      data: { code: "validation", outcome: "unknown" },
+    });
+    expect(f.calls).toHaveLength(2);
+  },
+);
+
+test("list and delete keep their absolute echo requirement", async () => {
+  const f = await fixture();
+  f.state.echo = "../../tmp/project";
+  await expect(
+    f.client.list({ sandbox, path: "/tmp/project" }),
+  ).rejects.toMatchObject({ data: { code: "validation" } });
+  f.state.echo = "../../tmp/project/file.bin";
+  await expect(
+    f.client.delete({ sandbox, path, operationId: "relative-delete" }),
+  ).rejects.toMatchObject({ data: { code: "validation", outcome: "unknown" } });
 });

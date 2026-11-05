@@ -42,8 +42,22 @@ function confirmed(
   reply: Record<string, unknown>,
   path: string,
   effect: Effect,
+  allowWorkdirRelative = false,
 ) {
-  if (reply.success !== true || reply.path !== path) throw invalid(effect);
+  // Native reads/writes can echo a path relative to the documented /home/user.
+  // Accept only the one exact equivalent spelling, never arbitrary traversal.
+  const relative = !allowWorkdirRelative
+    ? undefined
+    : path.startsWith("/tmp/")
+      ? `../..${path}`
+      : path.startsWith("/home/user/")
+        ? path.slice("/home/user/".length)
+        : undefined;
+  if (
+    reply.success !== true ||
+    (reply.path !== path && (relative === undefined || reply.path !== relative))
+  )
+    throw invalid(effect);
 }
 
 /** Whole-file native API only. Host wrappers own authorization and path policy. */
@@ -70,7 +84,7 @@ export function createBoatFiles(
           ),
           "read",
         );
-        confirmed(reply, path, "read");
+        confirmed(reply, path, "read", true);
         if (
           reply.encoding !== "base64" ||
           !integer(reply.size) ||
@@ -118,7 +132,7 @@ export function createBoatFiles(
           ),
           "write",
         );
-        confirmed(reply, path, "write");
+        confirmed(reply, path, "write", true);
         if (reply.encoding !== "base64" || reply.size !== bytes.length)
           throw invalid("write");
         return { bytesWritten: bytes.length, complete: true };

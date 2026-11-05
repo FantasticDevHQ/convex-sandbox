@@ -137,6 +137,8 @@ native account ID is a refusal. Archived account machines are not inspected or
 modified; zero active machines is not proof the account has no archived machines.
 Use a dedicated disposable account and do not run another workload concurrently.
 
+File checks use the adapter's [documented read/write response path equivalence](setup.md#bounded-inline-files); request paths remain absolute.
+
 The fixed sequence creates one small private machine with `noEnv: true` and native
 snapshots enabled by the adapter. It checks readiness; writes, reads and lists a
 run-specific file under `/tmp`; runs one finite detached `printf` command and

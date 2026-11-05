@@ -220,7 +220,7 @@ export function boatConformanceFixture(
           await required(files.write)(id, mapped, bytes.buffer, context);
           return json({
             success: true,
-            path,
+            path: `../..${path}`,
             encoding: "base64",
             size: bytes.length,
           });
@@ -242,7 +242,7 @@ export function boatConformanceFixture(
             : new Uint8Array(result.data);
         return json({
           success: true,
-          path,
+          path: `../..${path}`,
           encoding: "base64",
           size: bytes.length,
           content: base64(bytes),

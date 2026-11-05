@@ -359,8 +359,17 @@ the low-level adapter bypasses host authorization; keep it inside trusted code.
 The adapter also requires canonical absolute paths under `/home/user` or `/tmp`.
 Boat retains its own canonicalized-path restrictions. A narrower host policy is
 lexical and does not establish a symlink jail inside those provider roots; use
-native guest permissions/isolation for that boundary. Returned paths must match
-the requested path or listed child, otherwise the result fails conservatively.
+native guest permissions/isolation for that boundary.
+
+Read/write responses may echo the absolute request path or its exact relative
+spelling from Boat's documented `/home/user` work directory. For example,
+`/tmp/example.txt` may be echoed as `../../tmp/example.txt`, and
+`/home/user/project/example.txt` as `project/example.txt`. The adapter computes
+only that one equivalent spelling from the already validated absolute request.
+It does not normalize arbitrary traversal, decode paths or resolve symlinks.
+Relative caller requests remain invalid. List/delete replies and listed child
+paths retain their absolute identity checks. Any unrelated or noncanonical echo
+fails conservatively.
 
 This entry declares limits.maxFileBytes as 65536 bytes for inline files. Native
 Boat allows 5 MiB, but the smaller adapter limit fits its bounded JSON transport.
