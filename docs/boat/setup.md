@@ -23,6 +23,142 @@ imports of the Boat entry fail; the `convex` condition selects its server entry.
 An import guard helps prevent accidental bundling and does not replace application
 authorization or prevent credentials from being exposed by an unsafe host wrapper.
 
+## Store the key in the Convex backend
+
+`BOAT_API_KEY` is a server-side Convex deployment environment variable. A value in
+a shell or local `.env` file is not automatically a backend environment variable.
+Choose the intended development deployment before setting it. Do not select
+production as part of local setup.
+
+In a consumer application's configured Convex project, pass the value through
+stdin from an authorized secret manager to `convex env set BOAT_API_KEY`. Never
+pass the actual key as a command argument. Do not enter it in the interactive
+prompt in a recorded terminal: the pinned CLI masks only the final display, not
+the value while typing. The managed-checkout recipe below demonstrates stdin
+injection without an interactive prompt. Verify names only:
+
+```sh
+pnpm exec convex env list --names-only
+```
+
+Verify only that the variable name exists. `convex env get BOAT_API_KEY` and
+`convex env list --include-values` print secrets, so do not run them in recorded
+terminals or copy their output into tickets, PRs or chat. Convex actions read the
+stored key through `process.env.BOAT_API_KEY`.
+
+### This repository's anonymous worktrees
+
+This example uses checkout-local anonymous backends, not a shared cloud development
+deployment. Start the intended checkout with `pnpm worktree:start` after its normal
+setup. Each checkout has its own backend database and environment. Setting a key
+in one checkout does not configure another checkout or a cloud deployment.
+
+Run the following from that checkout's root, in an authorized terminal with the
+key injected by a secret manager. This 1Password example contains only a reference
+placeholder. Replace the reference with the intended vault/item/field; never put
+the actual value in the command:
+
+```sh
+BOAT_API_KEY='op://VAULT/ITEM/FIELD' op run -- node --input-type=module <<'JS'
+import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import {
+  state,
+  checkConfig,
+  childEnv,
+  cli,
+} from "./scripts/worktree/config.mjs";
+import { ownedRunning } from "./scripts/worktree/processes.mjs";
+import { projectLock } from "./scripts/worktree/registry.mjs";
+import { safe } from "./scripts/worktree/files.mjs";
+import { backend, dir } from "./scripts/worktree/context.mjs";
+
+await projectLock(async () => {
+  const s = await state();
+  await checkConfig(s, true);
+  if (!(await ownedRunning(s)))
+    throw new Error("Start this checkout's owned backend first");
+  const selector = path.join(dir, "convex.env");
+  await safe(selector);
+  const lines = readFileSync(selector, "utf8")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+  if (
+    lines.length !== 1 ||
+    lines[0] !== `CONVEX_DEPLOYMENT=anonymous:${s.deployment}`
+  ) {
+    throw new Error(
+      "Refusing a changed deployment selector or target override",
+    );
+  }
+  const key = process.env.BOAT_API_KEY;
+  if (!key || /\s/.test(key))
+    throw new Error("A nonempty Boat key is required");
+  const env = childEnv(s);
+  delete env.BOAT_API_KEY;
+  const target = ["--env-file", selector];
+  const set = spawnSync(
+    process.execPath,
+    [cli(), "env", "set", "BOAT_API_KEY", ...target],
+    {
+      cwd: backend,
+      env,
+      input: key,
+      encoding: "utf8",
+      timeout: 20000,
+    },
+  );
+  if (set.status !== 0)
+    throw new Error("Backend environment update failed; output suppressed");
+  const names = spawnSync(
+    process.execPath,
+    [cli(), "env", "list", "--names-only", ...target],
+    {
+      cwd: backend,
+      env,
+      encoding: "utf8",
+      timeout: 20000,
+    },
+  );
+  if (
+    names.status !== 0 ||
+    !names.stdout.split(/\r?\n/).some((name) => name.trim() === "BOAT_API_KEY")
+  ) {
+    throw new Error(
+      "Backend environment verification failed; output suppressed",
+    );
+  }
+  console.log(
+    "BOAT_API_KEY is configured in this checkout's backend; value hidden.",
+  );
+});
+JS
+```
+
+The managed child environment, verified anonymous selector and lifecycle lock
+keep the command on the checkout's owned backend. Extra selector entries, including
+cloud/authentication/self-hosted overrides, are refused. The CLI receives the value
+through stdin; its output
+is captured, and the verification requests names only. Keep 1Password commands
+in one authorized terminal session when setting up several values.
+
+The local Convex database stores the environment value. Restrict its state
+directory to the owning account, mode `0700`. Treat ignored backend state as
+sensitive; do not commit, upload or copy it into another worktree.
+`worktree:stop` and teardown preserve backend state. Explicit database cleanup
+removes it, and a new checkout needs its own configuration. Do not add the key to
+`backend.env`, frontend `.env` files, worktree bootstrap configuration or fixtures.
+Never use a `VITE_` or `NEXT_PUBLIC_` prefix for provider credentials.
+
+Saving the variable does not enable live Boat behavior in the simulator playground.
+The authenticated host guide remains an integration example rather than installed
+live endpoints. The standalone Node smoke CLI also needs its own authorized secret
+injection; it does not read Convex deployment variables automatically. Account and
+budget approval for [live verification](live-verification.md) remain separate from
+storing the key.
+
 ## Configure in the trusted host
 
 Construct inside the action after authenticating and authorizing the caller. Read

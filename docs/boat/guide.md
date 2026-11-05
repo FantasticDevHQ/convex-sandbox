@@ -18,6 +18,9 @@ arguments, guest environments, reactive records or logs. The default organizatio
 is personal; select another wallet only through trusted server configuration.
 Core/simulator consumers require neither the SDK nor a provider key.
 
+For server-side key storage and checkout-local setup, see
+[Convex backend environment configuration](setup.md#store-the-key-in-the-convex-backend).
+
 ## Checked read-only consumer example
 
 This complete module reads an existing host-authorized binding. It does not create
