@@ -1,4 +1,5 @@
 import { action, internalMutation, query } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 import { readBoatSetup } from "@fantastic.dev/convex-sandbox/boat";
@@ -34,12 +35,12 @@ export const proposal = query({
 export const approve = action({
   args: { reviewToken: v.string(), acknowledgeRisk: v.literal(true) },
   returns: v.id("liveApprovals"),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Id<"liveApprovals">> => {
     const operator = await requireOperator(ctx);
     const plan = currentPlan(operator.scope, args.reviewToken);
     if (!process.env.BOAT_API_KEY)
       refuse("Boat account configuration is required before approval.");
-    let account;
+    let account: Awaited<ReturnType<typeof readBoatSetup>>;
     try {
       account = await readBoatSetup({
         apiKey: process.env.BOAT_API_KEY,

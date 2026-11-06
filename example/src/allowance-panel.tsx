@@ -14,12 +14,12 @@ export type RunReview = {
   reviewToken: string | null;
   approval: ApprovalSummary | null;
 };
-const dollars = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 4,
-  }).format(value);
+const dollarFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 4,
+});
+const dollars = (value: number) => dollarFormatter.format(value);
 export function AllowancePanel({
   review,
   approve,
