@@ -47,3 +47,11 @@ provisioning approval.
 The [read-only setup guide](../docs/example-setup.md) explains configuration
 presence, explicit wallet selection and the account/limits check. Checking setup
 never approves spending or provisions a machine.
+
+The header offers explicit Simulator and Boat modes. Simulator opens `/playground`;
+Boat opens `/setup` and stays labeled Boat on its workflow routes, including when
+credentials or operator access are missing. Reload and back navigation keep the
+route's mode. A failed Boat check stays a visible Boat failure and never supplies
+simulator data. Ambient Boat configuration cannot turn simulator actions into
+native requests. Host-resolved Boat scopes use `example-boat:` and cannot collide
+with simulator fixture namespaces.

@@ -1271,3 +1271,32 @@ footer span:last-child {
     grid-template-columns: 1fr;
   }
 }
+
+.mode-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.mode-options {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  border: 1px solid #aab69e;
+  border-radius: 6px;
+  background: #e8ecdf;
+}
+.mode-option {
+  padding: 7px 12px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #52604a;
+}
+.mode-option[data-selected="true"] {
+  color: #f7faf2;
+  background: #264a2a;
+}
+.mode-label[data-mode="boat"] .status-dot {
+  background: #a46630;
+  box-shadow: 0 0 0 4px #f1e4d4;
+}
