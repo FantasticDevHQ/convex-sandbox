@@ -85,3 +85,7 @@ Commands now supports [detached execution on an owned machine](../docs/example-c
 The original operation and native history identity survive reload. Inspection
 shows native exit codes and never replays a lost start. Cancellation remains
 unsupported.
+
+Retained Commands views include [bounded stdout/stderr output](../docs/example-logs.md).
+Explicit reads resume the shared native cursor, replace the reactive cache snapshot
+without duplicate bytes, and show truncation. Drained output does not prove exit.

@@ -4,6 +4,7 @@ import { useAction, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { OperatorAccess } from "./operator-access";
 import { CommandsPanel } from "./commands-panel";
+import { ConnectedLogs } from "./logs";
 import { validMachineKey } from "./machine-key";
 function ChooseMachine() {
   const [key, setKey] = useState("");
@@ -85,6 +86,17 @@ export function ConnectedCommands({
             : Promise.resolve(null)
         }
       />
+      {record && (
+        <ConnectedLogs
+          key={JSON.stringify([
+            record.key,
+            record.operationId,
+            record.generation,
+            record.reference,
+          ])}
+          record={record}
+        />
+      )}
       <section className="setup-card">
         <h2>Retained command history</h2>
         <p>
