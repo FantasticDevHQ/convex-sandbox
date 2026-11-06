@@ -1,3 +1,4 @@
+import { OperatorAccess } from "./operator-access";
 import { useState } from "react";
 import brandLogo from "../../assets/brand/logo-mark.svg";
 import { Playground } from "./playground";
@@ -184,24 +185,26 @@ function WorkflowPage({ name }: { name: keyof typeof workflowDescriptions }) {
     <section className="workflow-page">
       <p className="eyebrow">WORKSPACE / {name}</p>
       <h1>{name}</h1>
-      <div className="empty-state">
-        <span className="step">LIVE WORKFLOW NOT CONNECTED</span>
-        <h2>
-          {name === "Setup"
-            ? "Prepare the example"
-            : `No live ${name.toLowerCase()} connected`}
-        </h2>
-        <p>{workflowDescriptions[name]}</p>
-        <p>
-          Use the credential-free simulator for the workflows available today.
-        </p>
-        <Link to="/playground" className="primary-link">
-          Open playground ↗
-        </Link>
-        <Link to="/integration" className="text-link">
-          Read integration setup →
-        </Link>
-      </div>
+      <OperatorAccess>
+        <div className="empty-state">
+          <span className="step">LIVE WORKFLOW NOT CONNECTED</span>
+          <h2>
+            {name === "Setup"
+              ? "Prepare the example"
+              : `No live ${name.toLowerCase()} connected`}
+          </h2>
+          <p>{workflowDescriptions[name]}</p>
+          <p>
+            Use the credential-free simulator for the workflows available today.
+          </p>
+          <Link to="/playground" className="primary-link">
+            Open playground ↗
+          </Link>
+          <Link to="/integration" className="text-link">
+            Read integration setup →
+          </Link>
+        </div>
+      </OperatorAccess>
     </section>
   );
 }
@@ -334,16 +337,18 @@ const machineDetailRoute = createRoute({
         <p className="eyebrow">WORKSPACE / MACHINES</p>
         <h1>Machine details</h1>
         <code>{machineId}</code>
-        <div className="empty-state">
-          <h2>Machine not connected</h2>
-          <p>
-            This URL does not establish ownership or load a live resource.
-            Connect a trusted host to inspect an owned machine.
-          </p>
-          <Link to="/machines" className="text-link">
-            ← Back to machines
-          </Link>
-        </div>
+        <OperatorAccess>
+          <div className="empty-state">
+            <h2>Machine not connected</h2>
+            <p>
+              This URL does not establish ownership or load a live resource.
+              Connect a trusted host to inspect an owned machine.
+            </p>
+            <Link to="/machines" className="text-link">
+              ← Back to machines
+            </Link>
+          </div>
+        </OperatorAccess>
       </section>
     );
   },

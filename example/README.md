@@ -36,3 +36,9 @@ hosted configuration; do not select a personal or unrelated team. See
 [hosted ownership](../docs/development.md#hosted-convex-ownership). Local worktrees
 continue to use isolated anonymous backends. This requirement does not authorize
 production deployment or Boat provisioning.
+
+Live workflow pages now have an operator access gate using Clerk development
+identities verified by Convex and an explicit server-owned issuer/subject policy.
+See [operator setup](../docs/example-auth.md). Missing configuration leaves live
+access locked while the simulator remains available. Signing in grants no
+provisioning approval.

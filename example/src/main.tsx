@@ -1,3 +1,4 @@
+import { OperatorProvider } from "./operator-access";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
@@ -9,7 +10,11 @@ import { backendClient } from "./backend-client";
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing root element");
 
-const app = <RouterProvider router={router} />;
+const app = (
+  <OperatorProvider>
+    <RouterProvider router={router} />
+  </OperatorProvider>
+);
 createRoot(root).render(
   <StrictMode>
     {backendClient ? (

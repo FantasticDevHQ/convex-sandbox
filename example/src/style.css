@@ -1132,3 +1132,72 @@ footer span:last-child {
     padding: 36px 0;
   }
 }
+
+.operator-access {
+  border: 1px solid #aab69e;
+  background: #fcfdf8;
+  border-radius: 8px;
+  padding: 30px;
+  margin: 28px 0;
+}
+.operator-access h2 {
+  font:
+    36px/1.2 Georgia,
+    serif;
+  letter-spacing: -1px;
+  margin: 12px 0;
+}
+.operator-access p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 650px;
+}
+.operator-access .access-lock {
+  color: #75462e;
+  font-weight: 650;
+}
+.operator-access .eyebrow {
+  margin-bottom: 18px;
+}
+.operator-policy {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 28px;
+}
+.operator-policy h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.operator-session {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-block: 1px solid var(--line);
+  padding: 18px 0;
+  margin-top: 28px;
+  font-size: 12px;
+}
+:is(.operator-access, .operator-session) button {
+  cursor: pointer;
+  border: 1px solid #6d805e;
+  border-radius: 5px;
+  background: #e6edda;
+  color: #233e22;
+  padding: 12px 18px;
+  font: inherit;
+}
+:is(.operator-access, .operator-session) button:focus-visible {
+  outline: 3px solid #547d3d;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .operator-access {
+    padding: 20px;
+  }
+  .operator-session {
+    align-items: start;
+    flex-direction: column;
+  }
+}

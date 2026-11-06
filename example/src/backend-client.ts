@@ -13,8 +13,10 @@ function localUrl(value: string | undefined) {
   }
   return null;
 }
-const url = localUrl(import.meta.env.VITE_CONVEX_URL);
-export const backendClient = url ? new ConvexReactClient(url) : null;
+export const backendUrl = localUrl(import.meta.env.VITE_CONVEX_URL);
+export const backendClient = backendUrl
+  ? new ConvexReactClient(backendUrl)
+  : null;
 if (import.meta.hot)
   import.meta.hot.dispose(() => {
     void backendClient?.close();
