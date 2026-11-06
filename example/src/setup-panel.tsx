@@ -113,9 +113,9 @@ export function SetupPanel({
         {pending && <p role="status">Reading account identity and limits…</p>}
         {failed && (
           <p role="alert">
-            Readiness could not be checked. Verify server configuration and
-            account permissions, then retry. Provider errors and credentials are
-            withheld.
+            Boat readiness failed. Readiness could not be checked. Verify server
+            configuration and account permissions, then retry. Provider errors
+            and credentials are withheld.
           </p>
         )}
         {checked && (

@@ -54,6 +54,9 @@ For illustration only, the policy shape is:
 This is a schema example, not an installed grant. Missing, malformed, duplicate
 issuer/subject entries or invalid policy fields deny all operator access. The
 policy supports at most 100 grants, and each string is bounded to 256 characters.
+The host prefixes the configured scope with `example-boat:` before returning or
+using it. Simulator records keep the separate `example-local-fixture-<epoch>`
+namespace, even if a grant accidentally uses that same raw scope string.
 Operator policy and issuer settings are server environment configuration, not
 browser build variables. The response returns only the caller's resolved scope
 and identity, never the policy or provider credentials.

@@ -9,6 +9,7 @@ import {
   createRouter,
   Link,
   Outlet,
+  useMatches,
 } from "@tanstack/react-router";
 
 const navigation = [
@@ -26,6 +27,18 @@ const navigation = [
 
 function Frame() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = useMatches({
+    select: (matches) => matches.at(-1)?.pathname ?? "/",
+  });
+  const boatMode = [
+    "/setup",
+    "/machines",
+    "/commands",
+    "/files",
+    "/forks",
+    "/operations",
+    "/cleanup",
+  ].some((path) => pathname === path || pathname.startsWith(`${path}/`));
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -76,9 +89,36 @@ function Frame() {
       <div className="app-body">
         <header className="app-header">
           <span>Component / Example app</span>
-          <span className="mode-label">
-            <span className="status-dot" /> Simulator · no live provider
-          </span>
+          <section className="mode-controls" aria-label="Mode selection">
+            <div className="mode-options">
+              <Link
+                to="/playground"
+                className="mode-option"
+                aria-label="Simulator mode"
+                data-selected={!boatMode}
+              >
+                Simulator
+              </Link>
+              <Link
+                to="/setup"
+                className="mode-option"
+                aria-label="Boat mode"
+                data-selected={boatMode}
+              >
+                Boat
+              </Link>
+            </div>
+            <span
+              className="mode-label"
+              data-mode={boatMode ? "boat" : "simulation"}
+              aria-live="polite"
+            >
+              <span className="status-dot" />{" "}
+              {boatMode
+                ? "Boat · no simulated fallback"
+                : "Simulator · no live provider"}
+            </span>
+          </section>
         </header>
         <div className="workbench">
           <main id="main-content" tabIndex={-1}>

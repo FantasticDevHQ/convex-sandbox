@@ -57,5 +57,9 @@ export async function requireOperator(
       code: "authorization",
       message: "Operator access is required.",
     });
-  return { issuer: grant.issuer, subject: grant.subject, scope: grant.scope };
+  return {
+    issuer: grant.issuer,
+    subject: grant.subject,
+    scope: `example-boat:${grant.scope}`,
+  };
 }

@@ -36,7 +36,7 @@ test("foreign operator", async () => {
 test("verified grant resolves only server-owned scope", async () => {
   const t = fixture().withIdentity({ issuer, subject: "operator" });
   await expect(t.action(checkAccess, {})).resolves.toEqual({
-    scope: grant.scope,
+    scope: `example-boat:${grant.scope}`,
     subject: grant.subject,
     issuer,
   });
@@ -45,7 +45,7 @@ test("verified grant resolves only server-owned scope", async () => {
   ).rejects.toThrow();
   await expect(t.query(session, {})).resolves.toMatchObject({
     state: "authorized",
-    scope: grant.scope,
+    scope: `example-boat:${grant.scope}`,
     subject: grant.subject,
   });
 });

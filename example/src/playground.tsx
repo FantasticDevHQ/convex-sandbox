@@ -41,8 +41,8 @@ export function Playground({ profile }: { profile?: string }) {
             </code>
           </pre>
           <p>
-            No provider keys or account login required. Live providers are not
-            integrated.
+            No provider keys or account login required. This route runs only
+            synthetic workflows. Boat mode has separate authenticated setup.
           </p>
         </section>
       )}

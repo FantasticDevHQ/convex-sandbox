@@ -11,6 +11,7 @@ export default defineConfig({
         "navigation.spec.ts",
         "auth.spec.ts",
         "setup.spec.ts",
+        "modes.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,
