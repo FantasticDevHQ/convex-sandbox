@@ -64,6 +64,8 @@ export const load = action({
     const page = await providers
       .images(createImageStore(ctx, components.sandbox))
       .listTemplates({ sandbox: resolved.sandbox, cursor: null, limit: 50 });
-    return { page, capabilities: provider.capabilities };
+    const capabilities = provider.capabilities;
+    if (!capabilities) refuse("The provider capability declaration is unavailable.");
+    return { page, capabilities };
   },
 });

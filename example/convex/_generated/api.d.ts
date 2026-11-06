@@ -26,6 +26,7 @@ import type * as live_allowance from "../live/allowance.js";
 import type * as live_allowanceModel from "../live/allowanceModel.js";
 import type * as live_authConfig from "../live/authConfig.js";
 import type * as live_boatHost from "../live/boatHost.js";
+import type * as live_catalog from "../live/catalog.js";
 import type * as live_commands from "../live/commands.js";
 import type * as live_create from "../live/create.js";
 import type * as live_delete from "../live/delete.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   "live/allowanceModel": typeof live_allowanceModel;
   "live/authConfig": typeof live_authConfig;
   "live/boatHost": typeof live_boatHost;
+  "live/catalog": typeof live_catalog;
   "live/commands": typeof live_commands;
   "live/create": typeof live_create;
   "live/delete": typeof live_delete;
