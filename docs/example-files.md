@@ -40,7 +40,10 @@ stay in the mounted editor rather than new reactive storage tables.
 Writes and deletes require a running machine with no unfinished component
 operation, the original reviewed account, and an active approved run. Reads can
 recover authorized home bytes after approval expiry or while the VM is stopped.
-The shared client checks the binding again after native replies. A failed or
+The shared client repeats binding and running/idle checks before dispatch and
+after native replies. File actions do not reserve a lifecycle lease, so these
+checks are not an atomic concurrency guarantee. Avoid concurrent lifecycle work
+from another client while editing. A failed or
 partial write/delete may have changed the guest; the error retains its operation
 ID and path. Inspect that exact path before another change. Refresh and read
 never replay mutations. Files render as plain text.

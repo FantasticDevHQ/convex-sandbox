@@ -34,7 +34,11 @@ function intent(id: string) {
   if (!/^file-[a-zA-Z0-9_-]{1,80}$/.test(id))
     refuse("Keep a valid original file operation identity.");
 }
-async function client(ctx: ActionCtx, input: Target, operation: Exclude<FileOperation, "transferFile">) {
+async function client(
+  ctx: ActionCtx,
+  input: Target,
+  operation: Exclude<FileOperation, "transferFile">,
+) {
   const operator = await requireOperator(ctx);
   const sandbox = { scope: operator.scope, key: input.key };
   const row = await ctx.runQuery(components.sandbox.registry.get, { sandbox });
@@ -63,7 +67,9 @@ async function client(ctx: ActionCtx, input: Target, operation: Exclude<FileOper
           sandbox: key,
         });
         return current?.generation === input.generation &&
-          current.reference.providerId === input.providerId
+          current.reference.providerId === input.providerId &&
+          (!mutable ||
+            (current.observedState === "running" && !current.activeOperationId))
           ? current
           : null;
       },
@@ -103,7 +109,10 @@ export const read = action({
 export const write = action({
   args: { ...file, data: v.bytes(), operationId: v.string() },
   returns: fileWriteValidator,
-  handler: async (ctx, args): Promise<{bytesWritten: number; partial: boolean}> => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ bytesWritten: number; partial: boolean }> => {
     await requireOperator(ctx);
     checkedPath(args.path);
     intent(args.operationId);
@@ -121,7 +130,7 @@ export const write = action({
 export const remove = action({
   args: { ...file, confirmPath: v.string(), operationId: v.string() },
   returns: fileDeleteValidator,
-  handler: async (ctx, args): Promise<{deleted: boolean}> => {
+  handler: async (ctx, args): Promise<{ deleted: boolean }> => {
     await requireOperator(ctx);
     checkedPath(args.path);
     intent(args.operationId);

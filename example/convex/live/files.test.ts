@@ -11,9 +11,11 @@ const path = "/home/user/demo/example.txt";
 const issuer = "https://synthetic.clerk.accounts.dev";
 let calls: Array<{ url: URL; init?: RequestInit }> = [];
 let disk = new Map<string, Uint8Array>();
+let onAccount: (() => Promise<void>) | undefined;
 beforeEach(() => {
   calls = [];
   disk = new Map();
+  onAccount = undefined;
   vi.stubEnv(
     "EXAMPLE_OPERATOR_GRANTS",
     JSON.stringify(
@@ -49,6 +51,11 @@ beforeEach(() => {
         new Response(
           JSON.stringify({ ok: true, ...(value as Record<string, unknown>) }),
         );
+      if (u.pathname.endsWith("/me") && onAccount) {
+        const change = onAccount;
+        onAccount = undefined;
+        await change();
+      }
       if (u.pathname.endsWith("/me"))
         return reply({ ok: true, user: { id: "account" } });
       if (u.pathname.endsWith("/limits"))
@@ -221,4 +228,25 @@ test("expired approval blocks changes while owned read recovery remains availabl
   expect(calls.every((call) => (call.init?.method ?? "GET") === "GET")).toBe(
     true,
   );
+});
+
+test("running admission is rechecked after asynchronous account verification", async () => {
+  const { a, t, c, sandbox } = await fixture();
+  onAccount = async () => {
+    const ticket = await t.mutation(c.registry.beginRefresh, { sandbox });
+    await t.mutation(c.registry.finishRefresh, {
+      sandbox,
+      ...ticket,
+      result: { state: "stopped" },
+    });
+  };
+  await expect(
+    a.action(action("write"), {
+      ...target,
+      path,
+      operationId: "file-stale-state",
+      data: new ArrayBuffer(0),
+    }),
+  ).rejects.toThrow();
+  expect(calls.some((call) => call.init?.method === "PUT")).toBe(false);
 });
