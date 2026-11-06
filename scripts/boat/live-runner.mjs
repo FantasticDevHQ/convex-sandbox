@@ -272,34 +272,37 @@ export async function runLive({
     requireTrue(exit.state === "completed" && exit.exitCode === 0);
     let cursor = null,
       stdout = "",
-      stderr = "",
-      complete = false;
-    for (let index = 0; index < 8; index++) {
-      const page = await work("command-logs", () =>
-        adapter.execution.logs(
-          machine,
-          command.executionId,
-          { cursor, maxBytes: 4096, maxEntries: 2 },
-          context("command-logs"),
-        ),
-      );
-      requireTrue(!page.truncated);
-      for (const entry of page.entries) {
-        if (entry.stream === "stdout") stdout += entry.text;
-        else stderr += entry.text;
-      }
-      requireTrue(
-        Buffer.byteLength(stdout) + Buffer.byteLength(stderr) <= 4096,
-      );
-      if (page.complete) {
-        complete = true;
-        break;
-      }
-      requireTrue(page.nextCursor !== null && page.nextCursor !== cursor);
-      cursor = page.nextCursor;
-    }
-    requireTrue(
-      complete && stdout === `csb-${approval.runId}\n` && stderr === "",
+      stderr = "";
+    const expectedOutput = `csb-${approval.runId}\n`;
+    // Native done only drains current persisted bytes. History already proved
+    // this exact printf exited; wait for its expected bytes, not final log EOF.
+    await poll(
+      async () => {
+        const page = await work("command-logs", () =>
+          adapter.execution.logs(
+            machine,
+            command.executionId,
+            { cursor, maxBytes: 4096, maxEntries: 2 },
+            context("command-logs"),
+          ),
+        );
+        requireTrue(!page.truncated);
+        for (const entry of page.entries) {
+          if (entry.stream === "stdout") stdout += entry.text;
+          else stderr += entry.text;
+        }
+        requireTrue(
+          Buffer.byteLength(stdout) + Buffer.byteLength(stderr) <= 4096 &&
+            expectedOutput.startsWith(stdout) &&
+            stderr === "" &&
+            page.nextCursor !== null,
+        );
+        cursor = page.nextCursor;
+        return stdout === expectedOutput;
+      },
+      (received) => received,
+      workSignal,
+      45,
     );
     checks.push("detached-command-and-logs");
     await work("template-catalog", () =>

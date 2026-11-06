@@ -18,6 +18,7 @@ export default defineConfig({
         "lifecycle.spec.ts",
         "delete.spec.ts",
         "commands.spec.ts",
+        "logs.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,

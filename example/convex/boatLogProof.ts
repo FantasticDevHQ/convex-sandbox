@@ -50,7 +50,7 @@ function client(ctx: ActionCtx, terminal: boolean) {
             size: text.length,
             encoding: "base64",
             data: btoa(data),
-            done: terminal,
+            done: true,
           }),
         );
       },
@@ -106,7 +106,7 @@ export const complete = internalAction({
     noDuplicates: v.boolean(),
     resumedOffsets: v.boolean(),
     notCompletion: v.boolean(),
-    finishedLogs: v.boolean(),
+    cursorReadable: v.boolean(),
   }),
   handler: async (ctx) => {
     const f = client(ctx, true);
@@ -126,11 +126,15 @@ export const complete = internalAction({
           .map((e) => e.text)
           .join("") === "note",
       resumedOffsets:
-        f.calls.length === 2 &&
+        f.calls.length === 4 &&
         f.calls[0].searchParams.get("offset") === "5" &&
         f.calls[1].searchParams.get("offset") === "4",
       notCompletion: record?.state === "running",
-      finishedLogs: f.calls.length === before && logs.truncated === false,
+      cursorReadable:
+        f.calls.length === before + 2 &&
+        f.calls[2].searchParams.get("offset") === "12" &&
+        f.calls[3].searchParams.get("offset") === "4" &&
+        logs.truncated === false,
     };
   },
 });
@@ -194,7 +198,7 @@ export const encoding = internalAction({
           "\ufeff😀" &&
         !first.truncated &&
         !last.truncated &&
-        last.complete,
+        !last.complete,
       boundaryReread: offsets.join(",") === "0,3",
     };
   },

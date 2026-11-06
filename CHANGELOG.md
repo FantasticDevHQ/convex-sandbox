@@ -41,6 +41,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Fixed
 
+- Boat log reads retain their cursor after a currently drained native page, so
+  later detached output remains readable. Incomplete UTF-8 suffixes wait at their
+  original offset instead of being consumed when native `done` is reported.
+
 - Boat deletion acceptance retains its job and stays pending even when the initial
   response reports completed; a separate matching status read confirms deletion.
 

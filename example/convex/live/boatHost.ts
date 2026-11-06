@@ -27,6 +27,7 @@ function accessFor(ctx: Pick<ActionCtx, "auth" | "runQuery">) {
         "execute",
         "executionGet",
         "executionStatus",
+        "executionLogs",
       ].includes(operation),
   });
 }
@@ -42,7 +43,8 @@ export async function ownedBoatClient(
     | "delete"
     | "execute"
     | "executionGet"
-    | "executionStatus",
+    | "executionStatus"
+    | "executionLogs",
   billable = false,
 ) {
   const access = accessFor(ctx);
