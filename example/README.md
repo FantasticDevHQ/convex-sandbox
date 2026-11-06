@@ -29,3 +29,10 @@ The [Boat host guide](../docs/boat/guide.md) contains an authenticated read-only
 consumer backend sample. It is checked documentation, not a mounted live endpoint
 or provider switch in this workbench. The playground remains explicitly simulated
 with missing or ambient Boat configuration and never reads a provider key.
+
+Hosted Convex projects/databases for this example must belong to FantasticDev.
+Verify the actual team slug/ID, existing project and selected deployment before
+hosted configuration; do not select a personal or unrelated team. See
+[hosted ownership](../docs/development.md#hosted-convex-ownership). Local worktrees
+continue to use isolated anonymous backends. This requirement does not authorize
+production deployment or Boat provisioning.

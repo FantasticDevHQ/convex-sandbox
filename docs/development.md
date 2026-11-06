@@ -29,6 +29,24 @@ On a constrained host, serialize installs, tests, codegen and backend integratio
 with the shared heavy-job lock, set `NODE_OPTIONS=--max-old-space-size=512`, and use
 one worker. Run the full check:all command on actual UbiCloud CI.
 
+## Hosted Convex ownership
+
+Any hosted Convex project/database used by the example must belong to the
+FantasticDev team. Before configuring hosted access, verify the actual team
+slug and ID, project identity and selected deployment from authenticated Convex
+metadata. Reuse the correct existing project when present. A display name alone
+is not verification; do not choose a personal or unrelated team.
+
+Record the verified non-secret identities and deployment type in setup evidence.
+Until that check runs, hosted ownership and deployment selection remain
+unverified. This repository currently documents no verified hosted selection.
+Do not copy hosted credentials or deployment state into local worktrees. Local
+development continues through the isolated anonymous lifecycle above.
+
+This ownership requirement authorizes no production deployment, credential
+changes or Boat provisioning. A hosted configuration check does not approve
+billable provider operations.
+
 ## Package and frontend workflow
 
 The library publishes ESM entry points from `dist`: core, component configuration,
