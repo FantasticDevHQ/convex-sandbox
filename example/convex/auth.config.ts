@@ -1,7 +1,9 @@
 import type { AuthConfig } from "convex/server";
 
 // No issuer means no authentication providers, preserving key-free local setup.
-const issuer = process.env.CLERK_JWT_ISSUER_DOMAIN;
+const issuer = Object.hasOwn(process.env, "CLERK_JWT_ISSUER_DOMAIN")
+  ? process.env.CLERK_JWT_ISSUER_DOMAIN
+  : undefined;
 if (issuer) {
   const url = new URL(issuer);
   if (
