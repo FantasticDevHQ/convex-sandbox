@@ -1506,3 +1506,7 @@ footer span:last-child {
 
 .fork-workspace { display: grid; gap: 28px; }
 .fork-workspace code { overflow-wrap: anywhere; }
+
+.catalog-items, .capability-limits { list-style: none; padding: 0; }
+.catalog-items li { display: flex; flex-wrap: wrap; gap: 24px; padding: 14px 0; border-bottom: 1px solid #b9c4b0; }
+.capability-limits li { margin: 20px 0; }
