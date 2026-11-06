@@ -2,7 +2,8 @@
 
 For a compiled, authenticated consumer wrapper and a dated capability matrix,
 start with the [Boat host guide](guide.md). This page records detailed native
-semantics and configuration limits.
+semantics and configuration limits. For optional signed ingress, see the
+[webhook host contract](webhooks.md).
 
 The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
 `create`, `describe`, `start`, `stop`, `delete`, detached `execute` and

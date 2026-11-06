@@ -146,6 +146,7 @@ test("every capability mapping has its dated native source and all guide links r
     "docs/boat/connections.md",
     "docs/boat/reconciliation.md",
     "docs/boat/conformance.md",
+    "docs/boat/webhooks.md",
   ]) {
     const contents = await readFile(file, "utf8");
     for (const match of contents.matchAll(/\]\(([^)]+)\)/g)) {

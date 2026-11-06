@@ -192,8 +192,14 @@ test(
       console.log('PASS: packed optional Boat entry uses injected HTTP after exact SDK installation');
     `]);
     await writeFile(join(root, "verify.ts"), `
-      import { createBoatProvider, type BoatOptions } from '@fantastic.dev/convex-sandbox/boat';
+      import { createBoatProvider, createBoatWebhookHandler, type BoatOptions, type BoatWebhookOptions } from '@fantastic.dev/convex-sandbox/boat';
       import { SandboxProviders, type ProviderRegistration } from '@fantastic.dev/convex-sandbox';
+      const webhook: BoatWebhookOptions = {
+        accountId:'test-account', endpointId:'test-endpoint', signingKeys:[new TextEncoder().encode('synthetic-packed-webhook-key')],
+        timestampUnit:'seconds', maxAgeMs:300000, maxFutureSkewMs:30000,
+        enqueueRefresh:async(hint,context)=>{ const provider:'boat'=hint.provider; context.signal.throwIfAborted(); return 'ignored'; },
+      };
+      const handler:(request:Request)=>Promise<Response>=createBoatWebhookHandler(webhook);
       const options: BoatOptions = {apiKey:'synthetic-types-key',ttlSeconds:60};
       const provider: ProviderRegistration = createBoatProvider(options);
       new SandboxProviders({authorize:async()=>{}}).register(provider);

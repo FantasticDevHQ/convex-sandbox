@@ -129,3 +129,28 @@ export const externalStop = internalAction({
     };
   },
 });
+
+/** Offline webhook ingress proof in the actual default Convex runtime. */
+export const webhooks = internalAction({
+  args: {},
+  returns: v.object({
+    authenticated: v.boolean(),
+    deduplicated: v.boolean(),
+    authorized: v.boolean(),
+    generationFenced: v.boolean(),
+    authoritative: v.boolean(),
+    recordsSafe: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    const { boatWebhookProof } = await import("../fixtures/boatWebhook.js");
+    const target = { scope: "boat-webhook-proof", key: "machine" };
+    await ctx.runMutation(components.sandbox.registry.ensure, {
+      sandbox: target,
+      reference: { provider: "boat", providerId: "bx_23456789" },
+    });
+    return boatWebhookProof(
+      createLifecycleStore(ctx, components.sandbox),
+      target,
+    );
+  },
+});
