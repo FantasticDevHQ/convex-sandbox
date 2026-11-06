@@ -1,0 +1,44 @@
+[
+  {
+    "id": "files",
+    "title": "Files",
+    "sourcePath": "convex/live/files.ts",
+    "href": "/files",
+    "description": "Bounded home files with original binding checks and a path policy."
+  },
+  {
+    "id": "lifecycle",
+    "title": "Lifecycle",
+    "sourcePath": "convex/live/lifecycle.ts",
+    "href": "/machines",
+    "description": "Shared stop/resume operations, exact home-byte verification and retained job inspection."
+  },
+  {
+    "id": "logs",
+    "title": "Command logs",
+    "sourcePath": "convex/live/logs.ts",
+    "href": "/commands",
+    "description": "Shared durable log cursor and a bounded reactive cache across reloads."
+  },
+  {
+    "id": "fork",
+    "title": "Forks",
+    "sourcePath": "convex/live/fork.ts",
+    "href": "/forks",
+    "description": "Stopped-source admission, explicit child binding and exact copied-byte verification."
+  },
+  {
+    "id": "catalog",
+    "title": "Templates and limits",
+    "sourcePath": "convex/live/catalog.ts",
+    "href": "/machines",
+    "description": "Read-only scoped template readiness and honest capability declarations."
+  },
+  {
+    "id": "mount",
+    "title": "Mount component",
+    "sourcePath": "convex/convex.config.ts",
+    "href": "/setup",
+    "description": "Mount the public component in a trusted Convex host."
+  }
+]

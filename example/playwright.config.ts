@@ -26,6 +26,7 @@ export default defineConfig({
           "catalog.spec.ts",
           "recovery.spec.ts",
           "cleanup.spec.ts",
+          "integration.spec.ts",
         ],
   workers: 1,
   fullyParallel: false,

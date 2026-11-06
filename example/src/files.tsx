@@ -1,3 +1,4 @@
+import { DeveloperExample } from "./developer-example";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useAction } from "convex/react";
@@ -88,6 +89,7 @@ export function FilesPage({ machineKey }: { machineKey?: string }) {
           <ChooseFilesMachine />
         )}
       </OperatorAccess>
+      <DeveloperExample workflow="files" />
     </section>
   );
 }

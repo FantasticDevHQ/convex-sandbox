@@ -32,11 +32,11 @@ test("TanStack routes navigate and reload without requiring a backend", async ({
   await page.getByRole("link", { name: "Integration", exact: true }).click();
   await expect(page).toHaveURL(/\/integration$/);
   await expect(
-    page.getByRole("heading", { name: "Mount the component." }),
+    page.getByRole("heading", { name: "Build on the working flows." }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Mount the component." }),
+    page.getByRole("heading", { name: "Build on the working flows." }),
   ).toBeVisible();
   await page.screenshot({
     path: info.outputPath("integration.png"),
@@ -59,7 +59,7 @@ test("starter navigation stays usable on a narrow viewport", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/integration`);
   await expect(
-    page.getByRole("heading", { name: "Mount the component." }),
+    page.getByRole("heading", { name: "Build on the working flows." }),
   ).toBeVisible();
   expect(
     await page.evaluate(

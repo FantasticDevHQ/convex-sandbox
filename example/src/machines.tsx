@@ -1,3 +1,4 @@
+import { DeveloperExample } from "./developer-example";
 import { ConnectedCatalog } from "./catalog";
 import { ConnectedDeletion } from "./delete";
 import { ConnectedLifecycle } from "./lifecycle";
@@ -113,6 +114,8 @@ export function MachinesPage() {
       <OperatorAccess>
         <ConnectedList />
       </OperatorAccess>
+      <DeveloperExample workflow="lifecycle" />
+      <DeveloperExample workflow="catalog" />
     </section>
   );
 }
@@ -125,6 +128,8 @@ export function MachinePage({ machineKey }: { machineKey: string }) {
       <OperatorAccess>
         <ConnectedDetail machineKey={machineKey} />
       </OperatorAccess>
+      <DeveloperExample workflow="lifecycle" />
+      <DeveloperExample workflow="catalog" />
       <Link to="/machines" className="text-link">
         ← Back to owned machines
       </Link>

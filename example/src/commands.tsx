@@ -1,3 +1,4 @@
+import { DeveloperExample } from "./developer-example";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAction, usePaginatedQuery, useQuery } from "convex/react";
@@ -157,6 +158,7 @@ export function CommandsPage({
           <ChooseMachine />
         )}
       </OperatorAccess>
+      <DeveloperExample workflow="logs" />
     </section>
   );
 }

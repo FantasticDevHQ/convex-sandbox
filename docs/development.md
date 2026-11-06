@@ -208,3 +208,21 @@ Tests use deterministic synthetic transport. Browser fixtures mount the producti
 panel and capture guarded reset and pending deletion, while the actual unconfigured
 route demonstrates the operator gate. These are not evidence of live Boat deletion,
 hosted authentication, physical erasure or zero billing.
+
+## Displayed consumer examples
+
+The integration manifest is `example/shared/integration-examples.json`.
+`example/src/integration-examples.ts` imports only those host modules through
+Vite's inert raw-text mechanism. Never import executable server modules into the
+frontend to render examples. The developer panel belongs outside the gated live
+subtree because it contains only public checked-in source, never query results,
+configuration values or operator data.
+
+`tests/boat/example-docs.test.mjs` is included in `pnpm test:docs`. It compiles
+all displayed modules with the existing public-export documentation checker,
+checks manifest/raw-import coverage, rejects common secret-shaped values and
+literal credential assignments, and verifies that unavailable exports fail.
+Relative helpers and app bindings resolve to this example's actual checked code.
+It is a static regression guard plus independent source review, not a universal
+secret detector. Browser qualification verifies exact displayed/copy bytes,
+workflow links, reload selection and narrow layout. No sample executes on opening.

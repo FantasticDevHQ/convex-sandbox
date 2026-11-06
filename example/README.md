@@ -152,3 +152,24 @@ partial view as complete. Native cleanup completion is distinct from physical
 erasure, provider-wide qualification, or measured zero billing. The original
 historical unknown fork remains unresolved; this implementation neither replays
 it nor scans or deletes account resources to infer its outcome.
+
+### Checked developer views
+
+`/integration` selects Files, Lifecycle, Command logs, Forks, Templates and limits,
+or component mounting. Each optional developer view shows the exact checked-in
+host module as inert text, with copy and workflow links. The matching view is also
+available beside Files, Commands, Forks and machine workflows without changing
+operator authorization. Opening source never executes a provider operation.
+
+Copy host modules with their relative helpers and generated bindings. Keep their
+verified operator scope, original binding checks, finite approval and shared
+client ownership when adapting them. They are not standalone unauthenticated
+endpoints. Credentials stay in server configuration; displayed environment names
+are references, not secret values.
+
+`pnpm test:docs` compiles every displayed source against public package exports
+and rejects common credential patterns, hardcoded credential assignments and
+private package imports. The source manifest and inert raw imports are checked
+together, and browser tests compare the displayed and copied bytes with the
+actual module. This static regression check supplements source review; it does
+not inspect environment values or prove live provider qualification.
