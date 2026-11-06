@@ -1405,3 +1405,22 @@ footer span:last-child {
   accent-color: #294e2a;
   flex-shrink: 0;
 }
+
+.creation-panel {
+  display: grid;
+  gap: 24px;
+}
+.machine-key-field {
+  display: grid;
+  gap: 12px;
+  max-width: 420px;
+  margin: 24px 0;
+}
+.machine-key-field input {
+  padding: 14px 16px;
+  border: 1px solid #8da47c;
+  border-radius: 4px;
+  background: #fdfdf8;
+  color: #243423;
+  font: inherit;
+}

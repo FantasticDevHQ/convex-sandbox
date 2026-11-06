@@ -14,6 +14,13 @@ function ConnectedList() {
     return <p role="status">Loading owned Boat bindings…</p>;
   return (
     <>
+      <Link
+        to="/machines/new"
+        search={{ key: undefined }}
+        className="primary-link"
+      >
+        Create an approved test machine →
+      </Link>
       <p className="lede">
         Reactive component observations for your authorized workspace.{" "}
         {results.length} loaded.
@@ -23,7 +30,7 @@ function ConnectedList() {
           <h2>No owned Boat machines</h2>
           <p>
             This workspace has no authorized Boat bindings on this page. The app
-            does not scan your native account or create fixture machines here.
+            does not scan your native account. Creation needs an approved run.
           </p>
           <Link to="/setup" className="text-link">
             Review setup →

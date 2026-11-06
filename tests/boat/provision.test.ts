@@ -241,7 +241,10 @@ test("native CPU observations are reported without guessed memory or disk units"
     state: "running",
     resources: { cpuCount: 2 },
   };
-  expect(await provider.adapter.create?.({}, context())).toEqual(expected);
+  expect(await provider.adapter.create?.({}, context())).toEqual({
+    ...expected,
+    state: "starting",
+  });
   expect(await provider.adapter.describe("boat-1", context())).toEqual(
     expected,
   );

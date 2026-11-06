@@ -58,7 +58,7 @@ export function createBoatProvider(options: BoatOptions) {
         }
         return transport.call("write", context, async (api, init) => {
           const idempotencyKey = await nativeCreateKey(context.idempotencyKey);
-          return projectBoatObservation(
+          const accepted = await projectBoatObservation(
             api.create(
               {
                 org: configuration.org,
@@ -75,6 +75,8 @@ export function createBoatProvider(options: BoatOptions) {
             ),
             "write",
           );
+          // A create acknowledgement is not an independent readiness observation.
+          return { ...accepted, state: "starting" as const };
         });
       },
     },
