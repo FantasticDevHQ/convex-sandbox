@@ -78,6 +78,13 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
       />
       <ConnectedLifecycle key={machineKey} machineKey={machineKey} />
       <ConnectedDeletion key={`delete-${machineKey}`} machineKey={machineKey} />
+      <Link
+        to="/commands"
+        search={{ machine: machineKey, operation: undefined }}
+        className="primary-link"
+      >
+        Run a command on this owned machine →
+      </Link>
     </>
   );
 }

@@ -80,3 +80,8 @@ stop proof releases concurrency without resetting cumulative allowance.
 The owned detail page also supports [exact-owned deletion](../docs/example-delete.md):
 type the current logical key, retain the original job, and confirm completion only
 from its separate matching status read. A 404 or accepted DELETE stays unresolved.
+
+Commands now supports [detached execution on an owned machine](../docs/example-commands.md).
+The original operation and native history identity survive reload. Inspection
+shows native exit codes and never replays a lost start. Cancellation remains
+unsupported.
