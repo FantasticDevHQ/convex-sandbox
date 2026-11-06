@@ -379,7 +379,7 @@ test(
     assert.deepEqual(await componentRpc(roots[0], "boatExecutionProof:complete", {}, true), { completed: true, unknown: true, readOnly: true });
     assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-execution-proof", key: "known" }, operationId: "known" })).state, "running");
     console.log("PASS: Boat command history reconciles after restart with one GET, no replay, and no sibling state crossover");
-    assert.deepEqual(await componentRpc(roots[0], "boatLogProof:complete", {}, true), { noDuplicates: true, resumedOffsets: true, notCompletion: true, finishedLogs: true });
+    assert.deepEqual(await componentRpc(roots[0], "boatLogProof:complete", {}, true), { noDuplicates: true, resumedOffsets: true, notCompletion: true, cursorReadable: true });
     assert.equal((await componentRpc(roots[1], "execution:get", { sandbox: { scope: "boat-log-proof", key: "machine" }, operationId: "command" })).outputBytes, 9);
     console.log("PASS: Boat log cursors resume after restart without duplicate bytes or sibling crossover; log completion does not imply process exit");
     assert.deepEqual(await componentRpc(roots[0], "boatImageProof:complete", {}, true), { ready: true, readOnly: true, sourceUnchanged: true });
