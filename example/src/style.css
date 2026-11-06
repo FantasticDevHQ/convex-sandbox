@@ -1424,3 +1424,13 @@ footer span:last-child {
   color: #243423;
   font: inherit;
 }
+
+.lifecycle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+.lifecycle-panel {
+  margin-top: 24px;
+}
