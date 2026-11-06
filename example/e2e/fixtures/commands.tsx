@@ -46,7 +46,6 @@ function Fixture() {
           const url = new URL(location.href);
           url.searchParams.set("operation", id);
           history.replaceState(null, "", url);
-          await new Promise((resolve) => setTimeout(resolve, 100));
           if (location.search.includes("fail"))
             throw Error("Synthetic refusal");
           const lost = location.search.includes("unknown");
@@ -68,7 +67,7 @@ function Fixture() {
           });
         }}
         inspect={async () => {
-          if (record && record.executionId)
+          if (record?.executionId)
             save({ ...record, state: "completed", exitCode: 17 });
         }}
       />
