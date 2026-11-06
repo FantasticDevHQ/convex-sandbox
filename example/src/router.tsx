@@ -1,3 +1,4 @@
+import { IntegrationPage } from "./integration";
 import { CleanupPage } from "./cleanup";
 import { RecoveryPage } from "./recovery";
 import { CommandsPage } from "./commands";
@@ -79,13 +80,15 @@ function Frame() {
               key={to}
               to={to}
               search={
-                to === "/commands" || to === "/operations"
-                  ? { machine: undefined, operation: undefined }
-                  : to === "/files"
-                    ? { machine: undefined }
-                    : to === "/forks"
-                      ? { source: undefined, child: undefined }
-                      : undefined
+                to === "/integration"
+                  ? { workflow: undefined }
+                  : to === "/commands" || to === "/operations"
+                    ? { machine: undefined, operation: undefined }
+                    : to === "/files"
+                      ? { machine: undefined }
+                      : to === "/forks"
+                        ? { source: undefined, child: undefined }
+                        : undefined
               }
               activeOptions={{ exact: to === "/" }}
               onClick={() => {
@@ -225,57 +228,6 @@ function Overview() {
   );
 }
 
-function Integration() {
-  return (
-    <section className="integration">
-      <p className="eyebrow">Integration / start here</p>
-      <h1>
-        Mount the
-        <br />
-        <em>component.</em>
-      </h1>
-      <p className="lede">
-        The example consumes the workspace package through its public exports.
-      </p>
-      <div className="integration-grid">
-        <div>
-          <span className="step">01 / CONFIGURE</span>
-          <h2>Connect the component.</h2>
-          <p>
-            Mount the package in your host’s Convex configuration. The
-            experimental adapter runs inside an internal host action.
-          </p>
-          <Link to="/" className="text-link">
-            ← Back to overview
-          </Link>
-        </div>
-        <div className="code-window">
-          <div className="window-bar">example/convex/convex.config.ts</div>
-          <pre>
-            <code>
-              {
-                'import sandbox from\n  "@fantastic.dev/convex-sandbox/convex.config.js";\nimport { defineApp } from "convex/server";\n\nconst app = defineApp();\napp.use(sandbox);\nexport default app;'
-              }
-            </code>
-          </pre>
-        </div>
-      </div>
-      <div className="setup-note">
-        <h2>Run the starter locally.</h2>
-        <pre>
-          <code>pnpm install --frozen-lockfile{"\n"}pnpm dev:frontend</code>
-        </pre>
-        <p>
-          The frontend starts without credentials. For the interactive
-          playground, run pnpm worktree:setup, then pnpm worktree:start
-          --frontend from a committed checkout. This provisions an anonymous
-          local backend.
-        </p>
-      </div>
-    </section>
-  );
-}
-
 const rootRoute = createRootRoute({
   component: Frame,
   notFoundComponent: () => (
@@ -306,7 +258,12 @@ const detailRoute = createRoute({
 const integrationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/integration",
-  component: Integration,
+  validateSearch: (search: Record<string, unknown>) => ({
+    workflow: typeof search.workflow === "string" ? search.workflow : undefined,
+  }),
+  component: () => (
+    <IntegrationPage workflow={integrationRoute.useSearch().workflow} />
+  ),
 });
 const setupRoute = createRoute({
   getParentRoute: () => rootRoute,

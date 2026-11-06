@@ -1,3 +1,4 @@
+import { DeveloperExample } from "./developer-example";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useAction } from "convex/react";
@@ -120,6 +121,7 @@ export function ForkPage({
           <ChooseFork sourceKey={sourceKey} />
         )}
       </OperatorAccess>
+      <DeveloperExample workflow="fork" />
     </section>
   );
 }

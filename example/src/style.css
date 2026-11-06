@@ -1539,3 +1539,12 @@ footer span:last-child {
 .cleanup-target { border-top: 1px solid #b9c4b0; padding: 22px 0; }
 .cleanup-target h3 { font-family: Georgia, serif; font-size: 1.6rem; margin: 12px 0; }
 .cleanup-target code { overflow-wrap: anywhere; }
+
+.developer-example { margin: 32px 0; border-top: 1px solid #b9c4b0; padding-top: 22px; }
+.developer-example summary { cursor: pointer; font-weight: 600; padding: 12px 0; }
+.developer-example .code-window { max-width: 100%; margin-top: 24px; }
+.developer-example .code-window pre { max-height: 600px; overflow: auto; font-size: 12px; line-height: 1.65; }
+.developer-example-actions, .integration-workflows { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+.integration-workflows { margin: 28px 0; }
+.integration nav.integration-workflows a { border: 1px solid #b9c4b0; border-radius: 4px; padding: 10px 14px; text-decoration: none; }
+.integration nav.integration-workflows a[aria-current="page"] { color: #f4f5ee; background: #254e29; }
