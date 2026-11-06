@@ -230,7 +230,9 @@ workflow links, reload selection and narrow layout. No sample executes on openin
 ## Offline browser boundary
 
 The browser test global setup scrubs ambient provider/auth/deployment secrets in
-its own process. It does not modify checkout environment files, credential stores
+its own process. The offline Vite server also disables environment-file loading;
+a synthetic `.env.local` regression verifies those values stay absent. It does not
+modify checkout environment files, credential stores
 or parent-shell settings. The mounted-workflow harness asserts secrets are absent
 before adding an explicit placeholder key, synthetic operator grant and finite
 synthetic run plan. These values authorize only the in-memory test fixture.

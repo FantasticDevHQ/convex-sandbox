@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { createServer, type ViteDevServer } from "vite";
+import type { ViteDevServer } from "vite";
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createOfflineServer } from "./helpers/offline-vite";
 import {
   createMountedBackend,
   SyntheticBoatHTTP,
@@ -7,7 +11,7 @@ import {
 } from "./helpers/mounted-workflows";
 let server: ViteDevServer, origin: string;
 test.beforeAll(async () => {
-  server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+  server = await createOfflineServer();
   await server.listen();
   const a = server.httpServer?.address();
   if (!a || typeof a === "string") throw Error("No address");
@@ -218,5 +222,23 @@ test("loading, missing configuration and denied access stay locked", async ({
     } finally {
       backend.close();
     }
+  }
+});
+
+test("checkout env files cannot configure the offline server", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "csb-offline-env-"));
+  let isolated: ViteDevServer | undefined;
+  try {
+    await writeFile(
+      join(directory, ".env.local"),
+      "VITE_CONVEX_URL=https://synthetic.invalid\nVITE_CLERK_PUBLISHABLE_KEY=pk_test_synthetic\nVITE_SYNTHETIC_ENV_SENTINEL=must-not-load\n",
+    );
+    isolated = await createOfflineServer(directory);
+    expect(isolated.config.env.VITE_CONVEX_URL).toBeUndefined();
+    expect(isolated.config.env.VITE_CLERK_PUBLISHABLE_KEY).toBeUndefined();
+    expect(isolated.config.env.VITE_SYNTHETIC_ENV_SENTINEL).toBeUndefined();
+  } finally {
+    await isolated?.close();
+    await rm(directory, { recursive: true, force: true });
   }
 });

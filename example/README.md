@@ -178,7 +178,8 @@ not inspect environment values or prove live provider qualification.
 
 `pnpm test:example` runs without ambient Boat, hosted auth or deployment secrets.
 Playwright's setup removes credential-bearing environment variables in the test
-process. The cross-workflow test supplies only explicit synthetic server policy
+process, and the fixture Vite server never loads checkout environment files.
+The cross-workflow test supplies only explicit synthetic server policy
 and an inert placeholder key, required by the real wrapper constructor. It never
 uses a real Boat credential or falls back to ambient HTTP.
 
