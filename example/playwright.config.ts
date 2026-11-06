@@ -25,6 +25,7 @@ export default defineConfig({
           "fork.spec.ts",
           "catalog.spec.ts",
           "recovery.spec.ts",
+          "cleanup.spec.ts",
         ],
   workers: 1,
   fullyParallel: false,

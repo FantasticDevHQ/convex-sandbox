@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Exact-owned run cleanup with child-first deletion, unresolved intent retention and guarded view archival.
+
 - Scoped Operations recovery with retained history, original-ID read-only inspection and anonymous backend restart qualification.
 
 - Optional accepted fork child references in shared image operations, allowing

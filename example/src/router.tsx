@@ -1,3 +1,4 @@
+import { CleanupPage } from "./cleanup";
 import { RecoveryPage } from "./recovery";
 import { CommandsPage } from "./commands";
 import { ForkPage } from "./fork";
@@ -6,7 +7,6 @@ import { CreatePage } from "./create";
 import { AllowancePage } from "./allowance";
 import { MachinesPage, MachinePage } from "./machines";
 import { SetupPage } from "./setup";
-import { OperatorAccess } from "./operator-access";
 import { useState } from "react";
 import brandLogo from "../../assets/brand/logo-mark.svg";
 import { Playground } from "./playground";
@@ -225,51 +225,6 @@ function Overview() {
   );
 }
 
-const workflowDescriptions = {
-  Setup:
-    "Verified operator access and server configuration checks will appear here. No live configuration is checked by this page.",
-  Machines:
-    "Owned Boat machines will appear here after trusted host setup. No live machine inventory is connected.",
-  Commands:
-    "Detached commands and bounded logs will appear here after an owned machine is connected.",
-  Files:
-    "Manage bounded files in an owned home directory after trusted host setup.",
-  Forks:
-    "Fork a stopped source and verify retained home files after an owned machine is connected.",
-  Operations:
-    "Durable live operation outcomes and recovery will appear here after trusted host setup.",
-  Cleanup:
-    "Exact-owned cleanup will appear here after trusted host setup. This page cannot delete resources.",
-};
-function WorkflowPage({ name }: { name: keyof typeof workflowDescriptions }) {
-  return (
-    <section className="workflow-page">
-      <p className="eyebrow">WORKSPACE / {name}</p>
-      <h1>{name}</h1>
-      <OperatorAccess>
-        <div className="empty-state">
-          <span className="step">LIVE WORKFLOW NOT CONNECTED</span>
-          <h2>
-            {name === "Setup"
-              ? "Prepare the example"
-              : `No live ${name.toLowerCase()} connected`}
-          </h2>
-          <p>{workflowDescriptions[name]}</p>
-          <p>
-            Use the credential-free simulator for the workflows available today.
-          </p>
-          <Link to="/playground" className="primary-link">
-            Open playground ↗
-          </Link>
-          <Link to="/integration" className="text-link">
-            Read integration setup →
-          </Link>
-        </div>
-      </OperatorAccess>
-    </section>
-  );
-}
-
 function Integration() {
   return (
     <section className="integration">
@@ -430,7 +385,7 @@ const operationsRoute = createRoute({
 const cleanupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/cleanup",
-  component: () => <WorkflowPage name="Cleanup" />,
+  component: CleanupPage,
 });
 const machineDetailRoute = createRoute({
   getParentRoute: () => rootRoute,

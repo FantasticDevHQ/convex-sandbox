@@ -127,3 +127,28 @@ Boat identities and the production recovery panel through a test-only Node RPC
 bridge. It proves component persistence and UI reopening across managed restart.
 It does not prove hosted authentication, provider availability or a live outcome.
 The bridge stays in Playwright fixtures; no admin credentials enter the browser.
+
+### Exact-owned run cleanup
+
+`/cleanup` loads the verified operator's retained run approval and its bounded
+admission journal. It derives native IDs from successful original creation
+records or registered fork-child proofs, never account inventory or names.
+Unbound children remain unresolved and block parent cleanup. Request one recorded
+deletion at a time, child first, after typing the run ID. Inspect the original
+native job separately; an accepted DELETE or a missing machine is not completion.
+Replaced generations receive no mutation. Active operations must be reconciled
+in their original workflow before deletion.
+
+Reset archives the completed run view only. It requires every recorded target to
+have matching native deletion proof or confirmed non-dispatch creation failure,
+every resume intent to be terminal, and a 24-hour retention period after the later
+of run expiry or latest terminal proof. Refresh the retained cleanup review after
+retention ends. Ownership journals, component records, fixtures and cumulative
+allowance counters remain intact. Reset grants no new spending approval and does
+not enable another run on the existing immutable approval ledger.
+
+A full journal beyond the bounded review blocks cleanup rather than treating a
+partial view as complete. Native cleanup completion is distinct from physical
+erasure, provider-wide qualification, or measured zero billing. The original
+historical unknown fork remains unresolved; this implementation neither replays
+it nor scans or deletes account resources to infer its outcome.
