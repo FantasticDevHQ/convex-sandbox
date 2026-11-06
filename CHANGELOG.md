@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Credential-free mounted workflow browser qualification with fatal HTTP/WebSocket traps and visible native-failure assertions.
+
 - Optional workflow developer views with exact host source, checked public exports and credential regression guards.
 
 - Exact-owned run cleanup with child-first deletion, unresolved intent retention and guarded view archival.

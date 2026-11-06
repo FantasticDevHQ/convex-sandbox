@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.ts",
   testMatch: process.env.CSB_RECOVERY_ROOT
     ? "recovery.spec.ts"
     : process.env.CSB_LIVE_URL
@@ -27,6 +28,7 @@ export default defineConfig({
           "recovery.spec.ts",
           "cleanup.spec.ts",
           "integration.spec.ts",
+          "workflows.spec.ts",
         ],
   workers: 1,
   fullyParallel: false,
@@ -35,6 +37,7 @@ export default defineConfig({
     join(tmpdir(), `convex-sandbox-e2e-${process.pid}`),
   reporter: "list",
   use: {
+    serviceWorkers: "block",
     viewport: { width: 1440, height: 1000 },
     video: "on",
     screenshot: "only-on-failure",

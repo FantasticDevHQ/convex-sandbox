@@ -226,3 +226,28 @@ Relative helpers and app bindings resolve to this example's actual checked code.
 It is a static regression guard plus independent source review, not a universal
 secret detector. Browser qualification verifies exact displayed/copy bytes,
 workflow links, reload selection and narrow layout. No sample executes on opening.
+
+## Offline browser boundary
+
+The browser test global setup scrubs ambient provider/auth/deployment secrets in
+its own process. The offline Vite server also disables environment-file loading;
+a synthetic `.env.local` regression verifies those values stay absent. It does not
+modify checkout environment files, credential stores
+or parent-shell settings. The mounted-workflow harness asserts secrets are absent
+before adding an explicit placeholder key, synthetic operator grant and finite
+synthetic run plan. These values authorize only the in-memory test fixture.
+
+The Node bridge invokes real host functions in `convex-test` and registers the
+public sandbox component. Its HTTP transport has an exhaustive method/path table
+for exact synthetic identities, no ambient-fetch fallback, and a violation ledger
+that teardown must check. Browser traffic outside the exact Vite origin is
+aborted and recorded, including WebSockets. Service workers are blocked so they
+cannot bypass routing. The network negative controls intentionally assert that
+such violations fail the normal clean-ledger checks.
+
+Run `pnpm --filter convex-sandbox-example exec playwright test workflows.spec.ts`
+under the host lock for the focused scenario, and `pnpm test:example` for browser
+regressions. The full UbiCloud gate also runs the independent actual anonymous
+backend restart/isolation qualification. Do not describe the in-memory bridge as
+hosted authentication or a live provider session. Never add its synthetic grants,
+transport or authority controls to production entry points.
