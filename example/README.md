@@ -7,7 +7,11 @@
 A private React/Vite example with TanStack Router. Run `pnpm dev:frontend` from the
 repository root after a frozen install. The library builds first. Vite chooses an
 available loopback port and prints its URL. `/` is the overview; `/integration`
-shows the host mount. Refresh and back navigation work on both routes.
+shows the host mount. The persistent sidebar also links to Setup, Machines, Commands,
+Files, Forks, Operations and Cleanup. These live workflow pages explain their
+unavailable state until their consumer backends are implemented. Machine detail
+URLs use `/machines/$machineId`; a URL alone grants no resource access.
+Refresh and back navigation preserve routes, and a menu exposes navigation on mobile.
 
 The `/playground` route subscribes to the local component and exposes fixed
 actions backed by durable simulator state. Select one of three profiles to explore

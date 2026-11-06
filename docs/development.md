@@ -40,7 +40,12 @@ The example has an explicit workspace dependency and uses public package exports
 
 `pnpm dev:frontend` builds the library and starts Vite on an available loopback
 port. A standalone frontend has no provider credentials or backend identity; `/playground` shows setup until a loopback backend is configured.
-TanStack Router handles `/`, `/integration`, `/playground` and `/playground/$profile`.
+TanStack Router provides persistent navigation for Overview, Setup, Machines, Commands,
+Files, Forks, Operations, Cleanup, Integration and the existing Playground.
+`/machines/$machineId` retains its detail URL across reloads. Workflow routes without
+a mounted live host show explicit unavailable states; visiting a URL never establishes
+resource ownership. The navigation collapses behind a menu on narrow viewports.
+The simulator remains at `/playground` and `/playground/$profile`.
 No router plugin/code generator is needed for these code-defined routes.
 
 `pnpm test:example` uses Playwright with an in-process Vite server on an OS-assigned

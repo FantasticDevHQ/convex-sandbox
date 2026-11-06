@@ -876,3 +876,259 @@ footer span:last-child {
     padding: 38px 0;
   }
 }
+
+.workspace-facts > div > span,
+.workspace-facts > div > small {
+  font-size: 11px;
+  color: var(--muted);
+}
+/* Persistent consumer workspace navigation. */
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 246px minmax(0, 1fr);
+}
+.app-sidebar {
+  background: #152333;
+  color: #eaf0ee;
+  padding: 34px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.app-sidebar .brand {
+  font-size: 17px;
+  letter-spacing: -0.5px;
+  gap: 10px;
+}
+.app-sidebar .brand img {
+  background: #f6f8f1;
+  border-radius: 7px;
+  padding: 4px;
+}
+.app-sidebar .brand small {
+  display: block;
+  font: 9px/2.5 monospace;
+  letter-spacing: 1.2px;
+  color: #a6b6c6;
+}
+.app-sidebar nav {
+  display: grid;
+  gap: 5px;
+  margin-top: 36px;
+}
+.app-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  padding: 12px 14px;
+  border-radius: 5px;
+  color: #b7c5d1;
+}
+.app-sidebar nav a > span {
+  font: 10px monospace;
+  opacity: 0.6;
+}
+.app-sidebar nav a:hover {
+  background: #223549;
+  color: white;
+}
+.app-sidebar nav a[aria-current="page"] {
+  background: #dce7cd;
+  color: #243823;
+  font-weight: 700;
+}
+.project-credit {
+  font-size: 11px;
+  color: #b7c5d1;
+  margin-top: auto;
+  padding: 30px 12px 0;
+}
+.app-body {
+  min-width: 0;
+}
+.app-header {
+  min-height: 78px;
+  border-bottom: 1px solid var(--line);
+  padding: 20px 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.mode-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font: 10px monospace;
+}
+.workbench {
+  max-width: 1390px;
+  padding: 0 44px;
+}
+.menu-toggle {
+  display: none;
+}
+.skip-link {
+  position: fixed;
+  top: -80px;
+  left: 20px;
+  z-index: 10;
+  padding: 12px;
+  background: white;
+  color: #152333;
+}
+.skip-link:focus {
+  top: 12px;
+}
+.overview-page,
+.workflow-page {
+  padding: 56px 0 64px;
+}
+.overview-page h1,
+.workflow-page h1 {
+  font-size: clamp(44px, 5vw, 76px);
+  letter-spacing: -3px;
+}
+.overview-page .lede {
+  max-width: 640px;
+}
+.workspace-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+  padding: 24px 0;
+  margin: 36px 0;
+  gap: 24px;
+}
+.workspace-facts > div {
+  display: grid;
+  gap: 10px;
+  border-right: 1px solid var(--line);
+}
+.workspace-facts > div:last-child {
+  border: 0;
+}
+
+.workspace-facts strong {
+  font-size: 19px;
+  font-weight: 600;
+}
+.overview-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+}
+.overview-actions article {
+  padding: 12px 0 28px;
+}
+.overview-actions h2,
+.recent-operations h2 {
+  font:
+    28px/1.2 Georgia,
+    serif;
+  letter-spacing: -0.5px;
+}
+.overview-actions p,
+.recent-operations p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.overview-actions .primary-link {
+  margin-top: 12px;
+}
+.recent-operations {
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+  margin-top: 16px;
+}
+.workflow-page .empty-state .text-link {
+  display: block;
+}
+.workflow-page > code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1050px) {
+  .app-shell {
+    grid-template-columns: 218px minmax(0, 1fr);
+  }
+  .workbench {
+    padding: 0 28px;
+  }
+  .app-header {
+    padding-inline: 28px;
+  }
+}
+@media (max-width: 760px) {
+  .app-shell {
+    display: block;
+  }
+  .app-sidebar {
+    position: static;
+    height: auto;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  .app-sidebar .brand {
+    font-size: 16px;
+  }
+  .menu-toggle {
+    display: block;
+    align-self: center;
+    padding: 10px;
+    background: #223549;
+    color: #eaf0ee;
+    border: 1px solid #506173;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .app-sidebar nav {
+    display: none;
+    grid-column: 1 / -1;
+    margin: 8px 0 0;
+  }
+  .app-sidebar nav[data-open="true"] {
+    display: grid;
+  }
+  .project-credit {
+    display: none;
+  }
+  .app-header {
+    padding: 18px 24px;
+    align-items: start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .workbench {
+    padding: 0 24px;
+  }
+  .workspace-facts {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .workspace-facts > div {
+    border-right: 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .workspace-facts small {
+    grid-column: 2;
+  }
+  .overview-actions {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .overview-page,
+  .workflow-page {
+    padding: 36px 0;
+  }
+}
