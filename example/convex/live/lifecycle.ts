@@ -12,19 +12,14 @@ import { v } from "convex/values";
 import {
   createLifecycleStore,
   createFileStore,
-  SandboxProviders,
   registryRecordValidator,
   operationRecordValidator,
   type RegistryRecord,
   type OperationRecord,
 } from "@fantastic.dev/convex-sandbox";
-import { createHostAccess } from "@fantastic.dev/convex-sandbox/server";
-import {
-  createBoatProvider,
-  readBoatSetup,
-} from "@fantastic.dev/convex-sandbox/boat";
 import { requireOperator } from "./operator";
-import { currentPlan, refuse } from "./allowanceModel";
+import { ownedBoatClient as client } from "./boatHost";
+import { refuse } from "./allowanceModel";
 import { fixtureValidator } from "./lifecycleModel";
 const keyArgs = { key: v.string() };
 const viewValidator = v.object({
@@ -97,61 +92,6 @@ export const status = query({
     };
   },
 });
-function accessFor(ctx: Pick<ActionCtx, "auth" | "runQuery">) {
-  return createHostAccess({
-    authenticate: () => requireOperator(ctx),
-    getSandbox: (sandbox) =>
-      ctx.runQuery(components.sandbox.registry.get, { sandbox }),
-    authorize: ({ principal, sandbox, reference, operation }) =>
-      principal.scope === sandbox.scope &&
-      reference?.provider === "boat" &&
-      ["get", "describe", "start", "stop", "readFile", "writeFile"].includes(
-        operation,
-      ),
-  });
-}
-async function client(
-  ctx: ActionCtx,
-  key: string,
-  operation: "stop" | "start" | "readFile" | "writeFile" | "describe",
-  billable = false,
-) {
-  const access = accessFor(ctx);
-  const resolved = await access.resolve({ key }, operation);
-  const operator = await requireOperator(ctx);
-  const review = await ctx.runQuery(api.live.allowance.proposal, {});
-  const plan = review.approval?.plan;
-  if (
-    !plan ||
-    plan.scope !== operator.scope ||
-    plan.wallet !== (process.env.BOAT_ORG ?? "personal")
-  )
-    refuse("The original reviewed account is required.");
-  if (billable) currentPlan(operator.scope, review.approval?.reviewToken);
-  const apiKey = process.env.BOAT_API_KEY;
-  if (!apiKey) refuse("Boat server configuration is required.");
-  let account: Awaited<ReturnType<typeof readBoatSetup>>;
-  try {
-    account = await readBoatSetup({ apiKey, org: plan.wallet });
-  } catch {
-    refuse("The exact reviewed account could not be verified.");
-  }
-  if (
-    account.accountId !== plan.accountId ||
-    account.walletTeamId !== plan.walletTeamId ||
-    (billable && account.canStart === false)
-  )
-    refuse("The reviewed account does not permit this operation.");
-  const providers = new SandboxProviders({ authorize: access.authorize });
-  providers.register(
-    createBoatProvider({
-      apiKey,
-      org: plan.wallet,
-      ttlSeconds: plan.durationMinutes * 60,
-    }),
-  );
-  return { ...resolved, access, providers, plan };
-}
 async function matching(
   ctx: Pick<MutationCtx, "auth" | "db" | "runQuery">,
   key: string,

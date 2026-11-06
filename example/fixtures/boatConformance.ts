@@ -50,6 +50,7 @@ export function boatConformanceFixture(
   const engine = createSimulatedProvider({ profile: "persistent" });
   const sdk = engine.provider.adapter;
   let requestIndex = 0;
+  const deletionJobs = new Map<string, string>();
   const nativePath = (path: string) => {
     if (path !== root && !path.startsWith(`${root}/`))
       throw new Error("Unexpected fixture path");
@@ -80,6 +81,20 @@ export function boatConformanceFixture(
       if (parts[0] === "saved-snapshots") {
         requireMethod("GET");
         return json({ snapshots: [] });
+      }
+      if (parts[0] === "deletion-operations") {
+        requireMethod("GET");
+        const targetId =
+          parts.length === 2 ? deletionJobs.get(parts[1]) : undefined;
+        if (!targetId) throw new Error("Unknown fixture deletion job");
+        return json({
+          operation: {
+            id: parts[1],
+            targetId,
+            kind: "sandbox",
+            status: "completed",
+          },
+        });
       }
       if (parts[0] !== "sandboxes") throw new Error("Unexpected fixture route");
       const id = parts[1];
@@ -252,6 +267,7 @@ export function boatConformanceFixture(
         throw new Error("Unexpected fixture sandbox route");
       if (init.method === "DELETE") {
         await required(sdk.delete)(id, context);
+        deletionJobs.set(`delete-${id}`, id);
         return json({
           operation: {
             id: `delete-${id}`,

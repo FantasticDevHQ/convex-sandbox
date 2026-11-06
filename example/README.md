@@ -76,3 +76,7 @@ Owned details support [stop/resume and retained-home-byte verification](../docs/
 Stop acceptance remains unfinished until shared job reconciliation; resume consumes
 another approved start and verifies original bytes only after readiness. Exact
 stop proof releases concurrency without resetting cumulative allowance.
+
+The owned detail page also supports [exact-owned deletion](../docs/example-delete.md):
+type the current logical key, retain the original job, and confirm completion only
+from its separate matching status read. A 404 or accepted DELETE stays unresolved.

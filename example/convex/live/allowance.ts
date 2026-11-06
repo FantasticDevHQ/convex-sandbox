@@ -1,4 +1,9 @@
-import { action, internalMutation, query } from "../_generated/server";
+import {
+  action,
+  internalMutation,
+  internalQuery,
+  query,
+} from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { components, internal } from "../_generated/api";
 import { v } from "convex/values";
@@ -275,5 +280,18 @@ export const releaseStopped = internalMutation({
       });
     }
     return null;
+  },
+});
+
+/** Recovery reads the retained approval independently of a malformed/expired proposed plan. */
+export const retained = internalQuery({
+  args: {},
+  returns: v.union(approvalValidator, v.null()),
+  handler: async (ctx) => {
+    const operator = await requireOperator(ctx);
+    return ctx.db
+      .query("liveApprovals")
+      .withIndex("by_scope", (q) => q.eq("scope", operator.scope))
+      .unique();
   },
 });

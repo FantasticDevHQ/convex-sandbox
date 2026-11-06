@@ -16,6 +16,7 @@ export default defineConfig({
         "allowance.spec.ts",
         "create.spec.ts",
         "lifecycle.spec.ts",
+        "delete.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,
