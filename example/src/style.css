@@ -1300,3 +1300,71 @@ footer span:last-child {
   background: #a46630;
   box-shadow: 0 0 0 4px #f1e4d4;
 }
+
+.owned-machine-list {
+  display: grid;
+  gap: 18px;
+  margin: 28px 0;
+}
+.owned-machine-card,
+.owned-machine-detail {
+  border: 1px solid #aab69e;
+  background: #fcfdf8;
+  padding: 26px;
+  border-radius: 8px;
+  margin-top: 24px;
+  min-width: 0;
+}
+.owned-machine-card {
+  margin-top: 0;
+}
+.owned-machine-card h2 {
+  font:
+    28px/1.2 Georgia,
+    serif;
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.owned-machine-card p,
+.observation-meta p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.machine-identity {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.machine-identity code {
+  margin-left: 8px;
+}
+.observation-meta {
+  border-block: 1px solid var(--line);
+  margin: 20px 0;
+  padding: 8px 0;
+}
+.refresh-machine {
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid #547344;
+  background: #264a2a;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.refresh-machine:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.refresh-machine:focus-visible {
+  outline: 3px solid #547d3d;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  .owned-machine-card,
+  .owned-machine-detail {
+    padding: 18px;
+  }
+}

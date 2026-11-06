@@ -8,6 +8,7 @@ import {
   SandboxProviderError,
   type LifecycleStore,
   type SandboxAdapter,
+  type AuthorizeSandbox,
 } from "@fantastic.dev/convex-sandbox";
 
 const sandbox = { scope: "fixture", key: "machine" };
@@ -18,6 +19,7 @@ const result = (
 function fixture(
   adapter: SandboxAdapter,
   createIdempotency: "native" | "none" = "native",
+  authorize: AuthorizeSandbox = async () => {},
 ) {
   const t = convexTest(defineSchema({}), {
     "./_generated/server.js": () =>
@@ -40,7 +42,7 @@ function fixture(
     finishRefresh: (args) => t.mutation(c.registry.finishRefresh, args),
   };
   const providers = new SandboxProviders({
-    authorize: async () => {},
+    authorize,
     authorizeCreate: async () => {},
   });
   providers.register(
@@ -558,4 +560,84 @@ test("lifecycle reconciliation rejects arbitrary execution records without calli
     f.lifecycle.reconcile({ sandbox, operationId: "command" }),
   ).rejects.toThrow("Invalid lifecycle operation");
   expect(reads).toBe(0);
+});
+
+test("refresh prepares the binding belonging to its ticket after a pre-ticket rebind", async () => {
+  const described: string[] = [];
+  const f = fixture(
+    adapter({
+      describe: async (id) => {
+        described.push(id);
+        return result(id, "stopped");
+      },
+    }),
+  );
+  await f.t.mutation(f.c.registry.ensure, {
+    sandbox,
+    reference: { provider: "fixture", providerId: "vm-old" },
+  });
+  const begin = f.store.beginRefresh;
+  f.store.beginRefresh = async (key) => {
+    // Simulate a completed deletion and rebind after prepare/authorize, before
+    // the caller receives its refresh ticket for the current generation.
+    const deletion = await begin(key);
+    await f.store.finishRefresh({
+      sandbox: key,
+      ...deletion,
+      result: { state: "deleted" },
+    });
+    const old = await f.store.get(key);
+    if (!old) throw new Error("Missing fixture");
+    await f.t.mutation(f.c.registry.rebind, {
+      sandbox: key,
+      expectedVersion: old.version,
+      reference: { provider: "fixture", providerId: "vm-new" },
+    });
+    return begin(key);
+  };
+  const row = await f.lifecycle.refresh(sandbox);
+  expect(described).toEqual(["vm-new"]);
+  expect(row?.reference.providerId).toBe("vm-new");
+  expect(row?.generation).toBe(2);
+  expect(row?.observedState).toBe("stopped");
+});
+
+test("refresh reauthorizes a concurrent rebound reference before returning it", async () => {
+  let f: ReturnType<typeof fixture>;
+  f = fixture(
+    adapter({
+      describe: async () => {
+        const ticket = await f.store.beginRefresh(sandbox);
+        await f.store.finishRefresh({
+          sandbox,
+          ...ticket,
+          result: { state: "deleted" },
+        });
+        const row = await f.store.get(sandbox);
+        if (!row) throw new Error("Missing fixture");
+        await f.t.mutation(f.c.registry.rebind, {
+          sandbox,
+          expectedVersion: row.version,
+          reference: { provider: "fixture", providerId: "vm-foreign" },
+        });
+        return result("vm-old", "running");
+      },
+    }),
+    "native",
+    async ({ reference }) => {
+      if (reference.providerId === "vm-foreign")
+        throw new SandboxProviderError({
+          code: "authorization",
+          outcome: "not_started",
+          retryable: false,
+        });
+    },
+  );
+  await f.t.mutation(f.c.registry.ensure, {
+    sandbox,
+    reference: { provider: "fixture", providerId: "vm-old" },
+  });
+  await expect(f.lifecycle.refresh(sandbox)).rejects.toMatchObject({
+    data: { code: "authorization" },
+  });
 });

@@ -143,7 +143,14 @@ Terminal outcomes, active leases or exhausted budgets stop the loop. Exhaustion
 retains unknown state; it does not silently retry later. Host scheduling can call
 these hooks again. The component installs no recurring polling job.
 
-`refresh` allocates a refresh ticket before reading provider state. `observe`
+`refresh` allocates a refresh ticket before reading provider state. If a
+completed deletion and rebind changes the generation between authorization and
+ticket acquisition, it resolves and prepares the ticket's current binding again.
+If the binding no longer matches the ticket when re-read, refresh returns the
+current cached record without dispatching the stale provider request. Refresh
+also reauthorizes the current binding before returning it. A rejected
+re-preparation can leave a pending marker; a subsequent bounded refresh can
+recover it without accepting an observation from the rejected request. `observe`
 applies a supplied ticket and validates identity/state through the registered
 provider boundary after authorization. It rejects duplicate, superseded and
 old-generation observations. A webhook wrapper must verify its provider signature

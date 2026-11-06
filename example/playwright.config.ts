@@ -12,6 +12,7 @@ export default defineConfig({
         "auth.spec.ts",
         "setup.spec.ts",
         "modes.spec.ts",
+        "machines.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,

@@ -1,3 +1,4 @@
+import { MachinesPage, MachinePage } from "./machines";
 import { SetupPage } from "./setup";
 import { OperatorAccess } from "./operator-access";
 import { useState } from "react";
@@ -341,7 +342,7 @@ const setupRoute = createRoute({
 const machinesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/machines",
-  component: () => <WorkflowPage name="Machines" />,
+  component: MachinesPage,
 });
 const commandsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -373,25 +374,7 @@ const machineDetailRoute = createRoute({
   path: "/machines/$machineId",
   component: () => {
     const { machineId } = machineDetailRoute.useParams();
-    return (
-      <section className="workflow-page">
-        <p className="eyebrow">WORKSPACE / MACHINES</p>
-        <h1>Machine details</h1>
-        <code>{machineId}</code>
-        <OperatorAccess>
-          <div className="empty-state">
-            <h2>Machine not connected</h2>
-            <p>
-              This URL does not establish ownership or load a live resource.
-              Connect a trusted host to inspect an owned machine.
-            </p>
-            <Link to="/machines" className="text-link">
-              ← Back to machines
-            </Link>
-          </div>
-        </OperatorAccess>
-      </section>
-    );
+    return <MachinePage machineKey={machineId} />;
   },
 });
 export const router = createRouter({
