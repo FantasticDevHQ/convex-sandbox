@@ -269,7 +269,9 @@ Memory suspend/resume is unsupported. Auto-stop remains a deadline, not inactivi
 detection, and no preservation claim follows merely from a successful stop.
 
 Delete sends `X-Ascii-Confirm-Delete` for the bound VM and stores the returned job
-ID in the shared operation. Pending, processing and blocked deletion remain
+ID in the shared operation. An initial DELETE response remains transitional even
+when it reports completed; a separate matching job read confirms completion.
+Pending, processing and blocked deletion remain
 unfinished even though sandbox lookup may already return 404. Only the native
 job's completed status, matching both job ID and sandbox target/kind, permits a
 deletion observation and retained tombstone. Read-only reconciliation works after

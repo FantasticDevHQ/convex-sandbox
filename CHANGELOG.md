@@ -41,6 +41,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Fixed
 
+- Boat deletion acceptance retains its job and stays pending even when the initial
+  response reports completed; a separate matching status read confirms deletion.
+
 - Boat create acknowledgements remain starting until an independent observation,
   including when the creation reply itself reports ready.
 

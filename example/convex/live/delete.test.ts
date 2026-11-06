@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { makeFunctionReference } from "convex/server";
+import { getFunctionName, makeFunctionReference } from "convex/server";
 import { register } from "@fantastic.dev/convex-sandbox/testing";
 import { vi, test, expect, beforeEach, afterEach } from "vitest";
 import schema from "../schema";
@@ -18,6 +18,7 @@ let job = {
 };
 let missing = false;
 let deletes = 0;
+let accountId = "synthetic-account";
 beforeEach(() => {
   job = {
     id: "synthetic-delete-job",
@@ -27,6 +28,7 @@ beforeEach(() => {
   };
   missing = false;
   deletes = 0;
+  accountId = "synthetic-account";
   vi.stubEnv(
     "EXAMPLE_OPERATOR_GRANTS",
     JSON.stringify(
@@ -60,7 +62,7 @@ beforeEach(() => {
       const reply = (value: unknown, status = 200) =>
         new Response(JSON.stringify(value), { status });
       if (path.endsWith("/me"))
-        return reply({ ok: true, user: { id: "synthetic-account" } });
+        return reply({ ok: true, user: { id: accountId } });
       if (path.endsWith("/limits")) return reply({ ok: true, canStart: true });
       if (init?.method === "DELETE") {
         deletes++;
@@ -80,6 +82,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+  vi.useRealTimers();
 });
 async function fixture() {
   const functions = await import("./delete");
@@ -96,6 +99,15 @@ async function fixture() {
     reviewToken: p.reviewToken,
     acknowledgeRisk: true,
   });
+  await a.mutation(
+    makeFunctionReference<"mutation">("live/allowance:reserve"),
+    {
+      runId: "synthetic-run",
+      intentKey: "create-research-one",
+      machineKey: "research-one",
+      kind: "create",
+    },
+  );
   await t.mutation(c.registry.ensure, {
     sandbox: { scope: "example-boat:a", key: "research-one" },
     reference: { provider: "boat", providerId: "native-a" },
@@ -177,8 +189,9 @@ test("foreign, anonymous, wrong confirmation and stale target review cannot dele
   expect(deletes).toBe(0);
 });
 
-test("cleanup uses retained account approval after a malformed proposal and never resets journals", async () => {
+test("cleanup uses retained approval after a malformed proposal and preserves its allowance ledger", async () => {
   const { a } = await fixture();
+  const ledger = await a.query(proposal, {});
   vi.stubEnv("EXAMPLE_LIVE_RUN_PLAN", "invalid-json");
   await request(a);
   job.status = "completed";
@@ -187,6 +200,11 @@ test("cleanup uses retained account approval after a malformed proposal and neve
     "confirmed",
   );
   expect(deletes).toBe(1);
+  const retained = await a.query(
+    makeFunctionReference<"query">("live/allowance:retained"),
+    {},
+  );
+  expect(retained).toEqual(ledger.approval);
 });
 
 test("a stale reviewed binding cannot redirect deletion to a replacement", async () => {
@@ -213,5 +231,97 @@ test("a stale reviewed binding cannot redirect deletion to a replacement", async
       reviewToken: original.reviewToken,
     }),
   ).rejects.toThrow();
+  expect(deletes).toBe(0);
+});
+
+test("expired approval still permits exact cleanup and changed account refuses it", async () => {
+  const { a } = await fixture();
+  const ledger = (await a.query(proposal, {})).approval;
+  vi.useFakeTimers();
+  vi.setSystemTime(ledger.plan.expiresAt + 1);
+  await request(a);
+  job.status = "completed";
+  await a.action(inspect, { key: "research-one" });
+  expect((await a.query(view, { key: "research-one" })).phase).toBe(
+    "confirmed",
+  );
+  expect(
+    await a.query(
+      makeFunctionReference<"query">("live/allowance:retained"),
+      {},
+    ),
+  ).toEqual(ledger);
+});
+test("changed original wallet refuses deletion before dispatch", async () => {
+  const { a } = await fixture();
+  vi.stubEnv("BOAT_ORG", "unrelated-wallet");
+  await expect(request(a)).rejects.toThrow();
+  expect(deletes).toBe(0);
+});
+test.each(["native-replacement", "native-a"])(
+  "rebind to %s after final review read cannot redirect confirmed deletion",
+  async (providerId) => {
+    const { t, c, a } = await fixture();
+    const functions = await import("./delete");
+    const original = await a.query(view, { key: "research-one" });
+    const sandbox = { scope: "example-boat:a", key: "research-one" };
+    let reads = 0;
+    await expect(
+      a.action(async (ctx) => {
+        const runQuery: typeof ctx.runQuery = async (reference, args) => {
+          const result = await ctx.runQuery(reference, args);
+          let name: string | null = null;
+          try {
+            name = getFunctionName(reference);
+          } catch {
+            /* Component references have a separate address. */
+          }
+          if (name === "live/delete:status" && ++reads === 2) {
+            const ticket = await t.mutation(c.registry.beginRefresh, {
+              sandbox,
+            });
+            await t.mutation(c.registry.finishRefresh, {
+              sandbox,
+              ...ticket,
+              result: { state: "deleted" },
+            });
+            const row = await t.query(c.registry.get, { sandbox });
+            if (!row) throw Error("Missing fixture binding");
+            await t.mutation(c.registry.rebind, {
+              sandbox,
+              expectedVersion: row.version,
+              reference: { provider: "boat", providerId },
+            });
+          }
+          return result;
+        };
+        type Handler = (
+          context: typeof ctx,
+          args: { key: string; confirmation: string; reviewToken: string },
+        ) => Promise<unknown>;
+        const registered = functions.request as unknown as {
+          _handler?: Handler;
+        };
+        const handler =
+          registered._handler ?? (functions.request as unknown as Handler);
+        return handler(
+          { ...ctx, runQuery },
+          {
+            key: "research-one",
+            confirmation: "research-one",
+            reviewToken: original.reviewToken,
+          },
+        );
+      }),
+    ).rejects.toThrow();
+    expect(reads).toBe(2);
+    expect(deletes).toBe(0);
+  },
+);
+
+test("changed authenticated Boat account refuses deletion before dispatch", async () => {
+  const { a } = await fixture();
+  accountId = "foreign-account";
+  await expect(request(a)).rejects.toThrow();
   expect(deletes).toBe(0);
 });
