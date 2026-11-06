@@ -36,6 +36,7 @@ export function LifecyclePanel({
   if (!view.row) return <p>No authorized Boat binding exists for this key.</p>;
   const { row, operation, fixture } = view;
   const unfinished = Boolean(
+    view.unresolvedStartIntent ||
     row.activeOperationId ||
     (operation &&
       !["succeeded", "failed", "cancelled"].includes(operation.status)),
@@ -67,6 +68,13 @@ export function LifecyclePanel({
       {fixture && (
         <p>
           Retained path: <code>{fixture.path}</code>
+        </p>
+      )}
+      {view.unresolvedStartIntent && (
+        <p role="alert">
+          Resume admission <code>{view.unresolvedStartIntent}</code> remains
+          reserved without a confirmed component claim. Keep this original
+          intent; no replacement resume is admitted.
         </p>
       )}
       {operation && (

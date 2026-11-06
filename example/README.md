@@ -71,3 +71,8 @@ Create an approved Small fixture from `/machines/new`. The selected logical key
 survives reload; creation stays pending until independently observed, and unknown
 replies retain their original operation. See [owned creation](../docs/example-create.md)
 for shared claims, private/no-inherited-secret defaults and recovery boundaries.
+
+Owned details support [stop/resume and retained-home-byte verification](../docs/example-lifecycle.md).
+Stop acceptance remains unfinished until shared job reconciliation; resume consumes
+another approved start and verifies original bytes only after readiness. Exact
+stop proof releases concurrency without resetting cumulative allowance.

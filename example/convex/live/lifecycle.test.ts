@@ -76,6 +76,7 @@ beforeEach(() => {
             "base64",
           );
           return reply({
+            ok: true,
             success: true,
             path: file,
             encoding: "base64",
@@ -84,6 +85,7 @@ beforeEach(() => {
         }
         const data = state.corrupt ? Buffer.from("changed") : state.bytes;
         return reply({
+          ok: true,
           success: true,
           path: file,
           encoding: "base64",
@@ -236,5 +238,133 @@ test("mismatched bytes never claim persistence", async () => {
   await a.action(inspect, { key: "research-one" });
   expect((await a.query(status, { key: "research-one" })).fixture.status).toBe(
     "mismatch",
+  );
+});
+
+test("only an exact completed stop releases concurrency, never cumulative allowance", async () => {
+  const { a } = await fixture();
+  const release = makeFunctionReference<"mutation">(
+    "live/allowance:releaseStopped",
+  );
+  await expect(
+    a.mutation(release, { key: "research-one", operationId: "missing" }),
+  ).rejects.toThrow();
+  await a.action(run, {
+    key: "research-one",
+    action: "stop",
+    operationId: "one",
+  });
+  await expect(
+    a.mutation(release, { key: "research-one", operationId: "stop-one" }),
+  ).rejects.toThrow();
+  state.stop = "completed";
+  state.machine = "archived";
+  await a.action(inspect, { key: "research-one" });
+  const ledger = (await a.query(proposal, {})).approval;
+  expect(ledger.activeReservations).toBe(0);
+  expect(ledger.machinesReserved).toBe(1);
+  expect(ledger.startsReserved).toBe(1);
+  expect(ledger.estimatedUsdReserved).toBe(0.1);
+  await a.mutation(release, { key: "research-one", operationId: "stop-one" });
+  expect((await a.query(proposal, {})).approval.activeReservations).toBe(0);
+});
+test("an unresolved creation with no confirmed child remains counted when another machine stops", async () => {
+  const p = JSON.parse(process.env.EXAMPLE_LIVE_RUN_PLAN ?? "{}");
+  vi.stubEnv(
+    "EXAMPLE_LIVE_RUN_PLAN",
+    JSON.stringify({ ...p, maxMachines: 2, maxStarts: 3, maxConcurrent: 2 }),
+  );
+  const { a } = await fixture();
+  const r = await a.mutation(
+    makeFunctionReference<"mutation">("live/allowance:reserve"),
+    {
+      runId: "synthetic-run",
+      intentKey: "create-orphan",
+      machineKey: "orphan",
+      kind: "create",
+    },
+  );
+  await a.mutation(
+    makeFunctionReference<"mutation">("live/allowance:markUnknown"),
+    { reservationId: r.reservationId },
+  );
+  const before = (await a.query(proposal, {})).approval;
+  await a.action(run, {
+    key: "research-one",
+    action: "stop",
+    operationId: "one",
+  });
+  state.stop = "completed";
+  state.machine = "archived";
+  await a.action(inspect, { key: "research-one" });
+  const after = (await a.query(proposal, {})).approval;
+  expect(after.activeReservations).toBe(1);
+  expect(after.machinesReserved).toBe(before.machinesReserved);
+  expect(after.startsReserved).toBe(before.startsReserved);
+  expect(after.estimatedUsdReserved).toBe(before.estimatedUsdReserved);
+});
+
+test("an interrupted resume admission stays visible and refuses a replacement intent", async () => {
+  const { a } = await fixture();
+  await a.action(prepare, { key: "research-one" });
+  await a.action(run, {
+    key: "research-one",
+    action: "stop",
+    operationId: "one",
+  });
+  state.stop = "completed";
+  state.machine = "archived";
+  await a.action(inspect, { key: "research-one" });
+  await a.mutation(
+    makeFunctionReference<"mutation">("live/allowance:reserve"),
+    {
+      runId: "synthetic-run",
+      intentKey: "start-orphan",
+      machineKey: "research-one",
+      kind: "start",
+    },
+  );
+  expect(
+    (await a.query(status, { key: "research-one" })).unresolvedStartIntent,
+  ).toBe("start-orphan");
+  await a.action(run, {
+    key: "research-one",
+    action: "start",
+    operationId: "replacement",
+  });
+  expect(writes.filter((path) => path.endsWith("/resume"))).toHaveLength(0);
+  expect((await a.query(proposal, {})).approval.activeReservations).toBe(1);
+});
+
+test("concurrent distinct resumes reserve one machine intent and preserve the winning fixture link", async () => {
+  const p = JSON.parse(process.env.EXAMPLE_LIVE_RUN_PLAN ?? "{}");
+  vi.stubEnv(
+    "EXAMPLE_LIVE_RUN_PLAN",
+    JSON.stringify({ ...p, maxMachines: 2, maxStarts: 3, maxConcurrent: 2 }),
+  );
+  const { a } = await fixture();
+  await a.action(prepare, { key: "research-one" });
+  await a.action(run, {
+    key: "research-one",
+    action: "stop",
+    operationId: "one",
+  });
+  state.stop = "completed";
+  state.machine = "archived";
+  await a.action(inspect, { key: "research-one" });
+  await Promise.allSettled(
+    ["two", "three"].map((operationId) =>
+      a.action(run, { key: "research-one", action: "start", operationId }),
+    ),
+  );
+  expect(writes.filter((path) => path.endsWith("/resume"))).toHaveLength(1);
+  const pending = await a.query(status, { key: "research-one" });
+  expect(pending.fixture.resumeOperationId).toBe(pending.row.activeOperationId);
+  expect((await a.query(proposal, {})).approval.activeReservations).toBe(1);
+  expect((await a.query(proposal, {})).approval.startsReserved).toBe(2);
+  state.machine = "ready";
+  await a.action(inspect, { key: "research-one" });
+  expect((await a.query(status, { key: "research-one" })).fixture.status).toBe(
+    "verified",
   );
 });

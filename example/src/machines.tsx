@@ -75,7 +75,7 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
         row={row}
         refresh={() => refresh({ key: machineKey })}
       />
-      <ConnectedLifecycle machineKey={machineKey} />
+      <ConnectedLifecycle key={machineKey} machineKey={machineKey} />
     </>
   );
 }

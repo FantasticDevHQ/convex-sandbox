@@ -31,11 +31,13 @@ const viewValidator = v.object({
   row: v.union(registryRecordValidator, v.null()),
   operation: v.union(operationRecordValidator, v.null()),
   fixture: v.union(fixtureValidator, v.null()),
+  unresolvedStartIntent: v.optional(v.string()),
 });
 export type LifecycleView = {
   row: RegistryRecord | null;
   operation: OperationRecord | null;
   fixture: Doc<"liveFixtures"> | null;
+  unresolvedStartIntent?: string;
 };
 async function fixtureFor(
   ctx: Pick<QueryCtx, "db">,
@@ -56,7 +58,7 @@ export const status = query({
     const row = await ctx.runQuery(components.sandbox.registry.get, {
       sandbox,
     });
-    if (!row || row.reference.provider !== "boat")
+    if (row?.reference.provider !== "boat")
       return { row: null, operation: null, fixture: null };
     const fixture = await fixtureFor(ctx, operator.scope, key);
     const page = await ctx.runQuery(components.sandbox.operations.list, {
@@ -69,7 +71,30 @@ export const status = query({
           operationId: row.activeOperationId,
         })
       : (page.page.find((op) => ["start", "stop"].includes(op.kind)) ?? null);
-    return { row, operation, fixture };
+    const reservations = await ctx.db
+      .query("liveReservations")
+      .withIndex("by_scope_and_machineKey_and_kind", (q) =>
+        q.eq("scope", operator.scope).eq("machineKey", key).eq("kind", "start"),
+      )
+      .take(5);
+    let unresolvedStartIntent: string | undefined;
+    for (const reservation of reservations) {
+      if (reservation.status === "released") continue;
+      const existing = await ctx.runQuery(components.sandbox.operations.get, {
+        sandbox,
+        operationId: reservation.intentKey,
+      });
+      if (!existing) {
+        unresolvedStartIntent = reservation.intentKey;
+        break;
+      }
+    }
+    return {
+      row,
+      operation,
+      fixture,
+      ...(unresolvedStartIntent ? { unresolvedStartIntent } : {}),
+    };
   },
 });
 function accessFor(ctx: Pick<ActionCtx, "auth" | "runQuery">) {
@@ -136,8 +161,7 @@ async function matching(
   const row = await ctx.runQuery(components.sandbox.registry.get, { sandbox });
   const fixture = await fixtureFor(ctx, operator.scope, key);
   if (
-    !row ||
-    row.reference.provider !== "boat" ||
+    row?.reference.provider !== "boat" ||
     row.tombstone ||
     !fixture ||
     fixture.generation !== row.generation ||
@@ -206,7 +230,9 @@ export const checkpoint = internalMutation({
         !operation ||
         operation.kind !== "start" ||
         operation.status !== "succeeded" ||
-        operation.generation !== row.generation
+        operation.generation !== row.generation ||
+        operation.reference.provider !== "boat" ||
+        operation.reference.providerId !== row.reference.providerId
       )
         refuse("Resume readiness is not confirmed.");
     }
@@ -314,6 +340,7 @@ export const run = action({
       const view = await ctx.runQuery(api.live.lifecycle.status, {
         key: args.key,
       });
+      if (view.unresolvedStartIntent) return view;
       if (
         !view.fixture?.writtenAt ||
         view.fixture.generation !== row.generation ||

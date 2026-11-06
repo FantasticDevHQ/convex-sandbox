@@ -66,8 +66,7 @@ transactionally, so racing admissions cannot both claim the final slot.
 The earlier absolute expiry or duration deadline closes new admission. Missing or
 expired approval, changed host configuration and exhausted machine/start/concurrent
 or estimated-dollar allowances refuse admission. The caller must await a successful
-reservation before invoking the shared component lifecycle client. This slice
-implements the guard; CSB-41 wires the first billable creation workflow to it.
+reservation before invoking the shared component lifecycle client. The [owned creation workflow](example-create.md) uses this guard before dispatch.
 It adds no parallel native lifecycle implementation or direct provider mutation.
 
 An intent key binds to its original operation kind and logical key. A repeated
@@ -77,11 +76,12 @@ component operation instead. `markUnknown` retains a lost-reply reservation with
 reducing any counter. Reload, process restart, expiry and retries do not release
 slots or restore cumulative allowance.
 
-This slice deliberately has no reservation-release mechanism. Even successful
-admissions remain counted until a later exact-owned reconciliation integration
-can prove the relevant resource no longer consumes a concurrent slot. Neither a
-lost response nor an empty active-machine list proves deletion. Never reset a
-private journal, guess an unknown child ID or scan-delete account resources.
+The owned stop/resume workflow now provides an internal exact-proof release of
+concurrency after a successful shared stop. See [lifecycle verification](example-lifecycle.md).
+It preserves cumulative machine/start/dollar usage, and cannot release an unknown
+creation with no confirmed child. No public release/reset endpoint exists.
+Neither a lost response nor an empty active-machine list proves deletion. Never
+reset a private journal, guess an unknown child ID or scan-delete account resources.
 
 ## Residual charges and verification
 

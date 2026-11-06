@@ -130,6 +130,21 @@ export const reserve = internalMutation({
         status: prior.status,
       };
     }
+    if (args.kind === "start") {
+      const outstanding = await ctx.db
+        .query("liveReservations")
+        .withIndex("by_scope_and_machineKey_and_kind", (q) =>
+          q
+            .eq("scope", operator.scope)
+            .eq("machineKey", args.machineKey)
+            .eq("kind", "start"),
+        )
+        .take(5);
+      if (outstanding.some((row) => row.status !== "released"))
+        refuse(
+          "This machine already has a retained resume admission. Inspect the original intent.",
+        );
+    }
     const plan = currentPlan(operator.scope, approval.reviewToken);
     if (Date.now() >= approval.approvedAt + plan.durationMinutes * 60_000)
       refuse("Run duration has expired.");
