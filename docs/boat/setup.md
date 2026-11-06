@@ -10,7 +10,8 @@ The optional `@fantastic.dev/convex-sandbox/boat` entry currently implements
 `executionLogs`, plus bounded `readFile`, `writeFile`, `listFiles` and `deleteFile`.
 Native `fork` and source-scoped `listTemplates` are also available. Direct transfers,
 image capture/restore and connections remain unsupported.
-It is not a live-qualified provider release.
+It is not a live-qualified provider release. See the [candidate handoff](release.md)
+for operation qualification and the unresolved release gate.
 The playground continues to use the simulator.
 
 Install the exact audited SDK alongside the component when using this entry:

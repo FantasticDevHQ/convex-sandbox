@@ -1,6 +1,8 @@
 # Opt-in live verification
 
-Boat is still qualified by offline fixtures only. The maintainer command in
+Boat has offline qualification and partial live smoke coverage, with an unresolved
+fork intent blocking release. See the [candidate handoff](release.md) for the
+operation-specific status. The maintainer command in
 `scripts/boat/live-cli.mjs` provides an opt-in live smoke run. It is never imported
 by the component or example app. The admission and inventory module in
 `scripts/boat/live-guard.mjs` remains offline and has no credential or SDK access.
