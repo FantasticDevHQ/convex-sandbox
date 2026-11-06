@@ -94,3 +94,8 @@ Files now supports [bounded owned home-file management](../docs/example-files.md
 prepare a trusted `/home/user/demo` directory, save and verify UTF-8 bytes, read
 back bounded files, and confirm exact nonrecursive deletion. Its lexical policy
 does not provide a symlink jail. Transfer URLs remain unsupported.
+
+Forks now supports the [stopped-source copy walkthrough](../docs/example-fork.md).
+It requires a confirmed stop, retains an accepted child under its own authorized
+binding before readiness, verifies original home bytes, and keeps lost replies
+unresolved without replaying the fork. No live qualification is implied.

@@ -20,6 +20,7 @@ export default defineConfig({
         "commands.spec.ts",
         "logs.spec.ts",
         "files.spec.ts",
+        "fork.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,

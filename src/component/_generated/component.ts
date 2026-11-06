@@ -487,6 +487,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "getConnection";
           leaseUntil?: number;
           nativeImage?: {
+            acceptedMachine?: { provider: string; providerId: string };
             leaseMode?: "start" | "status";
             providerOperationId?: string;
             result?:
@@ -530,7 +531,11 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
           expectedVersion: number;
           operationId: string;
           result:
-            | { operationId: string; state: "pending" }
+            | {
+                acceptedMachine?: { provider: string; providerId: string };
+                operationId: string;
+                state: "pending";
+              }
             | {
                 result:
                   | {
@@ -621,6 +626,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "getConnection";
           leaseUntil?: number;
           nativeImage?: {
+            acceptedMachine?: { provider: string; providerId: string };
             leaseMode?: "start" | "status";
             providerOperationId?: string;
             result?:
@@ -741,6 +747,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "getConnection";
           leaseUntil?: number;
           nativeImage?: {
+            acceptedMachine?: { provider: string; providerId: string };
             leaseMode?: "start" | "status";
             providerOperationId?: string;
             result?:
@@ -1096,6 +1103,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "getConnection";
           leaseUntil?: number;
           nativeImage?: {
+            acceptedMachine?: { provider: string; providerId: string };
             leaseMode?: "start" | "status";
             providerOperationId?: string;
             result?:
@@ -1191,6 +1199,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "getConnection";
             leaseUntil?: number;
             nativeImage?: {
+              acceptedMachine?: { provider: string; providerId: string };
               leaseMode?: "start" | "status";
               providerOperationId?: string;
               result?:
@@ -1274,6 +1283,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "getConnection";
           leaseUntil?: number;
           nativeImage?: {
+            acceptedMachine?: { provider: string; providerId: string };
             leaseMode?: "start" | "status";
             providerOperationId?: string;
             result?:
@@ -1369,6 +1379,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "getConnection";
             leaseUntil?: number;
             nativeImage?: {
+              acceptedMachine?: { provider: string; providerId: string };
               leaseMode?: "start" | "status";
               providerOperationId?: string;
               result?:

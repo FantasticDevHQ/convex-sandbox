@@ -254,6 +254,21 @@ export class SandboxImages {
             claim.reference.provider,
             claim.nativeImage.providerOperationId,
           );
+          const child =
+            result.state === "pending"
+              ? result.acceptedMachine
+              : result.state === "ready" && "machine" in result.result
+                ? result.result.machine
+                : undefined;
+          const accepted = claim.nativeImage.acceptedMachine;
+          if (
+            child &&
+            (child.providerId === claim.reference.providerId ||
+              (accepted &&
+                (child.provider !== accepted.provider ||
+                  child.providerId !== accepted.providerId)))
+          )
+            throw new Error("Fork child identity conflict");
         } catch {
           throw new SandboxProviderError({
             code: "validation",

@@ -108,7 +108,10 @@ test("native fork publishes the child identity as pending before readiness reads
   const started = await f.client().run({ ...handle, kind: "fork" });
   expect(started).toMatchObject({
     status: "running",
-    nativeImage: { providerOperationId: expect.any(String) },
+    nativeImage: {
+      providerOperationId: expect.any(String),
+      acceptedMachine: { provider: "boat", providerId: "child-vm" },
+    },
   });
   expect(f.calls).toHaveLength(1);
   expect(f.calls[0].url.pathname).toBe("/api/v1/sandboxes/source-vm/fork");

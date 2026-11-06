@@ -88,6 +88,13 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
       <Link to="/files" search={{ machine: machineKey }} className="text-link">
         Manage bounded home files →
       </Link>
+      <Link
+        to="/forks"
+        search={{ source: machineKey, child: undefined }}
+        className="text-link"
+      >
+        Fork this stopped source →
+      </Link>
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { CommandsPage } from "./commands";
+import { ForkPage } from "./fork";
 import { FilesPage } from "./files";
 import { CreatePage } from "./create";
 import { AllowancePage } from "./allowance";
@@ -81,7 +82,9 @@ function Frame() {
                   ? { machine: undefined, operation: undefined }
                   : to === "/files"
                     ? { machine: undefined }
-                    : undefined
+                    : to === "/forks"
+                      ? { source: undefined, child: undefined }
+                      : undefined
               }
               activeOptions={{ exact: to === "/" }}
               onClick={() => {
@@ -395,7 +398,14 @@ const filesRoute = createRoute({
 const forksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/forks",
-  component: () => <WorkflowPage name="Forks" />,
+  validateSearch: (search: Record<string, unknown>) => ({
+    source: typeof search.source === "string" ? search.source : undefined,
+    child: typeof search.child === "string" ? search.child : undefined,
+  }),
+  component: () => {
+    const { source, child } = forksRoute.useSearch();
+    return <ForkPage sourceKey={source} childKey={child} />;
+  },
 });
 const operationsRoute = createRoute({
   getParentRoute: () => rootRoute,

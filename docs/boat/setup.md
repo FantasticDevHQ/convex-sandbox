@@ -425,7 +425,10 @@ Authorize that native copy and its resulting compute/storage costs explicitly in
 your host policy. The adapter does not run an agent or rewrite guest files.
 
 The returned child sandbox ID is persisted immediately in a versioned native
-image-job handle, bound to the source ID, before any readiness read. A later
+image-job handle and optional `nativeImage.acceptedMachine`, bound to the source
+ID, before any readiness read. The public accepted reference permits explicit
+host-authorized child registration and cleanup while readiness remains pending.
+Later readiness must report that same child reference. A later
 status action reads that child only. Starting states remain pending; running
 states confirm a ready result with the new physical provider reference. Native
 error states fail the fork; missing, stopped or unknown states retain uncertainty.

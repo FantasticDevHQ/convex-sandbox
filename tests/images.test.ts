@@ -650,3 +650,39 @@ test("changed machine binding withholds a freshly issued connection handle", asy
     client.connection({ sandbox, kind: "preview" }),
   ).rejects.toMatchObject({ data: { code: "stale_resource" } });
 });
+
+test("accepted fork child remains distinct and later readiness cannot switch its identity", async () => {
+  const acceptedMachine = { provider: "fixture", providerId: "accepted-child" };
+  const f = fixture({
+    fork: async () => ({
+      state: "pending",
+      operationId: "fork-job",
+      acceptedMachine,
+    }),
+    status: async () => ({
+      state: "ready",
+      result: {
+        machine: { provider: "fixture", providerId: "different-child" },
+      },
+    }),
+  });
+  await f.setup();
+  const handle = { sandbox, operationId: "accepted-fork" };
+  const start = await f.client.run({ ...handle, kind: "fork" });
+  expect(start.nativeImage?.acceptedMachine).toEqual(acceptedMachine);
+  const status = await f.client.status(handle);
+  expect(status?.status).toBe("unknown");
+  expect(status?.nativeImage?.acceptedMachine).toEqual(acceptedMachine);
+  expect(status?.nativeImage?.result).toBeUndefined();
+  const source = fixture({
+    fork: async () => ({
+      state: "pending",
+      operationId: "bad-fork",
+      acceptedMachine: { provider: "fixture", providerId: "vm-1" },
+    }),
+  });
+  await source.setup();
+  expect((await source.client.run({ ...handle, kind: "fork" })).status).toBe(
+    "unknown",
+  );
+});

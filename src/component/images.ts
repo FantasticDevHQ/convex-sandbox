@@ -142,6 +142,24 @@ export const publish = mutation({
             op.nativeImage.providerOperationId,
           )
         : null;
+    const accepted =
+      state?.state === "pending" ? state.acceptedMachine : undefined;
+    const readyMachine =
+      state?.state === "ready" && "machine" in state.result
+        ? state.result.machine
+        : undefined;
+    const retained = op.nativeImage.acceptedMachine;
+    for (const machine of [accepted, readyMachine]) {
+      if (
+        machine &&
+        (kind !== "fork" ||
+          machine.providerId === op.reference.providerId ||
+          (retained &&
+            (machine.provider !== retained.provider ||
+              machine.providerId !== retained.providerId)))
+      )
+        throw new Error("Fork child identity conflict");
+    }
     const status = state
       ? state.state === "ready"
         ? "succeeded"
@@ -154,6 +172,7 @@ export const publish = mutation({
     const { leaseMode: _leaseMode, ...metadata } = op.nativeImage;
     const nativeImage = {
       ...metadata,
+      ...(accepted ? { acceptedMachine: accepted } : {}),
       ...(state?.state === "pending"
         ? { providerOperationId: nativeId(state.operationId) }
         : {}),
