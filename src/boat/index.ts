@@ -83,3 +83,6 @@ export function createBoatProvider(options: BoatOptions) {
 
 export { createBoatWebhookHandler } from "./webhooks.js";
 export type { BoatWebhookHint, BoatWebhookOptions } from "./webhooks.js";
+
+export { readBoatSetup } from "./setup.js";
+export type { BoatSetupReadiness } from "./setup.js";
