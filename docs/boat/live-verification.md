@@ -143,17 +143,32 @@ File checks use the adapter's [documented read/write response path equivalence](
 
 The fixed sequence creates one small private machine with `noEnv: true` and native
 snapshots enabled by the adapter. It checks readiness; writes, reads and lists a
-run-specific file under `/tmp`; runs one finite detached `printf` command and
+run-specific file under `/home/user`; runs one finite detached `printf` command and
 checks its history/logs; and reads the source-scoped template catalog. A two-machine
-approval also forks the owned parent and verifies its copied file. A one-machine
-approval reports the fork check skipped. It deletes the parent's fixture file,
-stops and resumes the parent once, then attempts child-first VM cleanup.
+approval also forks the owned parent and verifies its copied file. Before forking,
+the runner stops the parent and waits for its completed stop/current stopped
+observation so the newest snapshot includes the fixture. A one-machine approval
+reports the fork check skipped. It resumes the parent once, waits for guest file
+readiness, verifies the retained file again, deletes that file, then attempts
+child-first VM cleanup.
+
+Boat's [snapshot contents](https://docs.boat.dev/snapshots/whats-saved.md)
+exclude `/tmp` and retain `/home/user`. Its [fork documentation](https://docs.boat.dev/snapshots/resume-and-fork.md)
+says a running fork uses the latest background snapshot and may omit recent
+writes; a stopped source includes the stop's final snapshot. These contracts,
+reviewed on 2026-11-06, determine this sequence. The runner creates no saved
+snapshot/template or extra independently billable artifact. The older live run
+used `/tmp` without this snapshot boundary; its copied-file check could not have
+qualified persistence. This correction neither proves the reason for that run's
+409 nor resolves its pending fork intent.
+
 The reviewed estimate must allow up to two starts for one-machine mode or three
 starts for two-machine mode, including resume. It must account for storage and
 unresolved charges. This runner neither quotes prices nor enforces a dollar cap.
 
 A VM running observation is not proof that its guest file service is available.
-Before the parent's first file write and the fork's file read, the runner probes
+Before the parent's first file write, the fork's file read and the resumed
+parent's persistence read, the runner probes
 the owned machine's `/tmp` directory through the bounded read-only file API. It
 retries only normalized timeout, capacity, rate-limit or unknown-outcome read
 failures, within the same work deadline and at most 30 attempts. Permission and

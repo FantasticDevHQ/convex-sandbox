@@ -78,16 +78,21 @@ export function fakeBoatHTTP(approval, options = {}) {
     if (p[2] === "fork") {
       assert.equal(body.noEnv, true);
       assert.deepEqual(body.env, {});
+      if (!machine.snapshot)
+        return json({ error: { code: "synthetic_snapshot_unavailable" } }, 409);
       if (options.lostFork) throw new Error("synthetic-private-key-and-body");
       const child = `owned-${++number}`;
       machines.set(child, {
         state: "ready",
-        files: new Map(machine.files),
+        files: new Map(machine.snapshot),
         guestFailures: options.forkGuestFailures ?? 0,
       });
       return json({ id: child, sandbox: { id: child, state: "provisioning" } });
     }
     if (p[2] === "stop") {
+      machine.snapshot = new Map(
+        [...machine.files].filter(([file]) => file.startsWith("/home/user/")),
+      );
       machine.state = "archived";
       return json({ id, stop: { id: `stop-${id}`, status: "completed" } });
     }
@@ -95,6 +100,8 @@ export function fakeBoatHTTP(approval, options = {}) {
       return json({ id, stop: { id: p[3], status: "completed" } });
     if (p[2] === "resume") {
       assert.equal(body.noEnv, true);
+      machine.files = new Map(machine.snapshot ?? []);
+      machine.guestFailures = options.resumeGuestFailures ?? 0;
       machine.state = "ready";
       return json({ id, sandbox: { id, state: "provisioning" } });
     }
@@ -137,7 +144,12 @@ export function fakeBoatHTTP(approval, options = {}) {
     if (p[2] === "files") {
       const target = body?.path ?? u.searchParams.get("path");
       assert.ok(
-        target === "/tmp" || target === `/tmp/csb-live-${approval.runId}.txt`,
+        [
+          "/tmp",
+          "/home/user",
+          `/tmp/csb-live-${approval.runId}.txt`,
+          `/home/user/csb-live-${approval.runId}.txt`,
+        ].includes(target),
       );
       if (machine.guestFailures > 0) {
         if (p[3] === "list") machine.guestFailures--;
@@ -150,13 +162,15 @@ export function fakeBoatHTTP(approval, options = {}) {
           success: true,
           path: target,
           truncated: false,
-          files: [...machine.files].map(([file, bytes]) => ({
-            name: path.basename(file),
-            path: file,
-            isDir: false,
-            isSymlink: false,
-            size: bytes.length,
-          })),
+          files: [...machine.files]
+            .filter(([file]) => path.dirname(file) === target)
+            .map(([file, bytes]) => ({
+              name: path.basename(file),
+              path: file,
+              isDir: false,
+              isSymlink: false,
+              size: bytes.length,
+            })),
         });
       if (method === "PUT")
         machine.files.set(target, Buffer.from(body.content, "base64"));
@@ -167,7 +181,9 @@ export function fakeBoatHTTP(approval, options = {}) {
       const bytes = machine.files.get(target);
       return json({
         success: true,
-        path: `../..${target}`,
+        path: target.startsWith("/home/user/")
+          ? target.slice("/home/user/".length)
+          : `../..${target}`,
         encoding: "base64",
         size: bytes.length,
         ...(method === "GET" ? { content: bytes.toString("base64") } : {}),
