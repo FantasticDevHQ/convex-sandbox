@@ -81,7 +81,7 @@ beforeEach(() => {
         size: bytes.length,
         encoding: "base64",
         data: data.toString("base64"),
-        done: false,
+        done: offset + data.length === bytes.length,
       });
     }),
   );
@@ -236,4 +236,21 @@ test("rebound executions cannot expose cached bytes or fetch native output", asy
   expect(await a.query(cached, handle)).toBeNull();
   await expect(a.action(sync, handle)).rejects.toThrow();
   expect(calls).toHaveLength(0);
+});
+
+test("drained native output can grow while the original execution stays running", async () => {
+  const { a } = await fixture();
+  await a.action(sync, handle);
+  output += "later\n";
+  calls = [];
+  await a.action(sync, handle);
+  expect(
+    calls
+      .find((u) => u.searchParams.get("stream") === "stdout")
+      ?.searchParams.get("offset"),
+  ).toBe("6");
+  const page = await a.query(cached, handle);
+  expect(page.entries.map((e: { text: string }) => e.text).join("")).toBe(
+    "hello\nlater\n",
+  );
 });

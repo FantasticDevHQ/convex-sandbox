@@ -129,7 +129,7 @@ test("history byte offsets append only new bytes across polls and reconstructed 
       .join(""),
   ).toBe("warning!");
   expect(logs.truncated).toBe(false);
-  expect(f.calls).toHaveLength(count);
+  expect(f.calls).toHaveLength(count + 2);
   expect(
     f.calls
       .slice(1)
@@ -152,16 +152,17 @@ test("UTF-8 split at a native page or growing-stream boundary is emitted once", 
     `${"a".repeat(1023)}😀z`,
   );
   f.state.stdout = Buffer.from([0xf0, 0x9f]);
+  f.state.done = true;
   const partial = await f.read();
   expect(partial.entries).toEqual([]);
   f.state.stdout = Buffer.from("😀");
   f.state.done = true;
   const full = await f.read(partial.nextCursor);
   expect(full.entries).toEqual([{ stream: "stdout", text: "😀" }]);
-  expect(full.complete).toBe(true);
+  expect(full.complete).toBe(false);
 });
 
-test("retention gaps and invalid terminal UTF-8 are explicitly truncated", async () => {
+test("retention gaps and invalid UTF-8 are explicitly truncated", async () => {
   const f = await fixture();
   f.state.gap = 2;
   expect((await f.read()).truncated).toBe(true);
@@ -171,7 +172,7 @@ test("retention gaps and invalid terminal UTF-8 are explicitly truncated", async
   f.state.done = true;
   const page = await f.read();
   expect(page.truncated).toBe(true);
-  expect(page.complete).toBe(true);
+  expect(page.complete).toBe(false);
 });
 
 test.each(["missing", "identity", "encoding", "backward", "advance", "base64"])(

@@ -334,8 +334,11 @@ The status-only error policy does not expose the native error-body subcode.
 Missing offset fields also fail validation rather than inventing append cursors.
 
 UTF-8 suffixes split at a read boundary are left at their native byte position
-for the next read. Only complete characters are emitted until the stream is done;
-invalid terminal bytes are replaced and flagged truncated. A provider retention
+for the next read, including when the current native page reports `done`.
+That flag drains currently persisted bytes; it does not prove the output will
+never grow. The adapter keeps the shared cursor readable until the cache bound,
+rather than sealing it on `done`. An incomplete suffix stays at its native offset;
+other invalid bytes are replaced and flagged truncated. A provider retention
 gap marks truncation. Backward offsets are rejected. The cursor contains only an
 identity digest and two offsets, with no output, environment or credentials.
 Native base64 bytes are exact; the text cache is a bounded UTF-8 view, not a binary

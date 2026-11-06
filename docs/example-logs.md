@@ -21,6 +21,11 @@ refresh button is disabled. Raw-offset or agent errors remain visible as safe
 error codes, alongside any previously cached bytes. Errors do not advance the
 retained cursor. Logs render as text, never as HTML.
 
+Boat's native `done` flag drains only the currently available bytes. The adapter
+keeps its cursor readable because detached output can grow later, even after a
+drained read. It does not permanently seal the cache based on that flag. An
+incomplete UTF-8 suffix stays at its native offset until more bytes arrive.
+
 An empty page or a drained native stream does not confirm process exit. The
 execution state and exit code still come from separate native history inspection.
 There is no background polling or cancellation. Each explicit refresh is bounded

@@ -91,7 +91,9 @@ export function createBoatLogs(
       const page: ProviderLogPage = {
         entries: [],
         nextCursor: null,
-        complete: true,
+        // Native done only drains the currently persisted bytes. Detached
+        // output can grow later; never permanently seal the shared cache.
+        complete: false,
         truncated: false,
       };
       for (const [index, stream] of (["stdout", "stderr"] as const).entries()) {
@@ -127,7 +129,7 @@ export function createBoatLogs(
         const bytes = decodeBase64(reply.data, limit, "read");
         if (reply.nextOffset - reply.offset !== bytes.length)
           throw invalid("read");
-        const consumed = reply.done ? bytes.length : prefixLength(bytes);
+        const consumed = prefixLength(bytes);
         const prefix = bytes.subarray(0, consumed);
         let text: string;
         try {
@@ -142,7 +144,6 @@ export function createBoatLogs(
         if (text) page.entries.push({ stream, text });
         page.truncated ||= reply.offset > requested;
         positions[index] = reply.offset + consumed;
-        page.complete &&= reply.done;
       }
       page.nextCursor = JSON.stringify([1, key, ...positions]);
       return page;
