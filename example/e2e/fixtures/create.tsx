@@ -84,16 +84,17 @@ function Fixture() {
       {view.registry && (
         <button
           type="button"
-          onClick={() =>
+          onClick={() => {
+            if (!view.registry) return;
             save({
               ...view,
               registry: {
-                ...view.registry!,
+                ...view.registry,
                 observedState: "running",
                 refreshSequence: 2,
               },
-            })
-          }
+            });
+          }}
         >
           Inject independent running observation
         </button>

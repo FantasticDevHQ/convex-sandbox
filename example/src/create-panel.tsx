@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CreationView } from "../convex/live/create";
+export const validMachineKey = (key: string) =>
+  /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(key) && key !== "new";
 export function CreatePanel({
   selectedKey,
   view,
@@ -12,6 +14,7 @@ export function CreatePanel({
   const [draft, setDraft] = useState(selectedKey ?? "");
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [invalid, setInvalid] = useState(false);
   const [now, setNow] = useState(Date.now());
   const busy = useRef(false);
   useEffect(() => {
@@ -47,6 +50,11 @@ export function CreatePanel({
   async function submit() {
     if (busy.current || held || provision || view?.registry || !draft.trim())
       return;
+    if (!validMachineKey(draft.trim())) {
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
     busy.current = true;
     setPending(true);
     setFailed(false);
@@ -79,6 +87,12 @@ export function CreatePanel({
             pattern="[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}"
           />
         </label>
+        {invalid && (
+          <p role="alert">
+            Use a key of 1–80 letters, digits, dots, underscores or hyphens,
+            beginning with a letter or digit. The key new is reserved.
+          </p>
+        )}
         <p>Size: Small · Inherited guest secrets: Off · Visibility: Private</p>
         <p>
           The server verifies the approved account and atomically reserves run

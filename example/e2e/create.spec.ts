@@ -3,7 +3,22 @@ import { createServer, type ViteDevServer } from "vite";
 let server: ViteDevServer;
 let origin: string;
 test.beforeAll(async () => {
-  server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+  server = await createServer({
+    server: { host: "127.0.0.1", port: 0 },
+    plugins: [
+      {
+        name: "offline-create-hooks",
+        enforce: "pre",
+        transform(code, id) {
+          if (id.endsWith("/src/create.tsx"))
+            return code.replace(
+              'from "convex/react"',
+              'from "../e2e/fixtures/create-hooks"',
+            );
+        },
+      },
+    ],
+  });
   await server.listen();
   const a = server.httpServer?.address();
   if (!a || typeof a === "string") throw Error("No address");
@@ -52,4 +67,26 @@ test("lost reply", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Create approved machine" }),
   ).toHaveCount(0);
+});
+
+test("production navigation preserves a rejected request", async ({ page }) => {
+  await page.goto(`${origin}/e2e/fixtures/create-route.html`);
+  await page
+    .getByRole("textbox", { name: "Logical machine key" })
+    .fill("research-one");
+  await page.getByRole("button", { name: "Create approved machine" }).click();
+  await expect(page.getByTestId("selected-key")).toHaveText("research-one");
+  await expect(page.getByRole("alert")).toContainText(
+    "request did not return a confirmed result",
+  );
+});
+
+test("invalid key is refused before navigation", async ({ page }) => {
+  await page.goto(`${origin}/e2e/fixtures/create-route.html`);
+  await page
+    .getByRole("textbox", { name: "Logical machine key" })
+    .fill("invalid key");
+  await page.getByRole("button", { name: "Create approved machine" }).click();
+  await expect(page.getByRole("alert")).toContainText("Use a key");
+  await expect(page.getByTestId("selected-key")).toHaveText("none");
 });

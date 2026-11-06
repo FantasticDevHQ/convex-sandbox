@@ -10,7 +10,10 @@ const proposal = makeFunctionReference<"query">("live/allowance:proposal");
 const approve = makeFunctionReference<"action">("live/allowance:approve");
 const refresh = makeFunctionReference<"action">("live/machines:refresh");
 const issuer = "https://synthetic.clerk.accounts.dev";
-let native: ReturnType<typeof vi.fn>;
+let native = vi.fn(
+  async (_url: unknown, _init?: RequestInit): Promise<Response> =>
+    new Response(),
+);
 let lose = false;
 beforeEach(() => {
   vi.stubEnv(
@@ -152,4 +155,23 @@ test("foreign and anonymous callers, forged fields and changed wallet cannot dis
   expect((await b.query(status, { key: "research-one" })).reservationHeld).toBe(
     false,
   );
+});
+
+test("an interrupted reservation before the component claim is retained without redispatch", async () => {
+  const { a } = await fixture();
+  await a.mutation(
+    makeFunctionReference<"mutation">("live/allowance:reserve"),
+    {
+      runId: "synthetic-run",
+      intentKey: "create-research-one",
+      machineKey: "research-one",
+      kind: "create",
+    },
+  );
+  const reloaded = await a.query(status, { key: "research-one" });
+  expect(reloaded.reservationHeld).toBe(true);
+  expect(reloaded.provision).toBeNull();
+  await a.action(create, { key: "research-one" });
+  expect(native).not.toHaveBeenCalled();
+  expect((await a.query(proposal, {})).approval.activeReservations).toBe(1);
 });
