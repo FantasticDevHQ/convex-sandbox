@@ -3,7 +3,17 @@ import { createServer, type ViteDevServer } from "vite";
 let server: ViteDevServer;
 let origin: string;
 test.beforeAll(async () => {
-  server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+  server = await createServer({
+    server: { host: "127.0.0.1", port: 0 },
+    plugins: [{
+      name: "offline-command-hooks",
+      enforce: "pre",
+      transform(code, id) {
+        if (id.endsWith("/src/commands.tsx"))
+          return code.replace('from "convex/react"', 'from "../e2e/fixtures/command-hooks"');
+      },
+    }],
+  });
   await server.listen();
   const a = server.httpServer?.address();
   if (!a || typeof a === "string") throw Error("No address");
@@ -55,4 +65,15 @@ test("rejected submission keeps the original operation and error", async ({
   await expect(
     page.getByRole("button", { name: "Run detached command" }),
   ).toHaveCount(0);
+});
+
+test("production router retains rejected original submission", async ({ page }) => {
+  await page.goto(`${origin}/e2e/fixtures/command-route.html`);
+  await page.getByRole("button", { name: "Run detached command" }).click();
+  await expect(page.getByTestId("selected-operation")).toContainText("command-");
+  await expect(page.getByRole("alert")).toContainText("was not confirmed");
+  await expect(page.getByTestId("command-operation")).toHaveText(
+    await page.getByTestId("selected-operation").textContent() ?? "",
+  );
+  await expect(page.getByRole("button", { name: "Run detached command" })).toHaveCount(0);
 });

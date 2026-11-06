@@ -38,7 +38,7 @@ function ChooseMachine() {
     </section>
   );
 }
-function ConnectedCommands({
+export function ConnectedCommands({
   machineKey,
   operationId,
 }: {
