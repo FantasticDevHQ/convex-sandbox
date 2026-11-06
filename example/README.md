@@ -99,3 +99,8 @@ Forks now supports the [stopped-source copy walkthrough](../docs/example-fork.md
 It requires a confirmed stop, retains an accepted child under its own authorized
 binding before readiness, verifies original home bytes, and keeps lost replies
 unresolved without replaying the fork. No live qualification is implied.
+
+Owned details now include the [source template catalog and capability limits](../docs/example-catalog.md).
+An explicit read shows source-only mutable saved names, pending readiness and
+partial lists. Unsupported capture, restore, desktop/SSH and transfers explain
+their limits without requesting connections or provisioning.

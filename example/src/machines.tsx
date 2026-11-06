@@ -1,3 +1,4 @@
+import { ConnectedCatalog } from "./catalog";
 import { ConnectedDeletion } from "./delete";
 import { ConnectedLifecycle } from "./lifecycle";
 import { MachineCard } from "./machine-card";
@@ -76,6 +77,12 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
         row={row}
         refresh={() => refresh({ key: machineKey })}
       />
+      {row && !row.tombstone && (
+        <ConnectedCatalog
+          key={JSON.stringify([row.key, row.generation, row.reference])}
+          row={row}
+        />
+      )}
       <ConnectedLifecycle key={machineKey} machineKey={machineKey} />
       <ConnectedDeletion key={`delete-${machineKey}`} machineKey={machineKey} />
       <Link

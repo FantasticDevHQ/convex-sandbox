@@ -21,6 +21,7 @@ export default defineConfig({
         "logs.spec.ts",
         "files.spec.ts",
         "fork.spec.ts",
+        "catalog.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,
