@@ -1,3 +1,4 @@
+import { MachineCard } from "./machine-card";
 import { Link } from "@tanstack/react-router";
 import { useAction, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -31,21 +32,7 @@ function ConnectedList() {
       ) : (
         <div className="owned-machine-list">
           {results.map((row) => (
-            <article key={row.key} className="owned-machine-card">
-              <div className="detail-heading">
-                <h2>{row.key}</h2>
-                <span className="state-pill">{row.observedState}</span>
-              </div>
-              <p>
-                CPU: {row.resources?.cpuCount ?? "Unknown"} · Memory:{" "}
-                {row.resources?.memoryMiB === undefined
-                  ? "Unknown"
-                  : `${row.resources.memoryMiB} MiB`}
-              </p>
-              <p className="scope-note">
-                Refresh: {row.refresh.status}
-                {row.tombstone ? " · Deletion tombstone retained" : ""}
-              </p>
+            <MachineCard key={row.key} row={row}>
               <Link
                 to="/machines/$machineId"
                 params={{ machineId: row.key }}
@@ -53,7 +40,7 @@ function ConnectedList() {
               >
                 Open details →
               </Link>
-            </article>
+            </MachineCard>
           ))}
         </div>
       )}
