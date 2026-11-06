@@ -2,7 +2,8 @@ import { useAction, useQuery } from "convex/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { api } from "../convex/_generated/api";
 import { OperatorAccess } from "./operator-access";
-import { CreatePanel, validMachineKey } from "./create-panel";
+import { CreatePanel } from "./create-panel";
+import { validMachineKey } from "./machine-key";
 export function ConnectedCreate({ machineKey }: { machineKey?: string }) {
   const selectedKey =
     machineKey && validMachineKey(machineKey) ? machineKey : undefined;

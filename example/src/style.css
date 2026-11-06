@@ -1448,3 +1448,28 @@ footer span:last-child {
   color: #294e2a;
   font-weight: 600;
 }
+
+.commands-panel {
+  display: grid;
+  gap: 24px;
+}
+.command-field {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+  max-width: 720px;
+}
+.command-field input,
+.command-field textarea,
+.command-field select {
+  padding: 12px 14px;
+  border: 1px solid #8da47c;
+  border-radius: 4px;
+  background: #fdfdf8;
+  color: #243423;
+  font: inherit;
+}
+.command-field textarea {
+  font-family: ui-monospace, monospace;
+  resize: vertical;
+}

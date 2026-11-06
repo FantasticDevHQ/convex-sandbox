@@ -24,6 +24,9 @@ function accessFor(ctx: Pick<ActionCtx, "auth" | "runQuery">) {
         "readFile",
         "writeFile",
         "delete",
+        "execute",
+        "executionGet",
+        "executionStatus",
       ].includes(operation),
   });
 }
@@ -31,7 +34,15 @@ export async function ownedBoatClient(
   ctx: ActionCtx,
   key: string,
   operation:
-    "stop" | "start" | "readFile" | "writeFile" | "describe" | "delete",
+    | "stop"
+    | "start"
+    | "readFile"
+    | "writeFile"
+    | "describe"
+    | "delete"
+    | "execute"
+    | "executionGet"
+    | "executionStatus",
   billable = false,
 ) {
   const access = accessFor(ctx);
@@ -54,7 +65,14 @@ export async function ownedBoatClient(
     plan.wallet !== (process.env.BOAT_ORG ?? "personal")
   )
     refuse("The original reviewed account is required.");
-  if (billable) currentPlan(operator.scope, approval?.reviewToken);
+  if (billable) {
+    currentPlan(operator.scope, approval?.reviewToken);
+    if (
+      !approval ||
+      Date.now() >= approval.approvedAt + plan.durationMinutes * 60_000
+    )
+      refuse("Run duration has expired.");
+  }
   const apiKey = process.env.BOAT_API_KEY;
   if (!apiKey) refuse("Boat server configuration is required.");
   let account: Awaited<ReturnType<typeof readBoatSetup>>;

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CreationView } from "../convex/live/create";
-export const validMachineKey = (key: string) =>
-  /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(key) && key !== "new";
+import { validMachineKey } from "./machine-key";
 export function CreatePanel({
   selectedKey,
   view,

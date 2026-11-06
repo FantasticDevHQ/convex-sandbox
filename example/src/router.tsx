@@ -1,3 +1,4 @@
+import { CommandsPage } from "./commands";
 import { CreatePage } from "./create";
 import { AllowancePage } from "./allowance";
 import { MachinesPage, MachinePage } from "./machines";
@@ -74,6 +75,11 @@ function Frame() {
             <Link
               key={to}
               to={to}
+              search={
+                to === "/commands"
+                  ? { machine: undefined, operation: undefined }
+                  : undefined
+              }
               activeOptions={{ exact: to === "/" }}
               onClick={() => {
                 setMenuOpen(false);
@@ -365,7 +371,15 @@ const createRouteEntry = createRoute({
 const commandsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/commands",
-  component: () => <WorkflowPage name="Commands" />,
+  validateSearch: (search: Record<string, unknown>) => ({
+    machine: typeof search.machine === "string" ? search.machine : undefined,
+    operation:
+      typeof search.operation === "string" ? search.operation : undefined,
+  }),
+  component: () => {
+    const { machine, operation } = commandsRoute.useSearch();
+    return <CommandsPage machineKey={machine} operationId={operation} />;
+  },
 });
 const filesRoute = createRoute({
   getParentRoute: () => rootRoute,
