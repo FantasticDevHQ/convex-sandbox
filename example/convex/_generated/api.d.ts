@@ -22,6 +22,8 @@ import type * as demo_contracts from "../demo/contracts.js";
 import type * as demo_service from "../demo/service.js";
 import type * as demo_store from "../demo/store.js";
 import type * as live_access from "../live/access.js";
+import type * as live_allowance from "../live/allowance.js";
+import type * as live_allowanceModel from "../live/allowanceModel.js";
 import type * as live_authConfig from "../live/authConfig.js";
 import type * as live_machines from "../live/machines.js";
 import type * as live_operator from "../live/operator.js";
@@ -50,6 +52,8 @@ declare const fullApi: ApiFromModules<{
   "demo/service": typeof demo_service;
   "demo/store": typeof demo_store;
   "live/access": typeof live_access;
+  "live/allowance": typeof live_allowance;
+  "live/allowanceModel": typeof live_allowanceModel;
   "live/authConfig": typeof live_authConfig;
   "live/machines": typeof live_machines;
   "live/operator": typeof live_operator;

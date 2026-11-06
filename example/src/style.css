@@ -1368,3 +1368,40 @@ footer span:last-child {
     padding: 18px;
   }
 }
+
+.allowance-panel {
+  display: grid;
+  gap: 24px;
+}
+.cost-values {
+  display: flex;
+  gap: 64px;
+  margin: 28px 0;
+  flex-wrap: wrap;
+}
+.cost-values div {
+  display: grid;
+  gap: 8px;
+}
+.cost-values strong {
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 2.5rem;
+}
+.risk-notice {
+  border-left: 3px solid #a45e36;
+  padding: 12px 18px;
+  background: #f8efe5;
+}
+.risk-acknowledgement {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 24px 0;
+  max-width: 680px;
+}
+.risk-acknowledgement input {
+  width: 20px;
+  height: 20px;
+  accent-color: #294e2a;
+  flex-shrink: 0;
+}

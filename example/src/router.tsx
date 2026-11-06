@@ -1,3 +1,4 @@
+import { AllowancePage } from "./allowance";
 import { MachinesPage, MachinePage } from "./machines";
 import { SetupPage } from "./setup";
 import { OperatorAccess } from "./operator-access";
@@ -339,6 +340,11 @@ const setupRoute = createRoute({
   path: "/setup",
   component: SetupPage,
 });
+const allowanceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/setup/run",
+  component: AllowancePage,
+});
 const machinesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/machines",
@@ -381,6 +387,7 @@ export const router = createRouter({
   routeTree: rootRoute.addChildren([
     overviewRoute,
     setupRoute,
+    allowanceRoute,
     machinesRoute,
     commandsRoute,
     filesRoute,

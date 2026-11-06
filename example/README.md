@@ -61,3 +61,8 @@ manual bounded refresh through the public shared lifecycle client. It never
 scans the native account. Unknown resource measurements remain Unknown. See the
 [owned-machine guide](../docs/example-machines.md) for access, pagination,
 refresh-failure and rebind behavior.
+
+Review a finite live-run proposal at `/setup/run` after operator setup. It starts
+without a spending plan. See [run approval and durable admission](../docs/example-allowance.md)
+for the host-reviewed fields, account verification, residual-charge notice and
+reservation rules. Planning and readiness checks do not approve billable work.
