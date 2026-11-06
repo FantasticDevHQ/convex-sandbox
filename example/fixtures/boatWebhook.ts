@@ -124,18 +124,23 @@ export async function boatWebhookProof(
     });
   }
   const handler = createBoatWebhookHandler(options);
-  const statuses = [
-    (await handler(await delivery("a"))).status,
-    (await handler(await delivery("a"))).status,
-    (await handler(await delivery("b"))).status,
-    (await handler(await delivery("c", "bx_abcdefgh"))).status,
+  const requests = [
+    await delivery("a"),
+    await delivery("a"),
+    await delivery("b"),
+    await delivery("c", "bx_abcdefgh"),
+  ];
+  const statuses = await Promise.all(
+    requests.map(async (request) => (await handler(request)).status),
+  );
+  statuses.push(
     (
       await createBoatWebhookHandler({
         ...options,
         accountId: "foreign-account",
       })(await delivery("d"))
     ).status,
-  ];
+  );
   const queued = queue.length;
   // Simulate an expired-generation scheduled hint; the worker drops it before GET.
   queue.push({ generation: -1, providerId: "bx_23456789" });

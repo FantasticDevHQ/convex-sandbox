@@ -231,3 +231,38 @@ test("host routing deduplicates, rejects foreign/unbound hints and refreshes wit
     recordsSafe: true,
   });
 });
+
+test("bounds a stalled request body and cancels its reader", async () => {
+  vi.useFakeTimers();
+  try {
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const init = {
+      method: "POST",
+      headers: request().headers,
+      body,
+      duplex: "half",
+    };
+    const f = fixture();
+    const result = f.handler(new Request("https://example.test/boat", init));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect((await result).status).toBe(503);
+    expect(cancelled).toBe(true);
+    expect(f.enqueue).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("aborted incoming requests never dispatch", async () => {
+  const controller = new AbortController();
+  controller.abort();
+  const f = fixture();
+  const aborted = new Request(request(), { signal: controller.signal });
+  expect((await f.handler(aborted)).status).toBe(503);
+  expect(f.enqueue).not.toHaveBeenCalled();
+});
