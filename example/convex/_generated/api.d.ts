@@ -30,6 +30,8 @@ import type * as live_commands from "../live/commands.js";
 import type * as live_create from "../live/create.js";
 import type * as live_delete from "../live/delete.js";
 import type * as live_files from "../live/files.js";
+import type * as live_fork from "../live/fork.js";
+import type * as live_forkModel from "../live/forkModel.js";
 import type * as live_lifecycle from "../live/lifecycle.js";
 import type * as live_lifecycleModel from "../live/lifecycleModel.js";
 import type * as live_logs from "../live/logs.js";
@@ -68,6 +70,8 @@ declare const fullApi: ApiFromModules<{
   "live/create": typeof live_create;
   "live/delete": typeof live_delete;
   "live/files": typeof live_files;
+  "live/fork": typeof live_fork;
+  "live/forkModel": typeof live_forkModel;
   "live/lifecycle": typeof live_lifecycle;
   "live/lifecycleModel": typeof live_lifecycleModel;
   "live/logs": typeof live_logs;

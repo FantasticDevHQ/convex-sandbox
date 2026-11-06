@@ -31,7 +31,11 @@ export function ForkPanel({
   }
   if (!view) return <p>Loading retained fork state…</p>;
   const unknown =
-    !!view.intent && (!view.operation || view.operation.status === "unknown");
+    !!view.intent &&
+    (!view.operation ||
+      view.operation.status === "unknown" ||
+      (!view.intent.childId &&
+        !view.operation.nativeImage?.providerOperationId));
   return (
     <div className="fork-workspace">
       <p className="lede">
@@ -42,7 +46,10 @@ export function ForkPanel({
         <div>
           <dt>Source key / original ID</dt>
           <dd data-testid="fork-source">
-            {sourceKey} / {view.source?.reference.providerId ?? "Unavailable"}
+            {sourceKey} /{" "}
+            {view.intent?.sourceId ??
+              view.source?.reference.providerId ??
+              "Unavailable"}
           </dd>
         </div>
         <div>
@@ -99,8 +106,8 @@ export function ForkPanel({
           <p data-testid="fork-state">
             {unknown
               ? "Unknown child outcome"
-              : view.intent.childId
-                ? "Child registered"
+              : view.intent.childId && view.operation?.status === "succeeded"
+                ? "Child registered and ready"
                 : "Pending child readiness"}
           </p>
           <p>
@@ -151,7 +158,11 @@ export function ForkPanel({
         )}
         <button
           type="button"
-          disabled={pending || !view.intent?.childId}
+          disabled={
+            pending ||
+            !view.intent?.childId ||
+            view.operation?.status !== "succeeded"
+          }
           onClick={() => void run("verify")}
         >
           Verify retained copy

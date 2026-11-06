@@ -4,7 +4,6 @@ import {
   query,
   internalMutation,
   type QueryCtx,
-  type MutationCtx,
   type ActionCtx,
 } from "../_generated/server";
 import { api, internal, components } from "../_generated/api";
@@ -93,6 +92,7 @@ async function read(
         (op) => op.kind === "start" && op.sequence > stop.sequence,
       )
     ),
+    stopOperationId: stop?.operationId ?? null,
     fixtureReady: !!(
       fixture?.writtenAt &&
       fixture.generation === source?.generation &&
@@ -126,13 +126,22 @@ async function sourceFixture(
   return { source, fixture };
 }
 export const admit = internalMutation({
-  args,
+  args: {
+    ...args,
+    expectedSourceVersion: v.number(),
+    expectedStopOperationId: v.string(),
+  },
   returns: v.boolean(),
   handler: async (ctx, input): Promise<boolean> => {
     const operationId = identity(input);
     const old = await read(ctx, input);
     if (old.intent) return false;
     const { source, fixture } = await sourceFixture(ctx, input);
+    if (
+      source.version !== input.expectedSourceVersion ||
+      old.stopOperationId !== input.expectedStopOperationId
+    )
+      refuse("The source stopped epoch changed during fixture verification.");
     const scope = source.scope;
     const child = { scope, key: input.childKey };
     if (
@@ -165,6 +174,14 @@ export const admit = internalMutation({
         op.generation === source.generation,
     );
     if (!stop) refuse("The original source stop is missing.");
+    // Reserve the shared source operation in this same transaction. A resume
+    // cannot slip between the confirmed stop and later native fork dispatch.
+    await ctx.runMutation(components.sandbox.images.reserve, {
+      sandbox: { scope, key: input.sourceKey },
+      expectedVersion: source.version,
+      operationId,
+      kind: "fork",
+    });
     await ctx.db.insert("liveForks", {
       scope,
       sourceKey: input.sourceKey,
@@ -248,7 +265,13 @@ export const start = action({
       !actual.every((byte, i) => byte === expected[i])
     )
       refuse("The stopped source no longer matches its retained home fixture.");
-    if (!(await ctx.runMutation(internal.live.fork.admit, input)))
+    if (
+      !(await ctx.runMutation(internal.live.fork.admit, {
+        ...input,
+        expectedSourceVersion: existing.source.version,
+        expectedStopOperationId: existing.stopOperationId ?? "",
+      }))
+    )
       return ctx.runQuery(api.live.fork.status, input);
     const admitted = await ctx.runQuery(api.live.fork.status, input);
     if (!admitted.intent) throw Error("Fork intent missing");
@@ -260,6 +283,11 @@ export const start = action({
           operationId: admitted.intent.operationId,
           kind: "fork",
         });
+      if (
+        operation.nativeImage?.acceptedMachine ||
+        operation.status === "succeeded"
+      )
+        await ctx.runMutation(internal.live.fork.bindChild, input);
       if (operation.status === "unknown")
         await ctx.runMutation(internal.live.allowance.markUnknown, {
           reservationId: admitted.intent.reservationId,
@@ -282,7 +310,6 @@ export const bindChild = internalMutation({
     if (
       !intent ||
       op?.kind !== "fork" ||
-      op.status !== "succeeded" ||
       op.generation !== intent.sourceGeneration ||
       op.reference.providerId !== intent.sourceId ||
       !view.source ||
@@ -291,11 +318,12 @@ export const bindChild = internalMutation({
     )
       refuse("The original ready fork result is required.");
     const result = op.nativeImage?.result;
+    const reference =
+      op.nativeImage?.acceptedMachine ??
+      (result && "machine" in result ? result.machine : undefined);
     if (
-      !result ||
-      !("machine" in result) ||
-      result.machine.provider !== "boat" ||
-      result.machine.providerId === intent.sourceId
+      reference?.provider !== "boat" ||
+      reference.providerId === intent.sourceId
     )
       refuse("A distinct ready child reference is required.");
     const operator = await requireOperator(ctx);
@@ -317,7 +345,7 @@ export const bindChild = internalMutation({
     });
     const child = await ctx.runMutation(components.sandbox.registry.ensure, {
       sandbox: selected.sandbox,
-      reference: result.machine,
+      reference,
     });
     if (
       intent.childId &&
@@ -352,7 +380,10 @@ export const inspect = action({
         .status({ sandbox: c.sandbox, operationId: view.intent.operationId });
     }
     const current = await ctx.runQuery(api.live.fork.status, input);
-    if (current.operation?.status === "succeeded")
+    if (
+      current.operation?.nativeImage?.acceptedMachine ||
+      current.operation?.status === "succeeded"
+    )
       await ctx.runMutation(internal.live.fork.bindChild, input);
     return ctx.runQuery(api.live.fork.status, input);
   },
@@ -383,6 +414,8 @@ export const verify = action({
     const view = await ctx.runQuery(api.live.fork.status, input);
     await requireOperator(ctx);
     const intent = view.intent;
+    if (view.operation?.status !== "succeeded")
+      refuse("Wait for original child readiness before verifying copy bytes.");
     if (
       !intent?.childId ||
       !intent.childGeneration ||

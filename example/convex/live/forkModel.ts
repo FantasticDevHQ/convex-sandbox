@@ -33,5 +33,6 @@ export const forkViewValidator = v.object({
   intent: v.union(forkIntentValidator, v.null()),
   operation: v.union(operationRecordValidator, v.null()),
   stopConfirmed: v.boolean(),
+  stopOperationId: v.union(v.string(), v.null()),
   fixtureReady: v.boolean(),
 });

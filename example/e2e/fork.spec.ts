@@ -26,8 +26,11 @@ test("snapshot boundary", async ({ page }) => {
 test("retained copy", async ({ page }) => {
   await page.goto(`${origin}/e2e/fixtures/fork.html`);
   await approve(page);
-  await page.getByRole("button", { name: "Inspect original fork" }).click();
   await page.reload();
+  await expect(
+    page.getByRole("button", { name: "Verify retained copy" }),
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Inspect original fork" }).click();
   await expect(page.getByTestId("fork-source")).toContainText(
     "synthetic-source",
   );

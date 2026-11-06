@@ -46,6 +46,22 @@ export function normalizeImageSnapshot(
   if (raw.state === "pending") {
     const operationId = nativeId(raw.operationId);
     if (jobId && operationId !== jobId) return invalid();
+    if (raw.acceptedMachine !== undefined) {
+      if (
+        kind !== "fork" ||
+        !object(raw.acceptedMachine) ||
+        raw.acceptedMachine.provider !== provider
+      )
+        return invalid();
+      return {
+        state: "pending",
+        operationId,
+        acceptedMachine: {
+          provider,
+          providerId: nativeId(raw.acceptedMachine.providerId),
+        },
+      };
+    }
     return { state: "pending", operationId };
   }
   if (raw.state !== "ready" || !object(raw.result)) return invalid();

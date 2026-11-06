@@ -24,6 +24,7 @@ const empty: ForkView = {
   operation: null,
   stopConfirmed: !location.search.includes("pending"),
   fixtureReady: true,
+  stopOperationId: "stop-original",
 };
 function Fixture() {
   const [view, setView] = useState<ForkView>(
@@ -74,7 +75,21 @@ function Fixture() {
                 reservationId:
                   "synthetic-reservation" as Id<"liveReservations">,
                 copy: "unverified",
+                ...(!unknown
+                  ? { childId: "synthetic-child", childGeneration: 1 }
+                  : {}),
               },
+              child: unknown
+                ? null
+                : {
+                    ...source,
+                    key: "research-child",
+                    reference: {
+                      provider: "boat",
+                      providerId: "synthetic-child",
+                    },
+                    observedState: "starting",
+                  },
               operation: {
                 scope: source.scope,
                 key: source.key,

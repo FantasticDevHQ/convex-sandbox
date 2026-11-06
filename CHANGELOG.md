@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Optional accepted fork child references in shared image operations, allowing
+  explicit host-authorized child binding before readiness and fencing later
+  status replies to the same child.
+
 - Optional durable native lifecycle job handles in shared operations, with scoped
   read-only reconciliation after restart and protection against stale state or
   changed job identity. No provider-specific state or additional scheduler.

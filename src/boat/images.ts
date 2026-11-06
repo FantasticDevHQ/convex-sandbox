@@ -65,6 +65,7 @@ export function createBoatImages(
         return {
           state: "pending",
           operationId: forkJob(source, child, "write"),
+          acceptedMachine: { provider: "boat", providerId: child },
         };
       });
     },

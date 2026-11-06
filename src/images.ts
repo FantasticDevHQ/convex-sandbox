@@ -28,12 +28,17 @@ export const imageOutputValidator = v.union(
 );
 export type ImageOutput = Infer<typeof imageOutputValidator>;
 export const imageSnapshotValidator = v.union(
-  v.object({ state: v.literal("pending"), operationId: v.string() }),
+  v.object({
+    state: v.literal("pending"),
+    operationId: v.string(),
+    acceptedMachine: v.optional(providerReferenceValidator),
+  }),
   v.object({ state: v.literal("ready"), result: imageOutputValidator }),
   v.object({ state: v.literal("failed") }),
 );
 export type ImageSnapshot = Infer<typeof imageSnapshotValidator>;
 export const nativeImageValidator = v.object({
+  acceptedMachine: v.optional(providerReferenceValidator),
   leaseMode: v.optional(v.union(v.literal("start"), v.literal("status"))),
   source: v.optional(imageReferenceValidator),
   providerOperationId: v.optional(v.string()),

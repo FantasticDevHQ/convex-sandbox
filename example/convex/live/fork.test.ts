@@ -198,6 +198,7 @@ test("source identity and distinct child binding survive query reload without re
   let view = await a.query(status, args);
   expect(view.source.reference.providerId).toBe("native-source");
   expect(view.intent.operationId).toBe("fork-research-child");
+  expect(view.child?.reference.providerId).toBe("native-child");
   expect(forkCount).toBe(1);
   ready = true;
   await a.action(action("fork", "inspect"), args);
@@ -280,4 +281,50 @@ test("confirmed child stop releases only fork concurrency and preserves cumulati
   expect(after.machinesReserved).toBe(before.machinesReserved);
   expect(after.startsReserved).toBe(before.startsReserved);
   expect(after.estimatedUsdReserved).toBe(before.estimatedUsdReserved);
+});
+
+test("atomic source image reservation blocks resume between admission and dispatch", async () => {
+  const { a, confirm } = await fixture();
+  await confirm();
+  expect(
+    await a.mutation(makeFunctionReference<"mutation">("live/fork:admit"), {
+      ...args,
+      expectedSourceVersion: (await a.query(status, args)).source.version,
+      expectedStopOperationId: (await a.query(status, args)).stopOperationId,
+    }),
+  ).toBe(true);
+  await expect(
+    a.action(action("lifecycle", "run"), {
+      key: args.sourceKey,
+      action: "start",
+      operationId: "interleaved",
+    }),
+  ).rejects.toThrow();
+  const view = await a.query(status, args);
+  expect(view.source.observedState).toBe("stopped");
+  expect(view.source.activeOperationId).toBe("fork-research-child");
+  expect(view.operation.kind).toBe("fork");
+  expect(view.operation.status).toBe("pending");
+  expect(forkCount).toBe(0);
+});
+
+test("a changed stopped epoch invalidates preflight fixture verification before admission", async () => {
+  const { a, t, c, sandbox, confirm } = await fixture();
+  await confirm();
+  const original = await a.query(status, args);
+  const ticket = await t.mutation(c.registry.beginRefresh, { sandbox });
+  await t.mutation(c.registry.finishRefresh, {
+    sandbox,
+    ...ticket,
+    result: { state: "stopped" },
+  });
+  await expect(
+    a.mutation(makeFunctionReference<"mutation">("live/fork:admit"), {
+      ...args,
+      expectedSourceVersion: original.source.version,
+      expectedStopOperationId: original.stopOperationId,
+    }),
+  ).rejects.toThrow(/epoch changed/i);
+  expect((await a.query(status, args)).intent).toBeNull();
+  expect(forkCount).toBe(0);
 });
