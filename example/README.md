@@ -104,3 +104,26 @@ Owned details now include the [source template catalog and capability limits](..
 An explicit read shows source-only mutable saved names, pending readiness and
 partial lists. Unsupported capture, restore, desktop/SSH and transfers explain
 their limits without requesting connections or provisioning.
+
+### Retained operation recovery
+
+Open `/operations?machine=<original-key>` to read retained component history and
+allowance intents in the verified operator scope. An optional `operation` query
+parameter reopens an exact retained ID even outside the loaded history page.
+Records from older generations remain visible as history with inspection disabled.
+The page never invokes a replacement create, fork, start, stop, delete or command.
+An explicit inspection uses shared clients for bounded native reads against the
+original ID. Missing native handles remain unresolved. Reopening an unbound child
+also links its retained fork source; no account inventory is scanned.
+
+History is paginated, not an exhaustive account audit. Allowance intents show at
+most 20 per kind and disclose truncation. Inspecting a stop here does not release
+allowance or verify resume fixture bytes; finish those checks in the machine
+workflow. Fork binding and copy verification remain in the original Forks flow.
+Creation without a confirmed identity has no supported Boat recovery lookup.
+
+The restart qualification uses a real owned anonymous backend with synthetic
+Boat identities and the production recovery panel through a test-only Node RPC
+bridge. It proves component persistence and UI reopening across managed restart.
+It does not prove hosted authentication, provider availability or a live outcome.
+The bridge stays in Playwright fixtures; no admin credentials enter the browser.

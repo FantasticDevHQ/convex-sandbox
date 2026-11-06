@@ -1,3 +1,4 @@
+import { RecoveryPage } from "./recovery";
 import { CommandsPage } from "./commands";
 import { ForkPage } from "./fork";
 import { FilesPage } from "./files";
@@ -78,7 +79,7 @@ function Frame() {
               key={to}
               to={to}
               search={
-                to === "/commands"
+                to === "/commands" || to === "/operations"
                   ? { machine: undefined, operation: undefined }
                   : to === "/files"
                     ? { machine: undefined }
@@ -212,7 +213,11 @@ function Overview() {
           No live operation history is connected. Open the playground to inspect
           simulator activity.
         </p>
-        <Link to="/operations" className="text-link">
+        <Link
+          to="/operations"
+          search={{ machine: undefined, operation: undefined }}
+          className="text-link"
+        >
           View operations →
         </Link>
       </section>
@@ -410,7 +415,17 @@ const forksRoute = createRoute({
 const operationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/operations",
-  component: () => <WorkflowPage name="Operations" />,
+  validateSearch: (search: Record<string, unknown>) => ({
+    machine: typeof search.machine === "string" ? search.machine : undefined,
+    operation:
+      typeof search.operation === "string" ? search.operation : undefined,
+  }),
+  component: () => (
+    <RecoveryPage
+      machineKey={operationsRoute.useSearch().machine}
+      operationId={operationsRoute.useSearch().operation}
+    />
+  ),
 });
 const cleanupRoute = createRoute({
   getParentRoute: () => rootRoute,

@@ -168,3 +168,21 @@ in `check:all`. See [opt-in live verification](boat/live-verification.md) for
 approval limits, unresolved cleanup reporting and the remaining live qualification work. `pnpm test:boat:live` exercises the
 actual adapter through synthetic HTTP responses and tests CLI refusal paths; it
 never contacts Boat.
+
+## Operations recovery qualification
+
+The live Operations route reads persisted component operations and scoped host
+allowance intents without native requests on mount or reload. Explicit inspection
+uses only shared lifecycle reconciliation, execution status or image status.
+Original native identity, generation and sequence fences protect replacement
+bindings, including when an old reply arrives after a rebind. Unsupported or
+missing handles stay unresolved. A retained intent is not proof of native success
+or absence. Recovery never replays its mutation or resets the admission journal.
+
+`example/convex/live/recovery.test.ts` verifies scope, bounded reads, no replay,
+and late-response generation fencing with deterministic synthetic transport.
+`example/e2e/recovery.spec.ts` includes a real managed backend restart case run
+inside UbiCloud's worktree integration. A Node-only test bridge reads the owned
+anonymous component records into the production panel before and after stop/start.
+No hosted credentials or real Boat mutations are involved. Normal UI tests skip
+the restart case unless `CSB_RECOVERY_ROOT` identifies the managed test checkout.
