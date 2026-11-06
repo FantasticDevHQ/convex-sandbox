@@ -7,7 +7,9 @@ readiness. Signing in or checking setup never approves a billable run.
 The configuration query reports whether `BOAT_API_KEY` is present and names it
 when missing. The value stays in server environment configuration. `BOAT_ORG`
 selects the wallet; absence explicitly selects `personal`, independent of Boat's
-active-wallet setting. A malformed selector leaves readiness unavailable.
+active-wallet setting. Boat also accepts the authenticated account ID as its
+personal-wallet selector; that ID remains explicit in the check response.
+A malformed selector leaves readiness unavailable.
 Configure these only on the exact owned backend when authorized. Never put
 provider credentials or wallet authority in a browser build variable or request.
 

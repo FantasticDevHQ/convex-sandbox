@@ -186,3 +186,26 @@ test("organization selection is server-owned and its actual ID is projected", as
   expect(result.walletTeamId).toBe("team-fixture");
   expect(result.canStart).toBe(false);
 });
+
+test("the account's own ID is a valid personal-wallet selector", async () => {
+  vi.stubEnv("BOAT_ORG", "account-fixture");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      expect(new Headers(init?.headers).get("X-Boat-Org")).toBe(
+        "account-fixture",
+      );
+      return new Response(
+        JSON.stringify(
+          String(url).includes("/me")
+            ? { ok: true, user: { id: "account-fixture" } }
+            : { ok: true, canStart: true },
+        ),
+      );
+    }),
+  );
+  const result = await fixture().withIdentity(identity).action(readiness, {});
+  expect(result.state).toBe("checked");
+  expect(result.wallet).toBe("account-fixture");
+  expect(result.walletTeamId).toBeNull();
+});

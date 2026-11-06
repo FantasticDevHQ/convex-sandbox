@@ -24,6 +24,7 @@ import type * as demo_store from "../demo/store.js";
 import type * as live_access from "../live/access.js";
 import type * as live_authConfig from "../live/authConfig.js";
 import type * as live_operator from "../live/operator.js";
+import type * as live_setup from "../live/setup.js";
 import type * as nativeLifecycleProof from "../nativeLifecycleProof.js";
 import type * as proof from "../proof.js";
 
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   "live/access": typeof live_access;
   "live/authConfig": typeof live_authConfig;
   "live/operator": typeof live_operator;
+  "live/setup": typeof live_setup;
   nativeLifecycleProof: typeof nativeLifecycleProof;
   proof: typeof proof;
 }>;

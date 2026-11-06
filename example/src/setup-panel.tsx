@@ -134,12 +134,7 @@ export function SetupPanel({
               </div>
               <div>
                 <dt>Organization wallet ID</dt>
-                <dd>
-                  {checked.walletTeamId ??
-                    (checked.wallet === "personal"
-                      ? "Personal wallet"
-                      : "Not reported")}
-                </dd>
+                <dd>{checked.walletTeamId ?? "Personal wallet"}</dd>
               </div>
               <div>
                 <dt>Active / capacity</dt>

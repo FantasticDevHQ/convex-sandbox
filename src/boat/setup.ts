@@ -29,13 +29,14 @@ export async function readBoatSetup(
     value.length <= 256 &&
     !hasControlCharacters(value) &&
     !value.includes(options.apiKey);
+  const personal = org === "personal" || org === account.user?.id;
   if (
     !account.ok ||
     !limits.ok ||
     !safeId(account.user?.id) ||
     !safeId(org) ||
-    (org === "personal" && limits.teamId != null) ||
-    (org !== "personal" && !safeId(limits.teamId))
+    (personal && limits.teamId != null) ||
+    (!personal && !safeId(limits.teamId))
   )
     throw new SandboxProviderError({
       code: "validation",

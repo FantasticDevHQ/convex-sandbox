@@ -1,24 +1,10 @@
 import { useAction, useQuery } from "convex/react";
-import { makeFunctionReference } from "convex/server";
+import { api } from "../convex/_generated/api";
 import { OperatorAccess } from "./operator-access";
-import {
-  SetupPanel,
-  type SetupConfiguration,
-  type SetupReadiness,
-} from "./setup-panel";
-const configuration = makeFunctionReference<
-  "query",
-  Record<string, never>,
-  SetupConfiguration
->("live/setup:configuration");
-const readiness = makeFunctionReference<
-  "action",
-  Record<string, never>,
-  SetupReadiness
->("live/setup:readiness");
+import { SetupPanel } from "./setup-panel";
 function ConnectedSetup() {
-  const config = useQuery(configuration, {});
-  const check = useAction(readiness);
+  const config = useQuery(api.live.setup.configuration, {});
+  const check = useAction(api.live.setup.readiness);
   return <SetupPanel configuration={config} check={() => check({})} />;
 }
 export function SetupPage() {
