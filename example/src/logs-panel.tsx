@@ -59,10 +59,12 @@ export function LogsPanel({
       {cache === undefined && <p>Loading retained output…</p>}
       {cache === null && <p>Output is unavailable for this binding.</p>}
       <h3>stdout</h3>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: bounded scrollable output must support keyboard scrolling. */}
       <pre data-testid="log-stdout" tabIndex={0}>
         {text("stdout") || "No stdout bytes received."}
       </pre>
       <h3>stderr</h3>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: bounded scrollable output must support keyboard scrolling. */}
       <pre data-testid="log-stderr" tabIndex={0}>
         {text("stderr") || "No stderr bytes received."}
       </pre>

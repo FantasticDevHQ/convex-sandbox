@@ -31,6 +31,7 @@ import type * as live_create from "../live/create.js";
 import type * as live_delete from "../live/delete.js";
 import type * as live_lifecycle from "../live/lifecycle.js";
 import type * as live_lifecycleModel from "../live/lifecycleModel.js";
+import type * as live_logs from "../live/logs.js";
 import type * as live_machines from "../live/machines.js";
 import type * as live_operator from "../live/operator.js";
 import type * as live_setup from "../live/setup.js";
@@ -67,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   "live/delete": typeof live_delete;
   "live/lifecycle": typeof live_lifecycle;
   "live/lifecycleModel": typeof live_lifecycleModel;
+  "live/logs": typeof live_logs;
   "live/machines": typeof live_machines;
   "live/operator": typeof live_operator;
   "live/setup": typeof live_setup;

@@ -125,10 +125,11 @@ async function fixture() {
     operationId: handle.operationId,
     mode: "start",
   });
+  if (!lease) throw Error("Missing synthetic execution lease");
   await t.mutation(c.execution.publish, {
     sandbox,
     operationId: handle.operationId,
-    token: lease!.token,
+    token: lease.token,
     result: { snapshot: { executionId: "history-one", state: "running" } },
   });
   return { t, c, a, b, sandbox };
@@ -198,5 +199,41 @@ test("cached reads make no native requests and foreign or anonymous calls reveal
   expect(await b.query(cached, handle)).toBeNull();
   await expect(b.action(sync, handle)).rejects.toThrow();
   await expect(t.query(cached, handle)).rejects.toThrow();
+  expect(calls).toHaveLength(0);
+});
+
+test("rebound executions cannot expose cached bytes or fetch native output", async () => {
+  const { a, t, c, sandbox } = await fixture();
+  await a.action(sync, handle);
+  const lease = await t.mutation(c.execution.claim, {
+    sandbox,
+    operationId: handle.operationId,
+    mode: "status",
+  });
+  if (!lease) throw Error("Missing synthetic status lease");
+  await t.mutation(c.execution.publish, {
+    sandbox,
+    operationId: handle.operationId,
+    token: lease.token,
+    result: {
+      snapshot: { executionId: "history-one", state: "completed", exitCode: 0 },
+    },
+  });
+  const ticket = await t.mutation(c.registry.beginRefresh, { sandbox });
+  await t.mutation(c.registry.finishRefresh, {
+    sandbox,
+    ...ticket,
+    result: { state: "deleted" },
+  });
+  const row = await t.query(c.registry.get, { sandbox });
+  if (!row) throw Error("Missing synthetic binding");
+  await t.mutation(c.registry.rebind, {
+    sandbox,
+    expectedVersion: row.version,
+    reference: { provider: "boat", providerId: "native-rebound" },
+  });
+  calls = [];
+  expect(await a.query(cached, handle)).toBeNull();
+  await expect(a.action(sync, handle)).rejects.toThrow();
   expect(calls).toHaveLength(0);
 });

@@ -802,6 +802,17 @@ footer span:last-child {
   padding: 5px 0;
   font-weight: 600;
 }
+.command-output pre {
+  max-height: 280px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 20px;
+  border: 1px solid #354c35;
+  background: #1c2c21;
+  color: #e0efd0;
+  font: 14px/1.6 ui-monospace, monospace;
+}
 .result-code,
 .empty-state pre,
 .playground details pre {
@@ -1468,17 +1479,7 @@ footer span:last-child {
   display: grid;
   gap: 24px;
 }
-.command-output pre {
-  max-height: 280px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  padding: 20px;
-  border: 1px solid #354c35;
-  background: #1c2c21;
-  color: #e0efd0;
-  font: 14px/1.6 ui-monospace, monospace;
-}
+
 .command-field {
   display: grid;
   gap: 10px;
