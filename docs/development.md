@@ -186,3 +186,25 @@ inside UbiCloud's worktree integration. A Node-only test bridge reads the owned
 anonymous component records into the production panel before and after stop/start.
 No hosted credentials or real Boat mutations are involved. Normal UI tests skip
 the restart case unless `CSB_RECOVERY_ROOT` identifies the managed test checkout.
+
+## Cleanup and retention
+
+The Cleanup route is a consumer of the shared exact-binding deletion workflow.
+Its target list comes only from the selected scoped approval's admission records,
+successful creation proofs and registered fork-child identities. It never lists
+provider inventory. Pending or unknown children block parent deletion. Every
+request reuses the original generation's deletion review token, so a new binding
+cannot inherit cleanup authority. Each click dispatches at most one deletion or
+performs at most one bounded original-job inspection.
+
+The reset mutation only writes a scoped `liveCleanupArchives` presentation marker.
+It never deletes recovery evidence, resets private journals or replenishes
+cumulative allowance. It requires complete native proofs, terminal resume intents
+and 24 hours after the later of run expiry or latest terminal proof. The server
+rechecks these conditions transactionally; a disabled button is not its authority.
+The explicit review refresh reruns the cached status query for time-based retention.
+
+Tests use deterministic synthetic transport. Browser fixtures mount the production
+panel and capture guarded reset and pending deletion, while the actual unconfigured
+route demonstrates the operator gate. These are not evidence of live Boat deletion,
+hosted authentication, physical erasure or zero billing.

@@ -2,11 +2,17 @@ import { forkFields } from "./live/forkModel";
 import { fixtureFields } from "./live/lifecycleModel";
 import { demoTables } from "./demo/schema.js";
 import { approvalFields, reservationFields } from "./live/allowanceModel";
+import { v } from "convex/values";
 import { defineTable } from "convex/server";
 import { defineSchema } from "convex/server";
 
 export default defineSchema({
   ...demoTables,
+  liveCleanupArchives: defineTable({
+    scope: v.string(),
+    runId: v.string(),
+    archivedAt: v.number(),
+  }).index("by_scope_and_runId", ["scope", "runId"]),
   liveForks: defineTable(forkFields).index("by_scope_and_childKey", [
     "scope",
     "childKey",

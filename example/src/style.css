@@ -1535,3 +1535,7 @@ footer span:last-child {
     gap: 0.75rem;
   }
 }
+
+.cleanup-target { border-top: 1px solid #b9c4b0; padding: 22px 0; }
+.cleanup-target h3 { font-family: Georgia, serif; font-size: 1.6rem; margin: 12px 0; }
+.cleanup-target code { overflow-wrap: anywhere; }
