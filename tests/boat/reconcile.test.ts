@@ -33,9 +33,14 @@ async function fixture() {
   } = { phase: "ready", status: 200 };
   const provider = createBoatProvider({
     apiKey: "synthetic-refresh-key",
-    fetch: async (_url, init = {}) => {
+    fetch: async (url, init = {}) => {
       calls.push({ method: init.method, signal: init.signal });
-      if (init.method === "DELETE")
+      if (
+        init.method === "DELETE" ||
+        new URL(String(url)).pathname.endsWith(
+          "/deletion-operations/confirmed-delete",
+        )
+      )
         return new Response(
           JSON.stringify({
             ok: true,
@@ -141,6 +146,11 @@ test("an old native reply cannot alter a deleted/rebound generation", async () =
   const stale = f.client().refresh(sandbox);
   await started.promise;
   await f.client().run({ sandbox, action: "delete", operationId: "delete" });
+  expect((await f.store.get(sandbox))?.tombstone).toBe(false);
+  const confirmed = await f
+    .client()
+    .reconcile({ sandbox, operationId: "delete", policy: { maxAttempts: 1 } });
+  expect(confirmed?.status).toBe("succeeded");
   const deleted = await f.store.get(sandbox);
   await f.t.mutation(f.c.registry.rebind, {
     sandbox,
@@ -238,13 +248,11 @@ test("a hung native read aborts at the host call budget and leaves no timers or 
       started.resolve();
       return new Promise<Response>(() => {});
     };
-    const pending = f
-      .client()
-      .reconcile({
-        sandbox,
-        operationId: "resume",
-        policy: { maxAttempts: 1, maxElapsedMs: 10, callTimeoutMs: 10 },
-      });
+    const pending = f.client().reconcile({
+      sandbox,
+      operationId: "resume",
+      policy: { maxAttempts: 1, maxElapsedMs: 10, callTimeoutMs: 10 },
+    });
     await started.promise;
     await vi.advanceTimersByTimeAsync(10);
     expect(await pending).toMatchObject({
