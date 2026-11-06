@@ -38,6 +38,7 @@ import type * as live_lifecycleModel from "../live/lifecycleModel.js";
 import type * as live_logs from "../live/logs.js";
 import type * as live_machines from "../live/machines.js";
 import type * as live_operator from "../live/operator.js";
+import type * as live_recovery from "../live/recovery.js";
 import type * as live_setup from "../live/setup.js";
 import type * as nativeLifecycleProof from "../nativeLifecycleProof.js";
 import type * as proof from "../proof.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   "live/logs": typeof live_logs;
   "live/machines": typeof live_machines;
   "live/operator": typeof live_operator;
+  "live/recovery": typeof live_recovery;
   "live/setup": typeof live_setup;
   nativeLifecycleProof: typeof nativeLifecycleProof;
   proof: typeof proof;

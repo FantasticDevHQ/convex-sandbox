@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Scoped Operations recovery with retained history, original-ID read-only inspection and anonymous backend restart qualification.
+
 - Optional accepted fork child references in shared image operations, allowing
   explicit host-authorized child binding before readiness and fencing later
   status replies to the same child.

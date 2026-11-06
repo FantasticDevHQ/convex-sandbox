@@ -362,6 +362,12 @@ test(
     assert.equal(boatUnknown.status, "unknown");
     assert.equal(boatUnknown.idempotency, "native");
     console.log("PASS: Boat native binding and unknown creation survive anonymous backend restart in the shared component");
+    execFileSync(process.execPath, ["../node_modules/@playwright/test/cli.js", "test", "--grep", "backend restart"], {
+      cwd: path.join(roots[0], "example"),
+      env: { ...process.env, CSB_RECOVERY_ROOT: roots[0], CSB_LIVE_URL: `http://127.0.0.1:${states[0].ports.web}` },
+      stdio: "inherit", timeout: 180000,
+    });
+    console.log("PASS: Operations production panel reopens the exact pending component record after a managed anonymous backend restart");
     assert.deepEqual(await componentRpc(roots[0], "nativeLifecycleProof:complete", {}, true), {
       completed: true, tombstone: true, jobRead: true, notRedispatched: true,
     });

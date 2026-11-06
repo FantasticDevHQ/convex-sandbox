@@ -1510,3 +1510,28 @@ footer span:last-child {
 .catalog-items, .capability-limits { list-style: none; padding: 0; }
 .catalog-items li { display: flex; flex-wrap: wrap; gap: 24px; padding: 14px 0; border-bottom: 1px solid #b9c4b0; }
 .capability-limits li { margin: 20px 0; }
+
+.recovery-identities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+.recovery-identities dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.recovery-identities dd {
+  margin: 0.4rem 0 0;
+  overflow-wrap: anywhere;
+  font-family: monospace;
+}
+.recovery-operation h2 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .recovery-identities {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}

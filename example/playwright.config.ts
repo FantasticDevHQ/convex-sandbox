@@ -4,25 +4,28 @@ import { join } from "node:path";
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: process.env.CSB_LIVE_URL
-    ? "live.spec.ts"
-    : [
-        "scaffold.spec.ts",
-        "navigation.spec.ts",
-        "auth.spec.ts",
-        "setup.spec.ts",
-        "modes.spec.ts",
-        "machines.spec.ts",
-        "allowance.spec.ts",
-        "create.spec.ts",
-        "lifecycle.spec.ts",
-        "delete.spec.ts",
-        "commands.spec.ts",
-        "logs.spec.ts",
-        "files.spec.ts",
-        "fork.spec.ts",
-        "catalog.spec.ts",
-      ],
+  testMatch: process.env.CSB_RECOVERY_ROOT
+    ? "recovery.spec.ts"
+    : process.env.CSB_LIVE_URL
+      ? "live.spec.ts"
+      : [
+          "scaffold.spec.ts",
+          "navigation.spec.ts",
+          "auth.spec.ts",
+          "setup.spec.ts",
+          "modes.spec.ts",
+          "machines.spec.ts",
+          "allowance.spec.ts",
+          "create.spec.ts",
+          "lifecycle.spec.ts",
+          "delete.spec.ts",
+          "commands.spec.ts",
+          "logs.spec.ts",
+          "files.spec.ts",
+          "fork.spec.ts",
+          "catalog.spec.ts",
+          "recovery.spec.ts",
+        ],
   workers: 1,
   fullyParallel: false,
   outputDir:
