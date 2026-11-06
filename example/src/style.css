@@ -1503,3 +1503,6 @@ footer span:last-child {
   align-items: center;
   margin: 14px 0;
 }
+
+.fork-workspace { display: grid; gap: 28px; }
+.fork-workspace code { overflow-wrap: anywhere; }

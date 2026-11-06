@@ -1,3 +1,4 @@
+import { forkFields } from "./live/forkModel";
 import { fixtureFields } from "./live/lifecycleModel";
 import { demoTables } from "./demo/schema.js";
 import { approvalFields, reservationFields } from "./live/allowanceModel";
@@ -6,6 +7,10 @@ import { defineSchema } from "convex/server";
 
 export default defineSchema({
   ...demoTables,
+  liveForks: defineTable(forkFields).index("by_scope_and_childKey", [
+    "scope",
+    "childKey",
+  ]),
   liveFixtures: defineTable(fixtureFields).index("by_scope_and_key", [
     "scope",
     "key",

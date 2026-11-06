@@ -135,6 +135,23 @@ export const reserve = internalMutation({
         status: prior.status,
       };
     }
+    if (args.kind === "create" || args.kind === "fork") {
+      for (const kind of ["create", "fork"] as const) {
+        const claims = await ctx.db
+          .query("liveReservations")
+          .withIndex("by_scope_and_machineKey_and_kind", (q) =>
+            q
+              .eq("scope", operator.scope)
+              .eq("machineKey", args.machineKey)
+              .eq("kind", kind),
+          )
+          .take(1);
+        if (claims.length)
+          refuse(
+            "This logical key already has a retained provisioning intent.",
+          );
+      }
+    }
     if (args.kind === "start") {
       const outstanding = await ctx.db
         .query("liveReservations")
@@ -231,7 +248,7 @@ export const releaseStopped = internalMutation({
     );
     const candidates = (
       await Promise.all(
-        (["create", "start"] as const).map((kind) =>
+        (["create", "fork", "start"] as const).map((kind) =>
           ctx.db
             .query("liveReservations")
             .withIndex("by_scope_and_machineKey_and_kind", (q) =>
@@ -253,7 +270,20 @@ export const releaseStopped = internalMutation({
           provision.operationId === candidate.intentKey &&
           provision.reference?.provider === "boat" &&
           provision.reference.providerId === row.reference.providerId;
-      else {
+      else if (candidate.kind === "fork") {
+        const fork = await ctx.db
+          .query("liveForks")
+          .withIndex("by_scope_and_childKey", (q) =>
+            q.eq("scope", operator.scope).eq("childKey", key),
+          )
+          .unique();
+        confirmed = !!(
+          fork &&
+          fork.reservationId === candidate._id &&
+          fork.childId === row.reference.providerId &&
+          fork.childGeneration === row.generation
+        );
+      } else {
         const start = await ctx.runQuery(components.sandbox.operations.get, {
           sandbox,
           operationId: candidate.intentKey,
