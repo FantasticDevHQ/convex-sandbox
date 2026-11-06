@@ -1,3 +1,5 @@
+import { useState } from "react";
+import brandLogo from "../../assets/brand/logo-mark.svg";
 import { Playground } from "./playground";
 import {
   createRootRoute,
@@ -7,140 +9,200 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 
+const navigation = [
+  ["/", "Overview", "01"],
+  ["/setup", "Setup", "02"],
+  ["/machines", "Machines", "03"],
+  ["/commands", "Commands", "04"],
+  ["/files", "Files", "05"],
+  ["/forks", "Forks", "06"],
+  ["/operations", "Operations", "07"],
+  ["/cleanup", "Cleanup", "08"],
+  ["/integration", "Integration", "09"],
+  ["/playground", "Playground", "10"],
+] as const;
+
 function Frame() {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="workbench">
-      <header className="topbar">
-        <Link to="/" className="brand" aria-label="convex-sandbox home">
-          <span className="brand-mark" aria-hidden="true">
-            ⌘
-          </span>
-          convex-sandbox<span className="version">RC</span>
-        </Link>
-        <nav aria-label="Primary">
-          <Link to="/" activeOptions={{ exact: true }}>
-            Overview
-          </Link>
-          <Link to="/playground">Playground</Link>
-          <Link to="/integration">Integration</Link>
-        </nav>
-        <a
-          className="repository"
-          href="https://github.com/FantasticDevHQ/convex-sandbox"
+    <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
+      <aside className="app-sidebar">
+        <Link
+          to="/"
+          className="brand"
+          aria-label="convex-sandbox home"
+          onClick={() => setMenuOpen(false)}
         >
-          GitHub <span aria-hidden="true">↗</span>
+          <img src={brandLogo} width="32" height="32" alt="" />
+          <span>
+            convex-sandbox<small>EXAMPLE APP / RC</small>
+          </span>
+        </Link>
+        <button
+          type="button"
+          className="menu-toggle"
+          aria-label="Navigation menu"
+          aria-controls="primary-navigation"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? "Close" : "Menu"} <span aria-hidden="true">☰</span>
+        </button>
+        <nav id="primary-navigation" aria-label="Primary" data-open={menuOpen}>
+          {navigation.map(([to, label, number]) => (
+            <Link
+              key={to}
+              to={to}
+              activeOptions={{ exact: to === "/" }}
+              onClick={() => {
+                setMenuOpen(false);
+                if (menuOpen) document.getElementById("main-content")?.focus();
+              }}
+            >
+              <span aria-hidden="true">{number}</span>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <a className="project-credit" href="https://fantastic.dev">
+          A Fantastic.Dev Project ↗
         </a>
-      </header>
-      <main>
-        <Outlet />
-      </main>
-      <footer>
-        <span>Built with Convex · A Fantastic.Dev project</span>
-        <span>Experimental baseline / 001</span>
-      </footer>
+      </aside>
+      <div className="app-body">
+        <header className="app-header">
+          <span>Component / Example app</span>
+          <span className="mode-label">
+            <span className="status-dot" /> Simulator · no live provider
+          </span>
+        </header>
+        <div className="workbench">
+          <main id="main-content" tabIndex={-1}>
+            <Outlet />
+          </main>
+          <footer>
+            <a href="https://github.com/FantasticDevHQ/convex-sandbox">
+              View source ↗
+            </a>
+            <span>Public component. Trusted host actions.</span>
+          </footer>
+        </div>
+      </div>
     </div>
   );
 }
 
 function Overview() {
   return (
-    <>
-      <section className="intro">
-        <div className="intro-copy">
-          <p className="eyebrow">
-            <span className="status-dot" /> Component workbench
+    <section className="overview-page">
+      <p className="eyebrow">YOUR WORKSPACE / START HERE</p>
+      <h1>
+        Your sandbox
+        <br />
+        <em>workbench.</em>
+      </h1>
+      <p className="lede">
+        One component for machine state, commands and files. Explore with the
+        simulator, then configure a trusted Boat host.
+      </p>
+      <section className="workspace-facts" aria-label="Workspace status">
+        <div>
+          <span>Current mode</span>
+          <strong>Simulator</strong>
+          <small>No real VM or shell</small>
+        </div>
+        <div>
+          <span>Live provider</span>
+          <strong>Boat</strong>
+          <small>Not connected in this app</small>
+        </div>
+        <div>
+          <span>Live run</span>
+          <strong>Not approved</strong>
+          <small>No provisioning authorized</small>
+        </div>
+      </section>
+      <div className="overview-actions">
+        <article>
+          <span className="step">01 / EXPLORE</span>
+          <h2>Start with a simulated workspace.</h2>
+          <p>
+            Inspect reactive machine state, command outcomes and files using the
+            existing local simulator.
           </p>
-          <h1>
-            One interface.
-            <br />
-            <em>Any sandbox.</em>
-          </h1>
-          <p className="lede">
-            A common layer for cloud computers.
-            <br />
-            Keep the provider behind the boundary.
-          </p>
-          <Link to="/integration" className="primary-link">
-            Explore the integration <span aria-hidden="true">↗</span>
+          <Link to="/playground" className="primary-link">
+            Open playground <span aria-hidden="true">↗</span>
           </Link>
-          <p className="scope-note">Simulation · no live provider</p>
-        </div>
-        <section className="code-window" aria-label="Adapter boundary example">
-          <div className="window-bar">
-            <span>host / trusted action</span>
-            <span className="window-dots" aria-hidden="true">
-              ● ● ●
-            </span>
-          </div>
-          <pre>
-            <code>
-              <span className="code-muted">
-                {"// Adapters stay in the host action."}
-              </span>
-              {"\n"}
-              <span className="code-purple">import</span>{" "}
-              {"{ SandboxBoundary }"} <span className="code-purple">from</span>
-              {"\n"}{" "}
-              <span className="code-green">
-                "@fantastic.dev/convex-sandbox"
-              </span>
-              ;{"\n\n"}
-              <span className="code-purple">const</span> sandbox ={" "}
-              <span className="code-purple">new</span> SandboxBoundary({"{"}
-              {"\n"} simulated: adapter,{"\n"}
-              {"}"});{"\n\n"}
-              <span className="code-purple">await</span>{" "}
-              sandbox.observe(identity,{"\n"} observation =&gt;
-              record(observation){"\n"});
-            </code>
-          </pre>
-          <div className="window-footer">
-            <span className="small-dot" /> Only serializable observations cross
-            the boundary.
-          </div>
-        </section>
-      </section>
-      <section className="flow-section" aria-labelledby="flow-title">
-        <div className="section-label">
-          <h2 id="flow-title">A small boundary. A clear responsibility.</h2>
-          <span>01 — 03</span>
-        </div>
-        <div className="flow-grid">
-          <article>
-            <span className="step">01 / EXECUTE</span>
-            <h3>Host action</h3>
-            <p>
-              Your adapter calls the provider API. Credentials and SDK objects
-              stay server-side.
-            </p>
-          </article>
-          <article>
-            <span className="step">02 / VALIDATE</span>
-            <h3>Typed observation</h3>
-            <p>
-              Project the provider response into explicit fields before
-              recording it.
-            </p>
-          </article>
-          <article>
-            <span className="step">03 / OBSERVE</span>
-            <h3>Convex state</h3>
-            <p>
-              Validated mutations write component state. Queries expose the
-              recorded result.
-            </p>
-          </article>
-        </div>
-      </section>
-      <aside className="baseline-note">
-        <span className="note-label">IN THIS STARTER</span>
+        </article>
+        <article>
+          <span className="step">02 / CONNECT</span>
+          <h2>Prepare your trusted host.</h2>
+          <p>
+            Live workflows require verified operator access and server
+            configuration. Setup never implies approval to create a machine.
+          </p>
+          <Link to="/setup" className="text-link">
+            Review setup →
+          </Link>
+        </article>
+      </div>
+      <section className="recent-operations">
+        <span className="step">ACTIVITY</span>
+        <h2>Recent operations</h2>
         <p>
-          Explore component state, command outcomes and files in the local
-          simulated playground. Live provider adapters have separate
-          integrations.
+          No live operation history is connected. Open the playground to inspect
+          simulator activity.
         </p>
-      </aside>
-    </>
+        <Link to="/operations" className="text-link">
+          View operations →
+        </Link>
+      </section>
+    </section>
+  );
+}
+
+const workflowDescriptions = {
+  Setup:
+    "Verified operator access and server configuration checks will appear here. No live configuration is checked by this page.",
+  Machines:
+    "Owned Boat machines will appear here after trusted host setup. No live machine inventory is connected.",
+  Commands:
+    "Detached commands and bounded logs will appear here after an owned machine is connected.",
+  Files:
+    "Manage bounded files in an owned home directory after trusted host setup.",
+  Forks:
+    "Fork a stopped source and verify retained home files after an owned machine is connected.",
+  Operations:
+    "Durable live operation outcomes and recovery will appear here after trusted host setup.",
+  Cleanup:
+    "Exact-owned cleanup will appear here after trusted host setup. This page cannot delete resources.",
+};
+function WorkflowPage({ name }: { name: keyof typeof workflowDescriptions }) {
+  return (
+    <section className="workflow-page">
+      <p className="eyebrow">WORKSPACE / {name}</p>
+      <h1>{name}</h1>
+      <div className="empty-state">
+        <span className="step">LIVE WORKFLOW NOT CONNECTED</span>
+        <h2>
+          {name === "Setup"
+            ? "Prepare the example"
+            : `No live ${name.toLowerCase()} connected`}
+        </h2>
+        <p>{workflowDescriptions[name]}</p>
+        <p>
+          Use the credential-free simulator for the workflows available today.
+        </p>
+        <Link to="/playground" className="primary-link">
+          Open playground ↗
+        </Link>
+        <Link to="/integration" className="text-link">
+          Read integration setup →
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -227,9 +289,76 @@ const integrationRoute = createRoute({
   path: "/integration",
   component: Integration,
 });
+const setupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/setup",
+  component: () => <WorkflowPage name="Setup" />,
+});
+const machinesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/machines",
+  component: () => <WorkflowPage name="Machines" />,
+});
+const commandsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/commands",
+  component: () => <WorkflowPage name="Commands" />,
+});
+const filesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/files",
+  component: () => <WorkflowPage name="Files" />,
+});
+const forksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/forks",
+  component: () => <WorkflowPage name="Forks" />,
+});
+const operationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/operations",
+  component: () => <WorkflowPage name="Operations" />,
+});
+const cleanupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/cleanup",
+  component: () => <WorkflowPage name="Cleanup" />,
+});
+const machineDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/machines/$machineId",
+  component: () => {
+    const { machineId } = machineDetailRoute.useParams();
+    return (
+      <section className="workflow-page">
+        <p className="eyebrow">WORKSPACE / MACHINES</p>
+        <h1>Machine details</h1>
+        <code>{machineId}</code>
+        <div className="empty-state">
+          <h2>Machine not connected</h2>
+          <p>
+            This URL does not establish ownership or load a live resource.
+            Connect a trusted host to inspect an owned machine.
+          </p>
+          <Link to="/machines" className="text-link">
+            ← Back to machines
+          </Link>
+        </div>
+      </section>
+    );
+  },
+});
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     overviewRoute,
+    setupRoute,
+    machinesRoute,
+    commandsRoute,
+    filesRoute,
+    forksRoute,
+    operationsRoute,
+    cleanupRoute,
+    machineDetailRoute,
     integrationRoute,
     playgroundRoute,
     detailRoute,

@@ -26,9 +26,9 @@ test("TanStack routes navigate and reload without requiring a backend", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(origin);
   await expect(
-    page.getByRole("heading", { name: "One interface. Any sandbox." }),
+    page.getByRole("heading", { name: "Your sandbox workbench." }),
   ).toBeVisible();
-  await expect(page.getByText("Simulation · no live provider")).toBeVisible();
+  await expect(page.getByText("Simulator · no live provider")).toBeVisible();
   await page.getByRole("link", { name: "Integration", exact: true }).click();
   await expect(page).toHaveURL(/\/integration$/);
   await expect(
@@ -44,7 +44,7 @@ test("TanStack routes navigate and reload without requiring a backend", async ({
   });
   await page.goBack();
   await expect(
-    page.getByRole("heading", { name: "One interface. Any sandbox." }),
+    page.getByRole("heading", { name: "Your sandbox workbench." }),
   ).toBeVisible();
   await page.screenshot({
     path: info.outputPath("overview.png"),
@@ -70,9 +70,10 @@ test("starter navigation stays usable on a narrow viewport", async ({
     path: info.outputPath("mobile.png"),
     fullPage: true,
   });
+  await page.getByRole("button", { name: "Navigation menu" }).click();
   await page.getByRole("link", { name: "Overview", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "One interface. Any sandbox." }),
+    page.getByRole("heading", { name: "Your sandbox workbench." }),
   ).toBeVisible();
 });
 

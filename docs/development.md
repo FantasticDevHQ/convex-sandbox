@@ -29,6 +29,24 @@ On a constrained host, serialize installs, tests, codegen and backend integratio
 with the shared heavy-job lock, set `NODE_OPTIONS=--max-old-space-size=512`, and use
 one worker. Run the full check:all command on actual UbiCloud CI.
 
+## Hosted Convex ownership
+
+Any hosted Convex project/database used by the example must belong to the
+FantasticDev team. Before configuring hosted access, verify the actual team
+slug and ID, project identity and selected deployment from authenticated Convex
+metadata. Reuse the correct existing project when present. A display name alone
+is not verification; do not choose a personal or unrelated team.
+
+Record the verified non-secret identities and deployment type in setup evidence.
+Until that check runs, hosted ownership and deployment selection remain
+unverified. This repository currently documents no verified hosted selection.
+Do not copy hosted credentials or deployment state into local worktrees. Local
+development continues through the isolated anonymous lifecycle above.
+
+This ownership requirement authorizes no production deployment, credential
+changes or Boat provisioning. A hosted configuration check does not approve
+billable provider operations.
+
 ## Package and frontend workflow
 
 The library publishes ESM entry points from `dist`: core, component configuration,
@@ -40,7 +58,12 @@ The example has an explicit workspace dependency and uses public package exports
 
 `pnpm dev:frontend` builds the library and starts Vite on an available loopback
 port. A standalone frontend has no provider credentials or backend identity; `/playground` shows setup until a loopback backend is configured.
-TanStack Router handles `/`, `/integration`, `/playground` and `/playground/$profile`.
+TanStack Router provides persistent navigation for Overview, Setup, Machines, Commands,
+Files, Forks, Operations, Cleanup, Integration and the existing Playground.
+`/machines/$machineId` retains its detail URL across reloads. Workflow routes without
+a mounted live host show explicit unavailable states; visiting a URL never establishes
+resource ownership. The navigation collapses behind a menu on narrow viewports.
+The simulator remains at `/playground` and `/playground/$profile`.
 No router plugin/code generator is needed for these code-defined routes.
 
 `pnpm test:example` uses Playwright with an in-process Vite server on an OS-assigned

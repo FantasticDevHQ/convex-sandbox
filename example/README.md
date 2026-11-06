@@ -7,7 +7,11 @@
 A private React/Vite example with TanStack Router. Run `pnpm dev:frontend` from the
 repository root after a frozen install. The library builds first. Vite chooses an
 available loopback port and prints its URL. `/` is the overview; `/integration`
-shows the host mount. Refresh and back navigation work on both routes.
+shows the host mount. The persistent sidebar also links to Setup, Machines, Commands,
+Files, Forks, Operations and Cleanup. These live workflow pages explain their
+unavailable state until their consumer backends are implemented. Machine detail
+URLs use `/machines/$machineId`; a URL alone grants no resource access.
+Refresh and back navigation preserve routes, and a menu exposes navigation on mobile.
 
 The `/playground` route subscribes to the local component and exposes fixed
 actions backed by durable simulator state. Select one of three profiles to explore
@@ -25,3 +29,10 @@ The [Boat host guide](../docs/boat/guide.md) contains an authenticated read-only
 consumer backend sample. It is checked documentation, not a mounted live endpoint
 or provider switch in this workbench. The playground remains explicitly simulated
 with missing or ambient Boat configuration and never reads a provider key.
+
+Hosted Convex projects/databases for this example must belong to FantasticDev.
+Verify the actual team slug/ID, existing project and selected deployment before
+hosted configuration; do not select a personal or unrelated team. See
+[hosted ownership](../docs/development.md#hosted-convex-ownership). Local worktrees
+continue to use isolated anonymous backends. This requirement does not authorize
+production deployment or Boat provisioning.
