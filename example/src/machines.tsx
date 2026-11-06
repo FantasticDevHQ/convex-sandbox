@@ -1,32 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useAction, usePaginatedQuery, useQuery } from "convex/react";
-import { makeFunctionReference } from "convex/server";
-import type { RegistryRecord } from "@fantastic.dev/convex-sandbox";
+import { api } from "../convex/_generated/api";
 import { OperatorAccess } from "./operator-access";
 import { MachineDetailPanel } from "./machine-detail";
-const listQuery = makeFunctionReference<
-  "query",
-  { paginationOpts: { cursor: string | null; numItems: number } },
-  {
-    page: RegistryRecord[];
-    isDone: boolean;
-    continueCursor: string;
-    partial: boolean;
-  }
->("live/machines:list");
-const getQuery = makeFunctionReference<
-  "query",
-  { key: string },
-  RegistryRecord | null
->("live/machines:get");
-const refreshAction = makeFunctionReference<
-  "action",
-  { key: string },
-  RegistryRecord
->("live/machines:refresh");
 function ConnectedList() {
   const { results, status, loadMore } = usePaginatedQuery(
-    listQuery,
+    api.live.machines.list,
     {},
     { initialNumItems: 20 },
   );
@@ -92,8 +71,8 @@ function ConnectedList() {
   );
 }
 function ConnectedDetail({ machineKey }: { machineKey: string }) {
-  const row = useQuery(getQuery, { key: machineKey });
-  const refresh = useAction(refreshAction);
+  const row = useQuery(api.live.machines.get, { key: machineKey });
+  const refresh = useAction(api.live.machines.refresh);
   return (
     <MachineDetailPanel
       key={machineKey}

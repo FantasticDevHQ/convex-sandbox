@@ -198,15 +198,28 @@ export class SandboxLifecycle {
 
   async refresh(sandbox: SandboxKey) {
     sandbox = snapshotSandbox(sandbox);
-    const row = await this.get(sandbox);
+    let row = await this.get(sandbox);
     if (!row || row.tombstone) return row;
-    const prepared = await this.prepare({
+    let prepared = await this.prepare({
       sandbox,
       provider: row.reference.provider,
       reference: row.reference,
       action: "describe",
     });
     const ticket = await this.store.beginRefresh(sandbox);
+    if (ticket.generation !== row.generation) {
+      // Authorization may have raced a completed deletion/rebind before the
+      // ticket was acquired. Prepare only the binding that owns this ticket.
+      row = await this.get(sandbox);
+      if (!row || row.tombstone || row.generation !== ticket.generation)
+        return row;
+      prepared = await this.prepare({
+        sandbox,
+        provider: row.reference.provider,
+        reference: row.reference,
+        action: "describe",
+      });
+    }
     const result = await attempt(
       (context) => prepared.invoke(context),
       operationKey(
@@ -230,7 +243,7 @@ export class SandboxLifecycle {
             }
           : { errorCode: result.errorCode },
     });
-    return this.store.get(sandbox);
+    return this.get(sandbox);
   }
 
   async observe({
