@@ -1434,3 +1434,17 @@ footer span:last-child {
 .lifecycle-panel {
   margin-top: 24px;
 }
+
+.deletion-panel {
+  margin-top: 32px;
+  border-top: 2px solid #a45e36;
+}
+.setup-card .destructive-button {
+  background: #883d2c;
+  border-color: #883d2c;
+  color: #fff;
+}
+.confirmed-cleanup {
+  color: #294e2a;
+  font-weight: 600;
+}

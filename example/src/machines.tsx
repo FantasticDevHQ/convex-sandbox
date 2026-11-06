@@ -1,3 +1,4 @@
+import { ConnectedDeletion } from "./delete";
 import { ConnectedLifecycle } from "./lifecycle";
 import { MachineCard } from "./machine-card";
 import { Link } from "@tanstack/react-router";
@@ -76,6 +77,7 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
         refresh={() => refresh({ key: machineKey })}
       />
       <ConnectedLifecycle key={machineKey} machineKey={machineKey} />
+      <ConnectedDeletion key={`delete-${machineKey}`} machineKey={machineKey} />
     </>
   );
 }

@@ -37,9 +37,14 @@ export function createBoatLifecycle(
     return {
       providerId: id,
       state:
-        handle.status === "completed"
+        handle.status === "completed" && effect === "read"
           ? ("deleted" as const)
-          : ["pending", "processing", "blocked"].includes(handle.status)
+          : [
+                "pending",
+                "processing",
+                "blocked",
+                ...(effect === "write" ? ["completed"] : []),
+              ].includes(handle.status)
             ? ("stopping" as const)
             : ("unknown" as const),
       lifecycleJob: { id: handle.id },
