@@ -128,17 +128,27 @@ export function fakeBoatHTTP(approval, options = {}) {
           },
         });
       const stream = u.searchParams.get("stream");
-      const content = stream === "stdout" ? machine.output : "";
+      if (stream === "stdout") machine.logReads = (machine.logReads ?? 0) + 1;
+      const delayed = (machine.logReads ?? 0) <= (options.delayedLogReads ?? 0);
+      const content =
+        stream === "stdout" && !delayed
+          ? machine.output + (options.unexpectedLogBytes ? "unexpected" : "")
+          : "";
       const bytes = Buffer.from(content);
+      const offset = Number(u.searchParams.get("offset"));
+      const data = bytes.subarray(
+        offset,
+        offset + Number(u.searchParams.get("limit")),
+      );
       return json({
         commandId: p[3],
         stream,
         encoding: "base64",
-        offset: 0,
-        nextOffset: bytes.length,
+        offset,
+        nextOffset: offset + data.length,
         size: bytes.length,
-        data: bytes.toString("base64"),
-        done: true,
+        data: data.toString("base64"),
+        done: offset + data.length === bytes.length,
       });
     }
     if (p[2] === "files") {

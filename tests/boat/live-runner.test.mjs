@@ -360,3 +360,37 @@ test("fork uses a stopped source snapshot and a retained home fixture, then resu
   assert.equal(report.guestReadinessRetries, 2);
   assert.equal(report.cleanupVerified, true);
 });
+
+test("currently drained log pages keep polling until the exited fixture's exact bytes arrive", async (t) => {
+  const f = await fixture(t, { delayedLogReads: 2 });
+  const report = await f.run();
+  assert.equal(report.checksPassed, true, JSON.stringify(report));
+  assert.equal(report.cleanupVerified, true);
+  const reads = f.calls.filter((c) => c.p[4] === "logs");
+  assert.equal(reads.length, 6);
+  assert.equal(
+    f.calls.filter((c) => c.method === "POST" && c.p[2] === "commands").length,
+    1,
+  );
+});
+
+test("unexpected log bytes fail exact smoke verification and still clean only owned fixtures", async (t) => {
+  const f = await fixture(t, { unexpectedLogBytes: true });
+  const report = await f.run();
+  assert.equal(report.checksPassed, false);
+  assert.equal(report.cleanupVerified, true);
+  assert.ok(report.failures.some((f) => f.stage === "command-logs"));
+  assert.equal(report.fixtures.length, 1);
+});
+
+test("missing fixture output exhausts bounded log reads and preserves owned cleanup", async (t) => {
+  const f = await fixture(t, { delayedLogReads: 100 });
+  const report = await f.run();
+  assert.equal(report.checksPassed, false);
+  assert.equal(report.cleanupVerified, true);
+  assert.equal(f.calls.filter((c) => c.p[4] === "logs").length, 90);
+  assert.equal(
+    f.calls.filter((c) => c.method === "POST" && c.p[2] === "commands").length,
+    1,
+  );
+});

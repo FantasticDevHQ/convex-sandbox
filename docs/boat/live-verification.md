@@ -144,7 +144,13 @@ File checks use the adapter's [documented read/write response path equivalence](
 The fixed sequence creates one small private machine with `noEnv: true` and native
 snapshots enabled by the adapter. It checks readiness; writes, reads and lists a
 run-specific file under `/home/user`; runs one finite detached `printf` command and
-checks its history/logs; and reads the source-scoped template catalog. A two-machine
+checks its history/logs; and reads the source-scoped template catalog. After
+native history confirms exit code zero, log verification waits for that exact
+`printf` fixture's expected stdout and empty stderr, with at most 45 reads and
+one-second pauses under the existing work deadline. A currently drained native
+page is not final EOF; unchanged cursors remain valid while output catches up.
+Unexpected bytes, truncation or missing output fail verification and still enter
+owned cleanup. This exact-fixture check does not prove general stream finality. A two-machine
 approval also forks the owned parent and verifies its copied file. Before forking,
 the runner stops the parent and waits for its completed stop/current stopped
 observation so the newest snapshot includes the fixture. A one-machine approval
