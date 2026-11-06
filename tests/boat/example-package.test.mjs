@@ -14,13 +14,17 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { packAndExtract } from "../../scripts/release/pack.mjs";
+import {
+  packAndExtract,
+  offlinePackageEnv,
+} from "../../scripts/release/pack.mjs";
 const source = await realpath(process.cwd());
 function run(command, args, cwd) {
   const result = spawnSync(command, args, {
     cwd,
     encoding: "utf8",
     timeout: 60000,
+    env: offlinePackageEnv(),
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   return result.stdout;
@@ -190,3 +194,19 @@ test(
     );
   },
 );
+
+test("packed app build children do not inherit external credentials", () => {
+  const clean = offlinePackageEnv({
+    PATH: "synthetic-path",
+    NODE_OPTIONS: "--max-old-space-size=512",
+    BOAT_API_KEY: "synthetic",
+    VITE_CLERK_PUBLISHABLE_KEY: "synthetic",
+    CONVEX_DEPLOY_KEY: "synthetic",
+    EXAMPLE_OPERATOR_GRANTS: "synthetic",
+    GITHUB_TOKEN: "synthetic",
+  });
+  assert.deepEqual(clean, {
+    PATH: "synthetic-path",
+    NODE_OPTIONS: "--max-old-space-size=512",
+  });
+});

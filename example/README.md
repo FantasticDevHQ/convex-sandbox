@@ -209,7 +209,8 @@ runtime app source, public brand assets and the app's internal probe helpers,
 then resolves the component from an extracted local tarball. No component
 workspace source, environment file or backend state is copied. Third-party peers
 and build tools reuse their explicitly declared installed cache entries, so this
-build test needs no registry access; the existing package tests separately cover
+build test needs no registry access. Packaging/build child processes strip external
+provider, hosted-auth and deployment credentials. The existing package tests separately cover
 installation and frozen offline reinstall.
 
 The fixture typechecks the app's frontend/backend modules, builds Vite, verifies
