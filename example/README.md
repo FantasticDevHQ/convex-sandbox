@@ -173,3 +173,30 @@ private package imports. The source manifest and inert raw imports are checked
 together, and browser tests compare the displayed and copied bytes with the
 actual module. This static regression check supplements source review; it does
 not inspect environment values or prove live provider qualification.
+
+### Offline mounted-workflow qualification
+
+`pnpm test:example` runs without ambient Boat, hosted auth or deployment secrets.
+Playwright's setup removes credential-bearing environment variables in the test
+process. The cross-workflow test supplies only explicit synthetic server policy
+and an inert placeholder key, required by the real wrapper constructor. It never
+uses a real Boat credential or falls back to ambient HTTP.
+
+`example/e2e/workflows.spec.ts` mounts production panels against actual application
+functions and the registered public component in `convex-test`, through a test-only
+Node bridge. The scenario covers approval, creation/readiness, bounded files,
+commands and cached logs across reload, recovery, catalog, stop/resume home-byte
+verification, fork copy and child-first cleanup. The bridge, synthetic identity and
+transport remain under `e2e`; none is a production authentication path.
+
+Every native HTTP method/path must match the synthetic fixture. Unknown paths or
+IDs remain fatal even if a client normalizes the thrown error. Browser HTTP and
+WebSocket traffic is trapped outside the exact loopback Vite origin; service
+workers are blocked. Negative controls demonstrate both guards fail. A real
+synthetic HTTP failure is asserted through the production file panel, and loading,
+missing configuration, anonymous and denied access stay locked.
+
+This verifies the mounted functions/component protocol and production panels
+without real provider or hosted identity traffic. It does not claim a real Convex
+daemon, authenticated hosted route or live Boat qualification. Anonymous backend
+and packed-artifact checks remain separate integration gates.
