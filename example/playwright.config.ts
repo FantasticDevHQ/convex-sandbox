@@ -6,7 +6,7 @@ export default defineConfig({
   testDir: "./e2e",
   testMatch: process.env.CSB_LIVE_URL
     ? "live.spec.ts"
-    : ["scaffold.spec.ts", "navigation.spec.ts"],
+    : ["scaffold.spec.ts", "navigation.spec.ts", "auth.spec.ts"],
   workers: 1,
   fullyParallel: false,
   outputDir:
