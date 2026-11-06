@@ -1,7 +1,7 @@
 # Boat refresh and reconciliation
 
 The adapter uses the existing shared registry and operation clients. It adds no
-Boat table, settle scheduler, webhook receiver or background polling process.
+Boat table, installed webhook receiver, settle scheduler or background polling process.
 Construct the public Boat factory inside trusted host actions, authenticate and
 authorize the application binding, and keep account credentials in host config.
 
@@ -70,24 +70,14 @@ explicit versioned rebind, an old generation cannot update the replacement VM.
 The host must still authorize the current binding. Never route by display name,
 assume a 404 proves deletion, or replace generation checks with a provider label.
 
-## Native webhook audit and separate follow-up
+## Optional webhook hints
 
-The pinned OpenAPI documented in [the source inventory](decision.md#source-and-license-inventory)
-provides lifecycle webhooks with at-least-once, potentially out-of-order delivery.
-The provider asks for any 2xx acknowledgement within five seconds. The signature
-is HMAC-SHA256 over delivery_id.timestamp.raw_body, exposed as v1=hex in
-X-Ascii-Signature with X-Ascii-Delivery, X-Ascii-Timestamp, X-Ascii-Event and
-X-Ascii-Attempt. Events include ready/error/archived/hydrated/degraded/recovered;
-hydrated need not include state. These are native contract facts, not an installed
-or verified ingress endpoint in this adapter.
-
-Authenticated event routing is a separate optional follow-up. It must verify the
-raw-body signature and header/body IDs, establish timestamp/replay/rotation policy,
-resolve account and tenant ownership, and use verified events as hints for bounded
-authoritative refresh. Directly writing event.data.state could accept stale or
-untrusted data and bypass shared ordering. Registration, secrets, event dedupe and
-host scheduling remain unimplemented here; no webhook is registered by the factory.
-Explicit refresh and polling qualification do not depend on that future ingress.
+The [webhook ingress helper](webhooks.md) verifies signed raw deliveries and
+passes a minimal account-scoped hint to a host-owned enqueue hook. Hosts retain
+registration, signing keys, timestamp policy, atomic durable deduplication,
+binding authority and scheduling. No endpoint or scheduler is installed by the
+factory. Events trigger bounded authoritative refresh rather than direct state
+writes. Explicit refresh qualification does not depend on live webhook setup.
 
 ## Deterministic qualification
 

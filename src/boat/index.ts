@@ -80,3 +80,6 @@ export function createBoatProvider(options: BoatOptions) {
     },
   });
 }
+
+export { createBoatWebhookHandler } from "./webhooks.js";
+export type { BoatWebhookHint, BoatWebhookOptions } from "./webhooks.js";
