@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ClerkProvider, useAuth, useClerk } from "@clerk/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient, useConvexAuth, useQuery } from "convex/react";
-import { makeFunctionReference } from "convex/server";
+import { api } from "../convex/_generated/api";
 import { backendUrl } from "./backend-client";
 import {
   OperatorGate,
@@ -21,15 +21,6 @@ if (import.meta.hot)
     void operatorClient?.close();
   });
 
-type Session =
-  | { state: "authorized"; issuer: string; subject: string; scope: string }
-  | { state: "forbidden" | "signedOut" };
-const sessionQuery = makeFunctionReference<
-  "query",
-  Record<string, never>,
-  Session
->("live/access:session");
-
 export function OperatorProvider({ children }: { children: ReactNode }) {
   if (!configured)
     return <OperatorSessionProvider>{children}</OperatorSessionProvider>;
@@ -47,7 +38,7 @@ function ConnectedAccess({ children }: { children: ReactNode }) {
   const sessionKey = `${sessionId ?? "signedOut"}:${userId ?? "anonymous"}`;
   const { blockedSession } = useOperatorSessionLock();
   const session = useQuery(
-    sessionQuery,
+    api.live.access.session,
     isLoaded &&
       isSignedIn &&
       isAuthenticated &&

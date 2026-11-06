@@ -65,3 +65,46 @@ test("missing malformed and duplicate policy fail closed", async () => {
     await expect(t.query(session, {})).resolves.toEqual({ state: "forbidden" });
   }
 });
+
+test("development auth supports Convex's get-only environment proxy", async () => {
+  const { developmentAuthConfig } = await import("./authConfig");
+  // Match the Convex runtime's get-only Proxy over an empty target. An own-key
+  // guard would incorrectly hide the configured issuer too.
+  const environment = (value?: string) =>
+    new Proxy(
+      {},
+      {
+        get: (_, key) => {
+          if (key !== "CLERK_JWT_ISSUER_DOMAIN")
+            throw new Error("Unexpected environment access");
+          if (value === undefined)
+            throw new Error(
+              "Environment variable CLERK_JWT_ISSUER_DOMAIN is used in auth config file but its value was not set",
+            );
+          return value;
+        },
+      },
+    );
+  expect(developmentAuthConfig(environment())).toEqual({ providers: [] });
+  expect(developmentAuthConfig(environment(issuer))).toEqual({
+    providers: [{ domain: issuer, applicationID: "convex" }],
+  });
+  for (const invalid of [
+    "http://synthetic.clerk.accounts.dev",
+    "https://foreign.example.test",
+    `${issuer}/path`,
+  ])
+    expect(() => developmentAuthConfig(environment(invalid))).toThrow();
+  expect(() =>
+    developmentAuthConfig(
+      new Proxy(
+        {},
+        {
+          get: () => {
+            throw new Error("Unknown runtime failure");
+          },
+        },
+      ),
+    ),
+  ).toThrow("Unknown runtime failure");
+});
