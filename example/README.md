@@ -89,3 +89,8 @@ unsupported.
 Retained Commands views include [bounded stdout/stderr output](../docs/example-logs.md).
 Explicit reads resume the shared native cursor, replace the reactive cache snapshot
 without duplicate bytes, and show truncation. Drained output does not prove exit.
+
+Files now supports [bounded owned home-file management](../docs/example-files.md):
+prepare a trusted `/home/user/demo` directory, save and verify UTF-8 bytes, read
+back bounded files, and confirm exact nonrecursive deletion. Its lexical policy
+does not provide a symlink jail. Transfer URLs remain unsupported.

@@ -19,6 +19,7 @@ export default defineConfig({
         "delete.spec.ts",
         "commands.spec.ts",
         "logs.spec.ts",
+        "files.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,
