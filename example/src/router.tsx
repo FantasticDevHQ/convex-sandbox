@@ -1,3 +1,4 @@
+import { SetupPage } from "./setup";
 import { OperatorAccess } from "./operator-access";
 import { useState } from "react";
 import brandLogo from "../../assets/brand/logo-mark.svg";
@@ -295,7 +296,7 @@ const integrationRoute = createRoute({
 const setupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/setup",
-  component: () => <WorkflowPage name="Setup" />,
+  component: SetupPage,
 });
 const machinesRoute = createRoute({
   getParentRoute: () => rootRoute,

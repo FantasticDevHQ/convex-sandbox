@@ -66,7 +66,7 @@ function projectError(error: unknown, effect: "read" | "write") {
   return failure("unknown_outcome", "unknown");
 }
 
-/** Internal leaf; the public API exports only the configured provider factory. */
+/** Internal transport shared by the public provider and read-only setup helper. */
 export function createBoatTransport(options: BoatOptions) {
   if (
     !options ||

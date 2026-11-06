@@ -8,8 +8,9 @@ A private React/Vite example with TanStack Router. Run `pnpm dev:frontend` from 
 repository root after a frozen install. The library builds first. Vite chooses an
 available loopback port and prints its URL. `/` is the overview; `/integration`
 shows the host mount. The persistent sidebar also links to Setup, Machines, Commands,
-Files, Forks, Operations and Cleanup. These live workflow pages explain their
-unavailable state until their consumer backends are implemented. Machine detail
+Files, Forks, Operations and Cleanup. Setup checks authenticated server configuration and read-only Boat readiness.
+The other live workflow pages explain their unavailable state until their consumer
+backends are implemented. Machine detail
 URLs use `/machines/$machineId`; a URL alone grants no resource access.
 Refresh and back navigation preserve routes, and a menu exposes navigation on mobile.
 
@@ -42,3 +43,7 @@ identities verified by Convex and an explicit server-owned issuer/subject policy
 See [operator setup](../docs/example-auth.md). Missing configuration leaves live
 access locked while the simulator remains available. Signing in grants no
 provisioning approval.
+
+The [read-only setup guide](../docs/example-setup.md) explains configuration
+presence, explicit wallet selection and the account/limits check. Checking setup
+never approves spending or provisions a machine.
