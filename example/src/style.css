@@ -1486,3 +1486,20 @@ footer span:last-child {
   margin: 20px 0;
   max-width: 720px;
 }
+
+.files-workspace {
+  display: grid;
+  gap: 28px;
+}
+.home-file-list {
+  list-style: none;
+  padding: 0;
+}
+.home-file-list li,
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin: 14px 0;
+}

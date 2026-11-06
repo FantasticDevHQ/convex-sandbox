@@ -85,6 +85,9 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
       >
         Run a command on this owned machine →
       </Link>
+      <Link to="/files" search={{ machine: machineKey }} className="text-link">
+        Manage bounded home files →
+      </Link>
     </>
   );
 }

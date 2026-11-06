@@ -23,6 +23,8 @@ function accessFor(ctx: Pick<ActionCtx, "auth" | "runQuery">) {
         "stop",
         "readFile",
         "writeFile",
+        "listFiles",
+        "deleteFile",
         "delete",
         "execute",
         "executionGet",
@@ -39,6 +41,8 @@ export async function ownedBoatClient(
     | "start"
     | "readFile"
     | "writeFile"
+    | "listFiles"
+    | "deleteFile"
     | "describe"
     | "delete"
     | "execute"
