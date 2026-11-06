@@ -9,8 +9,8 @@ repository root after a frozen install. The library builds first. Vite chooses a
 available loopback port and prints its URL. `/` is the overview; `/integration`
 shows the host mount. The persistent sidebar also links to Setup, Machines, Commands,
 Files, Forks, Operations and Cleanup. Setup checks authenticated server configuration and read-only Boat readiness.
-The other live workflow pages explain their unavailable state until their consumer
-backends are implemented. Machine detail
+Machines browses owned component state; the remaining live workflow pages explain
+their unavailable state until their consumer backends are implemented. Machine detail
 URLs use `/machines/$machineId`; a URL alone grants no resource access.
 Refresh and back navigation preserve routes, and a menu exposes navigation on mobile.
 
@@ -55,3 +55,9 @@ route's mode. A failed Boat check stays a visible Boat failure and never supplie
 simulator data. Ambient Boat configuration cannot turn simulator actions into
 native requests. Host-resolved Boat scopes use `example-boat:` and cannot collide
 with simulator fixture namespaces.
+
+Machines now browses authorized component bindings with reactive details and a
+manual bounded refresh through the public shared lifecycle client. It never
+scans the native account. Unknown resource measurements remain Unknown. See the
+[owned-machine guide](../docs/example-machines.md) for access, pagination,
+refresh-failure and rebind behavior.
