@@ -206,7 +206,8 @@ export async function runLive({
     checks.push("create-and-describe");
     await guestFileReady(machine);
     checks.push("guest-file-readiness");
-    const file = `/tmp/csb-live-${approval.runId}.txt`;
+    const directory = "/home/user";
+    const file = `${directory}/csb-live-${approval.runId}.txt`;
     const bytes = new TextEncoder().encode(`csb-live:${approval.runId}\n`);
     const write = await work("file-write", () =>
       adapter.files.write(machine, file, bytes.buffer, context("file-write")),
@@ -231,7 +232,7 @@ export async function runLive({
     const listing = await work("file-list", () =>
       adapter.files.list(
         machine,
-        "/tmp",
+        directory,
         { cursor: null, maxEntries: 100 },
         context("file-list"),
       ),
@@ -239,7 +240,8 @@ export async function runLive({
     requireTrue(
       listing.entries.some(
         (entry) =>
-          entry.name === file.slice("/tmp/".length) && entry.kind === "file",
+          entry.name === file.slice(directory.length + 1) &&
+          entry.kind === "file",
       ),
     );
     checks.push("file-write-read-list");
@@ -309,6 +311,22 @@ export async function runLive({
     );
     checks.push("source-scoped-template-catalog");
 
+    // Running forks use the latest background snapshot, which can predate the
+    // fixture. A completed nonforced stop captures retained /home/user files.
+    const stop = await work("stop", () =>
+      adapter.stop(machine, context("stop")),
+    );
+    const stopContext = context(
+      "stop-status",
+      workSignal,
+      stop.lifecycleJob ? { ...stop.lifecycleJob, kind: "stop" } : undefined,
+    );
+    await poll(
+      () => work("stop-status", () => adapter.describe(machine, stopContext)),
+      (result) => result.state === "stopped",
+      workSignal,
+    );
+    checks.push("stopped-source-snapshot");
     if (approval.maxMachines === 2) {
       const child = await work("fork", async () => {
         const item = reserve("fork", machine);
@@ -341,24 +359,6 @@ export async function runLive({
       await readFile(child.id);
       checks.push("fork-file-copy");
     } else skipped.push("fork-budget");
-    const removed = await work("file-delete", () =>
-      adapter.files.delete(machine, file, context("file-delete")),
-    );
-    requireTrue(removed.deleted);
-    checks.push("file-delete");
-    const stop = await work("stop", () =>
-      adapter.stop(machine, context("stop")),
-    );
-    const stopContext = context(
-      "stop-status",
-      workSignal,
-      stop.lifecycleJob ? { ...stop.lifecycleJob, kind: "stop" } : undefined,
-    );
-    await poll(
-      () => work("stop-status", () => adapter.describe(machine, stopContext)),
-      (result) => result.state === "stopped",
-      workSignal,
-    );
     await work("resume", () => adapter.start(machine, context("resume")));
     await poll(
       () =>
@@ -369,6 +369,15 @@ export async function runLive({
       workSignal,
     );
     checks.push("stop-and-resume");
+    await guestFileReady(machine);
+    checks.push("resume-guest-file-readiness");
+    await readFile(machine);
+    checks.push("resume-file-copy");
+    const removed = await work("file-delete", () =>
+      adapter.files.delete(machine, file, context("file-delete")),
+    );
+    requireTrue(removed.deleted);
+    checks.push("file-delete");
     checksPassed = true;
   } catch (error) {
     failures.push({

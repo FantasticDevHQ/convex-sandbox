@@ -290,10 +290,10 @@ test("smoke creates no independent snapshot artifacts and deletes only its two o
       "POST sandboxes",
       "PUT sandboxes/owned-1/files",
       "POST sandboxes/owned-1/commands",
-      "POST sandboxes/owned-1/fork",
-      "DELETE sandboxes/owned-1/files",
       "POST sandboxes/owned-1/stop",
+      "POST sandboxes/owned-1/fork",
       "POST sandboxes/owned-1/resume",
+      "DELETE sandboxes/owned-1/files",
       "DELETE sandboxes/owned-2",
       "DELETE sandboxes/owned-1",
     ],
@@ -333,4 +333,30 @@ test("terminal guest permission errors are reported safely without retries", asy
   assert.equal(f.calls.filter((c) => c.p[3] === "list").length, 1);
   assert.equal(f.calls.filter((c) => c.method === "PUT").length, 0);
   assert.doesNotMatch(JSON.stringify(report), /synthetic-private/);
+});
+
+test("fork uses a stopped source snapshot and a retained home fixture, then resume preserves it", async (t) => {
+  const f = await fixture(t, { resumeGuestFailures: 2 });
+  const report = await f.run();
+  assert.equal(report.checksPassed, true, JSON.stringify(report));
+  const write = f.calls.find((c) => c.method === "PUT");
+  assert.equal(write.body.path, `/home/user/csb-live-${f.approval.runId}.txt`);
+  const stopAt = f.calls.findIndex((c) => c.p[2] === "stop");
+  const stopStatusAt = f.calls.findIndex((c) => c.p[2] === "stops");
+  const forkAt = f.calls.findIndex((c) => c.p[2] === "fork");
+  const resumeAt = f.calls.findIndex((c) => c.p[2] === "resume");
+  const removeAt = f.calls.findIndex(
+    (c) => c.method === "DELETE" && c.p[2] === "files",
+  );
+  assert.ok(
+    stopAt < stopStatusAt &&
+      stopStatusAt < forkAt &&
+      forkAt < resumeAt &&
+      resumeAt < removeAt,
+  );
+  assert.ok(report.checks.includes("stopped-source-snapshot"));
+  assert.ok(report.checks.includes("fork-file-copy"));
+  assert.ok(report.checks.includes("resume-file-copy"));
+  assert.equal(report.guestReadinessRetries, 2);
+  assert.equal(report.cleanupVerified, true);
 });
