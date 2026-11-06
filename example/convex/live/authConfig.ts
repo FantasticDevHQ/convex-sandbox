@@ -11,9 +11,8 @@ export function developmentAuthConfig(
     // not implement own-property checks, so hasOwn would also hide set values.
     if (
       !(error instanceof Error) ||
-      !error.message.includes(
-        "Environment variable CLERK_JWT_ISSUER_DOMAIN is used in auth config file but its value was not set",
-      )
+      error.message !==
+        "Environment variable CLERK_JWT_ISSUER_DOMAIN is used in auth config file but its value was not set"
     )
       throw error;
   }

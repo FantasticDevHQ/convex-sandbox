@@ -108,3 +108,21 @@ test("development auth supports Convex's get-only environment proxy", async () =
     ),
   ).toThrow("Unknown runtime failure");
 });
+
+test("auth config propagates unrelated errors containing missing-variable text", async () => {
+  const { developmentAuthConfig } = await import("./authConfig");
+  const message =
+    "Fatal runtime failure: Environment variable CLERK_JWT_ISSUER_DOMAIN is used in auth config file but its value was not set; abort";
+  expect(() =>
+    developmentAuthConfig(
+      new Proxy(
+        {},
+        {
+          get: () => {
+            throw new Error(message);
+          },
+        },
+      ),
+    ),
+  ).toThrow(message);
+});
