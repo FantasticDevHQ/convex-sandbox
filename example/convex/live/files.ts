@@ -8,6 +8,8 @@ import {
   fileDeleteValidator,
   fileListValidator,
   type FileOperation,
+  type FileList,
+  type FileRead,
 } from "@fantastic.dev/convex-sandbox";
 import {
   HOME_FILE_ROOT,
@@ -32,7 +34,7 @@ function intent(id: string) {
   if (!/^file-[a-zA-Z0-9_-]{1,80}$/.test(id))
     refuse("Keep a valid original file operation identity.");
 }
-async function client(ctx: ActionCtx, input: Target, operation: FileOperation) {
+async function client(ctx: ActionCtx, input: Target, operation: Exclude<FileOperation, "transferFile">) {
   const operator = await requireOperator(ctx);
   const sandbox = { scope: operator.scope, key: input.key };
   const row = await ctx.runQuery(components.sandbox.registry.get, { sandbox });
@@ -75,7 +77,7 @@ async function client(ctx: ActionCtx, input: Target, operation: FileOperation) {
 export const list = action({
   args: target,
   returns: fileListValidator,
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<FileList> => {
     const c = await client(ctx, args, "listFiles");
     return c.files.list({
       sandbox: c.sandbox,
@@ -87,7 +89,7 @@ export const list = action({
 export const read = action({
   args: file,
   returns: fileReadValidator,
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<FileRead> => {
     await requireOperator(ctx);
     checkedPath(args.path);
     const c = await client(ctx, args, "readFile");
@@ -101,7 +103,7 @@ export const read = action({
 export const write = action({
   args: { ...file, data: v.bytes(), operationId: v.string() },
   returns: fileWriteValidator,
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{bytesWritten: number; partial: boolean}> => {
     await requireOperator(ctx);
     checkedPath(args.path);
     intent(args.operationId);
@@ -119,7 +121,7 @@ export const write = action({
 export const remove = action({
   args: { ...file, confirmPath: v.string(), operationId: v.string() },
   returns: fileDeleteValidator,
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{deleted: boolean}> => {
     await requireOperator(ctx);
     checkedPath(args.path);
     intent(args.operationId);
