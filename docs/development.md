@@ -251,3 +251,30 @@ regressions. The full UbiCloud gate also runs the independent actual anonymous
 backend restart/isolation qualification. Do not describe the in-memory bridge as
 hosted authentication or a live provider session. Never add its synthetic grants,
 transport or authority controls to production entry points.
+
+## Packed application qualification
+
+`tests/boat/example-package.test.mjs` assembles a fresh consumer using only copied
+app source and a validated extracted component tarball. It excludes component
+workspace `src`, local configuration and backend state. Public entry resolution,
+strict typechecking and a production Vite build run against that physical package.
+A missing-export negative control must fail instead of finding workspace source.
+Third-party dependency/tool symlinks point only to installed cache packages;
+this is a build qualification, not a claim of a fresh registry installation.
+
+Packing/extraction is shared with the existing anonymous-runtime packed host in
+`scripts/release/pack.mjs`. Every archive entry passes the existing artifact
+allowlist before extraction. The package remains private and unpublished.
+
+The `app isolation` subtest in the adopted two-worktree integration verifies
+actual host `liveApprovals` and `liveReservations` data, beyond component machine
+state. `appIsolationProof` is internal-only, restricted to a fixed synthetic
+namespace outside the operator scope mapper, and rejects run replacement. It
+creates no native machine or provider authority. After managed restart, alpha's
+run remains alpha's and beta retains its distinct run. No lifecycle ownership,
+production credentials or backend state are copied between checkouts.
+
+Review the full CI job's actual runner name, ID and UbiCloud labels before merging.
+A configured runner label alone is not execution evidence. Packed/anonymous app
+qualification does not settle the historical unknown native fork, provider-wide
+qualification, hosted FantasticDev ownership or authorization to publish.

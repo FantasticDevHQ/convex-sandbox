@@ -22,7 +22,7 @@
     "typecheck:lib": "tsc --noEmit",
     "typecheck:example": "pnpm --filter convex-sandbox-example typecheck",
     "test:example": "pnpm --filter convex-sandbox-example test:e2e",
-    "test:package": "node --test --test-concurrency=1 tests/package.test.mjs tests/boat/package.test.mjs",
+    "test:package": "node --test --test-concurrency=1 tests/package.test.mjs tests/boat/package.test.mjs tests/boat/example-package.test.mjs",
     "dev:frontend": "pnpm build:lib && pnpm --filter convex-sandbox-example dev:frontend",
     "test:worktree:integration": "node --test --test-concurrency=1 scripts/worktree/worktree.integration.mjs",
     "lint": "biome lint --error-on-warnings .",

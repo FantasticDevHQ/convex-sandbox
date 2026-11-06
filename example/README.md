@@ -201,3 +201,24 @@ This verifies the mounted functions/component protocol and production panels
 without real provider or hosted identity traffic. It does not claim a real Convex
 daemon, authenticated hosted route or live Boat qualification. Anonymous backend
 and packed-artifact checks remain separate integration gates.
+
+### Packed app and backend isolation
+
+`pnpm test:package` includes a fresh app fixture outside the checkout. It copies
+runtime app source, public brand assets and the app's internal probe helpers,
+then resolves the component from an extracted local tarball. No component
+workspace source, environment file or backend state is copied. Third-party peers
+and build tools reuse their explicitly declared installed cache entries, so this
+build test needs no registry access; the existing package tests separately cover
+installation and frozen offline reinstall.
+
+The fixture typechecks the app's frontend/backend modules, builds Vite, verifies
+public entry paths stay inside the copied package, and deliberately breaks a
+public export to ensure workspace fallback cannot hide it. It does not publish.
+
+The adopted two-worktree integration also writes a synthetic run to the actual
+app approval/reservation tables on one owned anonymous backend, verifies the
+sibling has no run record, and checks distinct journals across restart. Its
+internal fixture uses an unreachable non-operator namespace, confers no provider
+authority and never replaces retained work. Lifecycle allocation, state and
+cleanup remain with `scripts/worktree`; full qualification belongs on UbiCloud.
