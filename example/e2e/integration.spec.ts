@@ -87,6 +87,8 @@ test("every example shows its exact checked module and links to its workflow", a
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  await page.locator("#main-content").focus();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({
     path: info.outputPath("integration-mobile.png"),
     fullPage: true,
