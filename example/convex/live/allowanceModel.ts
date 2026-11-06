@@ -39,6 +39,7 @@ export const admissionKind = v.union(
 export const reservationStatus = v.union(
   v.literal("reserved"),
   v.literal("unknown"),
+  v.literal("released"),
 );
 export const reservationFields = {
   scope: v.string(),

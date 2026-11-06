@@ -1,6 +1,6 @@
 import { action, internalMutation, query } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { internal } from "../_generated/api";
+import { components, internal } from "../_generated/api";
 import { v } from "convex/values";
 import { readBoatSetup } from "@fantastic.dev/convex-sandbox/boat";
 import { requireOperator } from "./operator";
@@ -170,7 +170,95 @@ export const markUnknown = internalMutation({
     const row = await ctx.db.get(reservationId);
     if (!row || row.scope !== operator.scope)
       refuse("Reservation access denied.");
-    await ctx.db.patch(reservationId, { status: "unknown" });
+    if (row.status !== "released")
+      await ctx.db.patch(reservationId, { status: "unknown" });
+    return null;
+  },
+});
+
+/** Release only concurrency after an exact successful stop. Cumulative allowance never resets. */
+export const releaseStopped = internalMutation({
+  args: { key: v.string(), operationId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { key, operationId }) => {
+    const operator = await requireOperator(ctx);
+    const sandbox = { scope: operator.scope, key };
+    const row = await ctx.runQuery(components.sandbox.registry.get, {
+      sandbox,
+    });
+    const stop = await ctx.runQuery(components.sandbox.operations.get, {
+      sandbox,
+      operationId,
+    });
+    if (
+      !row ||
+      row.tombstone ||
+      row.observedState !== "stopped" ||
+      row.activeOperationId ||
+      !stop ||
+      stop.kind !== "stop" ||
+      stop.status !== "succeeded" ||
+      stop.generation !== row.generation ||
+      stop.reference.provider !== "boat" ||
+      stop.reference.providerId !== row.reference.providerId
+    )
+      refuse(
+        "A completed exact-owned stop is required to release concurrency.",
+      );
+    const provision = await ctx.runQuery(
+      components.sandbox.lifecycle.getProvision,
+      { sandbox },
+    );
+    const candidates = (
+      await Promise.all(
+        (["create", "start"] as const).map((kind) =>
+          ctx.db
+            .query("liveReservations")
+            .withIndex("by_scope_and_machineKey_and_kind", (q) =>
+              q
+                .eq("scope", operator.scope)
+                .eq("machineKey", key)
+                .eq("kind", kind),
+            )
+            .take(5),
+        ),
+      )
+    ).flat();
+    for (const candidate of candidates) {
+      if (candidate.status === "released") continue;
+      let confirmed = false;
+      if (candidate.kind === "create")
+        confirmed =
+          provision?.status === "succeeded" &&
+          provision.operationId === candidate.intentKey &&
+          provision.reference?.provider === "boat" &&
+          provision.reference.providerId === row.reference.providerId;
+      else {
+        const start = await ctx.runQuery(components.sandbox.operations.get, {
+          sandbox,
+          operationId: candidate.intentKey,
+        });
+        confirmed = Boolean(
+          start &&
+          start.kind === "start" &&
+          start.sequence < stop.sequence &&
+          start.generation === row.generation &&
+          start.reference.providerId === row.reference.providerId,
+        );
+      }
+      if (!confirmed) continue;
+      const approval = await ctx.db.get(candidate.approvalId);
+      if (
+        !approval ||
+        approval.scope !== operator.scope ||
+        approval.activeReservations < 1
+      )
+        refuse("Reservation accounting requires reconciliation.");
+      await ctx.db.patch(candidate._id, { status: "released" });
+      await ctx.db.patch(approval._id, {
+        activeReservations: approval.activeReservations - 1,
+      });
+    }
     return null;
   },
 });

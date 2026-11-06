@@ -1,3 +1,4 @@
+import { ConnectedLifecycle } from "./lifecycle";
 import { MachineCard } from "./machine-card";
 import { Link } from "@tanstack/react-router";
 import { useAction, usePaginatedQuery, useQuery } from "convex/react";
@@ -68,11 +69,14 @@ function ConnectedDetail({ machineKey }: { machineKey: string }) {
   const row = useQuery(api.live.machines.get, { key: machineKey });
   const refresh = useAction(api.live.machines.refresh);
   return (
-    <MachineDetailPanel
-      key={machineKey}
-      row={row}
-      refresh={() => refresh({ key: machineKey })}
-    />
+    <>
+      <MachineDetailPanel
+        key={machineKey}
+        row={row}
+        refresh={() => refresh({ key: machineKey })}
+      />
+      <ConnectedLifecycle machineKey={machineKey} />
+    </>
   );
 }
 export function MachinesPage() {
