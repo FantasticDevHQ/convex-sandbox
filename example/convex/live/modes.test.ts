@@ -1,5 +1,4 @@
 import { convexTest } from "convex-test";
-import { makeFunctionReference } from "convex/server";
 import { register } from "@fantastic.dev/convex-sandbox/testing";
 import { api } from "../_generated/api";
 import schema from "../schema";
@@ -77,7 +76,7 @@ test("failed Boat reads cannot seed or return simulator state", async () => {
   const { t } = fixture();
   const result = await t
     .withIdentity(identity)
-    .action(makeFunctionReference("live/setup:readiness"), {});
+    .action(api.live.setup.readiness, {});
   expect(result.state).toBe("unavailable");
   expect(result.accountId).toBeNull();
   expect((await t.query(api.demo.info, {})).initialized).toBe(false);
