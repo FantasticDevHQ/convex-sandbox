@@ -41,6 +41,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Fixed
 
+- Boat create acknowledgements remain starting until an independent observation,
+  including when the creation reply itself reports ready.
+
 - Re-resolve a refresh binding when deletion/rebind changes its generation before
   ticket acquisition, so an old native observation cannot be accepted for the new
   binding, and reauthorize the final current binding before returning refresh

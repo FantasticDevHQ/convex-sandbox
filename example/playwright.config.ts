@@ -14,6 +14,7 @@ export default defineConfig({
         "modes.spec.ts",
         "machines.spec.ts",
         "allowance.spec.ts",
+        "create.spec.ts",
       ],
   workers: 1,
   fullyParallel: false,

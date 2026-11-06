@@ -66,3 +66,8 @@ Review a finite live-run proposal at `/setup/run` after operator setup. It start
 without a spending plan. See [run approval and durable admission](../docs/example-allowance.md)
 for the host-reviewed fields, account verification, residual-charge notice and
 reservation rules. Planning and readiness checks do not approve billable work.
+
+Create an approved Small fixture from `/machines/new`. The selected logical key
+survives reload; creation stays pending until independently observed, and unknown
+replies retain their original operation. See [owned creation](../docs/example-create.md)
+for shared claims, private/no-inherited-secret defaults and recovery boundaries.

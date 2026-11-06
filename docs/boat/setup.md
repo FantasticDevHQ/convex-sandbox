@@ -207,7 +207,9 @@ See [the lifecycle contract](../lifecycle.md).
 
 Concurrent requests for one logical key use the shared reservation and produce
 one native POST. A returned native ID is bound with its observed state, which may
-still be starting. A successful creation claim means the ID was obtained, not
+still be starting. Create acknowledgements are recorded as starting even when
+the reply reports ready; an independent observation must confirm readiness.
+A successful creation claim means the ID was obtained, not
 that the machine is ready. Use shared `refresh(sandbox)` to observe readiness.
 
 Host configuration selects `small`, `default`, `large` or `xlarge`; default is

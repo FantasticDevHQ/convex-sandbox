@@ -1,3 +1,4 @@
+import { CreatePage } from "./create";
 import { AllowancePage } from "./allowance";
 import { MachinesPage, MachinePage } from "./machines";
 import { SetupPage } from "./setup";
@@ -350,6 +351,17 @@ const machinesRoute = createRoute({
   path: "/machines",
   component: MachinesPage,
 });
+const createRouteEntry = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/machines/new",
+  validateSearch: (search: Record<string, unknown>) => ({
+    key: typeof search.key === "string" ? search.key : undefined,
+  }),
+  component: () => {
+    const { key } = createRouteEntry.useSearch();
+    return <CreatePage machineKey={key} />;
+  },
+});
 const commandsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/commands",
@@ -389,6 +401,7 @@ export const router = createRouter({
     setupRoute,
     allowanceRoute,
     machinesRoute,
+    createRouteEntry,
     commandsRoute,
     filesRoute,
     forksRoute,
