@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Fresh packed-app build qualification and actual anonymous-backend isolation checks for retained app run journals.
+
 - Credential-free mounted workflow browser qualification with fatal HTTP/WebSocket traps and visible native-failure assertions.
 
 - Optional workflow developer views with exact host source, checked public exports and credential regression guards.

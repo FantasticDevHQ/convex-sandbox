@@ -206,6 +206,20 @@ test(
     );
     await Promise.all(roots.map((root) => ok(root, "start", "--frontend")));
     await Promise.all(states.map(frontendReady));
+    await t.test("app isolation: synthetic run ledger stays on its owned backend", async () => {
+      assert.equal(await componentRpc(roots[0], "appIsolationProof:get", {}, true), null);
+      assert.equal(await componentRpc(roots[1], "appIsolationProof:get", {}, true), null);
+      assert.deepEqual(await componentRpc(roots[0], "appIsolationProof:seed", { runId: "qualification-alpha" }, true), {
+        runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
+      });
+      assert.equal(await componentRpc(roots[1], "appIsolationProof:get", {}, true), null,
+        "Creating an app run on alpha must not create a sibling record");
+      assert.deepEqual(await componentRpc(roots[1], "appIsolationProof:seed", { runId: "qualification-beta" }, true), {
+        runId: "qualification-beta", intentKeys: ["qualification-create"], unknown: 1,
+      });
+      assert.equal((await componentRpc(roots[0], "appIsolationProof:get", {}, true)).runId, "qualification-alpha");
+    });
+    console.log("PASS: actual app approval/reservation journals are isolated across packed and workspace anonymous hosts");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:runtime", {}, true), {
       injectedFetch: true, requestInputs: true, detachedCommand: true,
       abortForwarded: true, lostReplyNotRetried: true, httpErrorsNotRetried: true,
@@ -350,6 +364,11 @@ test(
       "Repeated setup must preserve managed configuration",
     );
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
+    assert.deepEqual(await componentRpc(roots[0], "appIsolationProof:get", {}, true), {
+      runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
+    });
+    assert.equal((await componentRpc(roots[1], "appIsolationProof:get", {}, true)).runId, "qualification-beta");
+    console.log("PASS: retained app run journals survive owned restart without crossing into the sibling backend");
     const boatBinding = await componentRpc(roots[0], "registry:get", {
       sandbox: { scope: "boat-provision-proof", key: "created" },
     });
@@ -443,6 +462,11 @@ test(
     await ok(roots[0], "start", "--frontend");
     await frontendReady(states[0]);
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
+    assert.deepEqual(await componentRpc(roots[0], "appIsolationProof:get", {}, true), {
+      runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
+    });
+    assert.equal((await componentRpc(roots[1], "appIsolationProof:get", {}, true)).runId, "qualification-beta");
+    console.log("PASS: retained app run journals survive owned restart without crossing into the sibling backend");
     console.log(
       "PASS: teardown preserves data, leaves sibling backend running, restart reacquires ports",
     );
