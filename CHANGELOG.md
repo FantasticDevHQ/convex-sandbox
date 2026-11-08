@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Fixed
 
-- Convex CLI cold-setup downloads use the official release asset download query and report the HTTP status on failure.
+- Convex CLI cold-setup downloads fall back to the exact official GitHub release asset API after HTTP 5xx and report the HTTP status on failure.
 
 ### Added
 

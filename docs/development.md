@@ -282,12 +282,19 @@ qualification, hosted FantasticDev ownership or authorization to publish.
 ## Convex CLI release-download patch
 
 The pinned Convex 1.49.0 CLI has a narrow pnpm patch in
-`patches/convex@1.49.0.patch`. Its official GitHub backend/dashboard asset URL uses
-`?download=1`, which avoided the failed canonical download route during cold
-anonymous setup. Non-200 failures now report their actual HTTP status instead of
-calling every response “File not found.” Both shipped CLI code and its source are
-patched; the package version and backend-version selection behavior are unchanged.
+`patches/convex@1.49.0.patch`. If an official GitHub release download returns
+HTTP 5xx, the CLI requests that exact release tag from GitHub's API, selects the
+uploaded asset with the exact platform filename and a positive numeric ID, and
+downloads it through the official release-asset API. Each request has a 60-second
+bound. HTTP 4xx responses do not trigger fallback. Failures report the actual URL
+and HTTP status instead of calling every response "File not found."
 
+Both shipped CLI code and its source are patched. The package version and
+backend-version selection behavior stay unchanged. Offline tests execute the
+installed CLI with synthetic fetch responses and isolated temporary home/state.
+They verify fallback routing, missing releases and rejected metadata without
+starting a backend. Actual successful cold setup belongs to the UbiCloud
+integration check.
 The patch adds no mirror, credentials, alternate lifecycle or backend state cache.
 The adopted setup/start commands, allocated ports and checkout-local ownership
 checks continue unchanged. Frozen installs apply the recorded patch hash. Remove

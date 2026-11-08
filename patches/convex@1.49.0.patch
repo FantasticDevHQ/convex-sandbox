@@ -1,17 +1,48 @@
 diff --git a/dist/cli.bundle.cjs b/dist/cli.bundle.cjs
-index c7f6c6d9f62f47d68930aef184eeebbde7aca8dc..23c8141d3c7553dc2c6f3cde447b70354a78cd55 100644
+index c7f6c6d9f62f47d68930aef184eeebbde7aca8dc..6f92bdb079bd400bc191bcaaa1c944b6a54c6cfa 100644
 --- a/dist/cli.bundle.cjs
 +++ b/dist/cli.bundle.cjs
-@@ -73291,7 +73291,7 @@ function getDownloadPath() {
-   return null;
- }
- function getGithubDownloadUrl(version4, filename) {
--  return `https://github.com/convex/convex-backend/releases/download/${version4}/${filename}`;
-+  return `https://github.com/convex/convex-backend/releases/download/${version4}/${filename}?download=1`;
+@@ -73295,8 +73295,37 @@ function getGithubDownloadUrl(version4, filename) {
  }
  async function downloadZipFile(ctx, args) {
    const { version: version4, filename, nameForLogging } = args;
-@@ -73318,7 +73318,7 @@ async function downloadZipFile(ctx, args) {
+-  const url2 = getGithubDownloadUrl(version4, filename);
+-  const response = await fetch(url2);
++  let url2 = getGithubDownloadUrl(version4, filename);
++  let response = await fetch(url2, { signal: AbortSignal.timeout(60_000) });
++  // Retry only server failures through GitHub's official release asset API.
++  if (response.status >= 500 && response.status <= 599) {
++    await response.body?.cancel();
++    url2 = `https://api.github.com/repos/convex/convex-backend/releases/tags/${encodeURIComponent(version4)}`;
++    response = await fetch(url2, {
++      headers: { Accept: "application/vnd.github+json" },
++      signal: AbortSignal.timeout(60_000),
++    });
++    if (response.status === 200) {
++      const release = await response.json();
++      const asset = release?.tag_name === version4 && Array.isArray(release.assets)
++        ? release.assets.find((item) =>
++            item?.name === filename && item.state === "uploaded" &&
++            Number.isSafeInteger(item.id) && item.id > 0)
++        : undefined;
++      if (!asset) {
++        return await ctx.crash({
++          exitCode: 1,
++          errorType: "fatal",
++          printedMessage: `No uploaded asset ${filename} in release ${version4}.`,
++        });
++      }
++      url2 = `https://api.github.com/repos/convex/convex-backend/releases/assets/${asset.id}`;
++      response = await fetch(url2, {
++        headers: { Accept: "application/octet-stream" },
++        signal: AbortSignal.timeout(60_000),
++      });
++    }
++  }
+   const contentLength = parseInt(
+     response.headers.get("content-length") ?? "",
+     10
+@@ -73318,7 +73347,7 @@ async function downloadZipFile(ctx, args) {
      return await ctx.crash({
        exitCode: 1,
        errorType: "fatal",
@@ -21,19 +52,50 @@ index c7f6c6d9f62f47d68930aef184eeebbde7aca8dc..23c8141d3c7553dc2c6f3cde447b7035
    }
    await withTmpDir(async (tmpDir) => {
 diff --git a/src/cli/lib/localDeployment/download.ts b/src/cli/lib/localDeployment/download.ts
-index bf7faf4541e5d099200c48811abbb4a93d14c103..9badd9ce02ae80da4a98a6083a69a3810c9c5784 100644
+index bf7faf4541e5d099200c48811abbb4a93d14c103..fb69a60a1f3e86ee2b1976123f34187e0a0d546c 100644
 --- a/src/cli/lib/localDeployment/download.ts
 +++ b/src/cli/lib/localDeployment/download.ts
-@@ -274,7 +274,7 @@ function getDownloadPath() {
- }
- 
- function getGithubDownloadUrl(version: string, filename: string) {
--  return `https://github.com/convex/convex-backend/releases/download/${version}/${filename}`;
-+  return `https://github.com/convex/convex-backend/releases/download/${version}/${filename}?download=1`;
- }
- 
- async function downloadZipFile(
-@@ -310,7 +310,7 @@ async function downloadZipFile(
+@@ -287,8 +287,37 @@ async function downloadZipFile(
+   },
+ ) {
+   const { version, filename, nameForLogging } = args;
+-  const url = getGithubDownloadUrl(version, filename);
+-  const response = await fetch(url);
++  let url = getGithubDownloadUrl(version, filename);
++  let response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
++  // Retry only server failures through GitHub's official release asset API.
++  if (response.status >= 500 && response.status <= 599) {
++    await response.body?.cancel();
++    url = `https://api.github.com/repos/convex/convex-backend/releases/tags/${encodeURIComponent(version)}`;
++    response = await fetch(url, {
++      headers: { Accept: "application/vnd.github+json" },
++      signal: AbortSignal.timeout(60_000),
++    });
++    if (response.status === 200) {
++      const release = await response.json();
++      const asset = release?.tag_name === version && Array.isArray(release.assets)
++        ? release.assets.find((item: any) =>
++            item?.name === filename && item.state === "uploaded" &&
++            Number.isSafeInteger(item.id) && item.id > 0)
++        : undefined;
++      if (!asset) {
++        return await ctx.crash({
++          exitCode: 1,
++          errorType: "fatal",
++          printedMessage: `No uploaded asset ${filename} in release ${version}.`,
++        });
++      }
++      url = `https://api.github.com/repos/convex/convex-backend/releases/assets/${asset.id}`;
++      response = await fetch(url, {
++        headers: { Accept: "application/octet-stream" },
++        signal: AbortSignal.timeout(60_000),
++      });
++    }
++  }
+   const contentLength = parseInt(
+     response.headers.get("content-length") ?? "",
+     10,
+@@ -310,7 +339,7 @@ async function downloadZipFile(
      return await ctx.crash({
        exitCode: 1,
        errorType: "fatal",
