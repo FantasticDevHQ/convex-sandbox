@@ -31,6 +31,8 @@ test("README and new guides link to existing local documentation", async () => {
     "docs/adapters.md",
     "docs/api.md",
     "docs/integrations.md",
+    "docs/example-walkthrough.md",
+    "example/README.md",
   ]) {
     const text = await readFile(file, "utf8");
     for (const match of text.matchAll(/\]\(([^)]+)\)/g)) {

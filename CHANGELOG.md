@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ### Added
 
+- Checked fresh simulator setup and operator walkthrough, including server-only credentials, FantasticDev hosted ownership and guarded recovery/reset.
+
 - Fresh packed-app build qualification and actual anonymous-backend isolation checks for retained app run journals.
 
 - Credential-free mounted workflow browser qualification with fatal HTTP/WebSocket traps and visible native-failure assertions.
