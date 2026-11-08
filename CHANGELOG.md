@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- Convex CLI cold-setup downloads use the official release asset download query and report the HTTP status on failure.
+
 ### Added
 
 - Checked fresh simulator setup and operator walkthrough, including server-only credentials, FantasticDev hosted ownership and guarded recovery/reset.

@@ -1,0 +1,44 @@
+diff --git a/dist/cli.bundle.cjs b/dist/cli.bundle.cjs
+index c7f6c6d9f62f47d68930aef184eeebbde7aca8dc..23c8141d3c7553dc2c6f3cde447b70354a78cd55 100644
+--- a/dist/cli.bundle.cjs
++++ b/dist/cli.bundle.cjs
+@@ -73291,7 +73291,7 @@ function getDownloadPath() {
+   return null;
+ }
+ function getGithubDownloadUrl(version4, filename) {
+-  return `https://github.com/convex/convex-backend/releases/download/${version4}/${filename}`;
++  return `https://github.com/convex/convex-backend/releases/download/${version4}/${filename}?download=1`;
+ }
+ async function downloadZipFile(ctx, args) {
+   const { version: version4, filename, nameForLogging } = args;
+@@ -73318,7 +73318,7 @@ async function downloadZipFile(ctx, args) {
+     return await ctx.crash({
+       exitCode: 1,
+       errorType: "fatal",
+-      printedMessage: `File not found at ${url2}.`
++      printedMessage: `Unable to download ${url2}: HTTP ${response.status}.`
+     });
+   }
+   await withTmpDir(async (tmpDir) => {
+diff --git a/src/cli/lib/localDeployment/download.ts b/src/cli/lib/localDeployment/download.ts
+index bf7faf4541e5d099200c48811abbb4a93d14c103..9badd9ce02ae80da4a98a6083a69a3810c9c5784 100644
+--- a/src/cli/lib/localDeployment/download.ts
++++ b/src/cli/lib/localDeployment/download.ts
+@@ -274,7 +274,7 @@ function getDownloadPath() {
+ }
+ 
+ function getGithubDownloadUrl(version: string, filename: string) {
+-  return `https://github.com/convex/convex-backend/releases/download/${version}/${filename}`;
++  return `https://github.com/convex/convex-backend/releases/download/${version}/${filename}?download=1`;
+ }
+ 
+ async function downloadZipFile(
+@@ -310,7 +310,7 @@ async function downloadZipFile(
+     return await ctx.crash({
+       exitCode: 1,
+       errorType: "fatal",
+-      printedMessage: `File not found at ${url}.`,
++      printedMessage: `Unable to download ${url}: HTTP ${response.status}.`,
+     });
+   }
+   await withTmpDir(async (tmpDir) => {

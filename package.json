@@ -112,5 +112,10 @@
   "homepage": "https://github.com/FantasticDevHQ/convex-sandbox#readme",
   "bugs": {
     "url": "https://github.com/FantasticDevHQ/convex-sandbox/issues"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "convex@1.49.0": "patches/convex@1.49.0.patch"
+    }
   }
 }

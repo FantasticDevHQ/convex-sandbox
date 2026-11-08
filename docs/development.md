@@ -278,3 +278,18 @@ Review the full CI job's actual runner name, ID and UbiCloud labels before mergi
 A configured runner label alone is not execution evidence. Packed/anonymous app
 qualification does not settle the historical unknown native fork, provider-wide
 qualification, hosted FantasticDev ownership or authorization to publish.
+
+## Convex CLI release-download patch
+
+The pinned Convex 1.49.0 CLI has a narrow pnpm patch in
+`patches/convex@1.49.0.patch`. Its official GitHub backend/dashboard asset URL uses
+`?download=1`, which avoided the failed canonical download route during cold
+anonymous setup. Non-200 failures now report their actual HTTP status instead of
+calling every response “File not found.” Both shipped CLI code and its source are
+patched; the package version and backend-version selection behavior are unchanged.
+
+The patch adds no mirror, credentials, alternate lifecycle or backend state cache.
+The adopted setup/start commands, allocated ports and checkout-local ownership
+checks continue unchanged. Frozen installs apply the recorded patch hash. Remove
+the patch when an upstream CLI release supplies a verified equivalent fix; qualify
+a cold anonymous setup on UbiCloud before doing so.
