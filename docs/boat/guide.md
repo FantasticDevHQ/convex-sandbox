@@ -142,6 +142,7 @@ of an unreviewed future release. See the detailed [setup](setup.md) for semantic
 | snapshotDisk | Unsupported: background/stop capture is not an explicit correlated capture | 2026-11-04: saveSavedSnapshot / listSandboxSnapshots |
 | suspendMemory | Unsupported; native stop discards running processes/RAM | 2026-11-04: stop / resume semantics |
 | resumeMemory | Unsupported; disk resume is not RAM restore | 2026-11-04: resume semantics |
+| getDesktopSession | Contract declared; unsupported by Boat adapter until native dispatch is implemented | 2026-11-09: desktop / DesktopResponse; [connection-window semantics](../desktop-sessions.md) |
 | getConnection | Unsupported: no established native enforced expiry for any common kind | 2026-11-04: desktop / hostPort / sshKey; browser mapping unestablished |
 
 ## Lifetimes, recovery and cleanup
