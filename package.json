@@ -9,6 +9,7 @@
     "typecheck": "pnpm build:lib && pnpm typecheck:lib && pnpm typecheck:example",
     "build": "pnpm build:lib && pnpm build:example",
     "check:all": "pnpm lint && pnpm test:codegen && pnpm typecheck && pnpm test && pnpm test:boat:live-guard && pnpm test:boat:live && pnpm build:example && pnpm test:package && pnpm test:docs && pnpm test:release && pnpm test:example && pnpm test:pr-standard && pnpm test:worktree && pnpm test:worktree:integration",
+    "boat:import-key": "node scripts/worktree/boat-import-cli.mjs",
     "worktree:setup": "node scripts/worktree/cli.mjs setup",
     "worktree:start": "node scripts/worktree/cli.mjs start",
     "worktree:stop": "node scripts/worktree/cli.mjs stop",
