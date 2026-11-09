@@ -138,7 +138,7 @@ test("every capability mapping has its dated native source and all guide links r
       .split("\n")
       .find((line) => line.startsWith(`| ${capability} |`));
     assert.ok(row, `Missing mapping: ${capability}`);
-    assert.match(row.split("|")[3], /2026-11-04: \S/);
+    assert.match(row.split("|")[3], /\d{4}-\d{2}-\d{2}: \S/);
   }
   for (const file of [
     "docs/boat/guide.md",

@@ -68,6 +68,33 @@ async function componentRpc(root, fn, args, host = false) {
   );
   return JSON.parse(output);
 }
+// Captures CLI values in memory and emits only a boolean, never the credential.
+function boatKeyMatches(root, expected) {
+  const code = `
+    import {spawnSync} from "node:child_process";
+    import path from "node:path";
+    import {state,checkConfig,cli,childEnv} from "./scripts/worktree/config.mjs";
+    import {backend,dir} from "./scripts/worktree/context.mjs";
+    const s=await state();await checkConfig(s,true);
+    const result=spawnSync(process.execPath,[cli(),"env","get","BOAT_API_KEY","--env-file",path.join(dir,"convex.env")],{cwd:backend,env:childEnv(s),encoding:"utf8"});
+    if(result.status!==0) throw new Error("Owned backend environment read failed; details suppressed");
+    process.stdout.write(JSON.stringify(result.stdout.trim()===process.argv[1]));
+  `;
+  return JSON.parse(execFileSync(process.execPath,["--input-type=module","-e",code,expected],{cwd:root,encoding:"utf8",stdio:["ignore","pipe","pipe"],timeout:30000}));
+}
+function importSyntheticBoatKey(root) {
+  const code = `
+    import {importBoatKey} from "./scripts/worktree/boat-import.mjs";
+    await importBoatKey({accessToken:"synthetic-management-token",managementFetch:async url=>{
+      if(String(url)==="https://api.convex.dev/v1/projects/3397663")
+        return Response.json({id:3397663,slug:"convex-sandbox",teamId:419366,teamSlug:"fantastic-dev"});
+      if(String(url)!=="https://api.convex.dev/v1/projects/3397663/list_default_environment_variables?name=BOAT_API_KEY&deploymentType=dev") throw new Error("Unexpected management read");
+      return Response.json({items:[{name:"BOAT_API_KEY",value:"synthetic-isolation-key",deploymentTypes:["dev"]}],pagination:{hasMore:false}});
+    }});
+  `;
+  const output=execFileSync(process.execPath,["--input-type=module","-e",code],{cwd:root,encoding:"utf8",stdio:["ignore","pipe","pipe"],timeout:30000});
+  assert.ok(!output.includes("synthetic-isolation-key"), "Import output must omit the synthetic credential");
+}
 const identity = { scope: "qualification", key: "same-key" };
 function readObservation(root) {
   return componentRpc(root, "observations:get", identity);
@@ -219,6 +246,8 @@ test(
     );
     await Promise.all(roots.map((root) => ok(root, "start", "--frontend")));
     await Promise.all(states.map(frontendReady));
+    assert.ok(roots.every(root=>boatKeyMatches(root,"")), "Default managed setup must remain Boat-key-free");
+    console.log("PASS: key-free default managed setup starts both simulator backends without Boat configuration");
     await t.test("app isolation: synthetic run ledger stays on its owned backend", async () => {
       assert.equal(await componentRpc(roots[0], "appIsolationProof:get", {}, true), null);
       assert.equal(await componentRpc(roots[1], "appIsolationProof:get", {}, true), null);
@@ -408,6 +437,8 @@ test(
       runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
     });
     assert.equal((await componentRpc(roots[1], "appIsolationProof:get", {}, true)).runId, "qualification-beta");
+    assert.ok(roots.every(root=>boatKeyMatches(root,"")),"Default backends must remain key-free before opt-in import");
+    console.log("PASS: default anonymous backends remain key-free after restart, before opt-in import");
     console.log("PASS: retained app run journals survive owned restart without crossing into the sibling backend");
     const boatBinding = await componentRpc(roots[0], "registry:get", {
       sandbox: { scope: "boat-provision-proof", key: "created" },
@@ -496,6 +527,11 @@ test(
     console.log(
       "PASS: repeated setup/restart preserves database, identity, ports and generated configuration",
     );
+    await t.test("Boat key import: synthetic Development default reaches only the owned anonymous backend", async () => {
+      importSyntheticBoatKey(roots[0]);
+      assert.ok(boatKeyMatches(roots[0],"synthetic-isolation-key"),"Import must reach the selected managed backend");
+      assert.ok(boatKeyMatches(roots[1],""),"Sibling must remain key-free");
+    });
     await ok(roots[0], "teardown");
     await frontendReady(states[1]);
     assert.equal((await readObservation(roots[1])).providerId, "beta");
@@ -506,6 +542,9 @@ test(
       runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
     });
     assert.equal((await componentRpc(roots[1], "appIsolationProof:get", {}, true)).runId, "qualification-beta");
+    assert.ok(boatKeyMatches(roots[0],"synthetic-isolation-key"),"Imported key must survive owned restart");
+    assert.ok(boatKeyMatches(roots[1],""),"Sibling remains key-free after restart");
+    console.log("PASS: synthetic Boat key persists only in its owned backend across teardown/restart, with secret-free import output");
     console.log("PASS: retained app run journals survive owned restart without crossing into the sibling backend");
     console.log(
       "PASS: teardown preserves data, leaves sibling backend running, restart reacquires ports",

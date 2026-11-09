@@ -351,8 +351,8 @@ the production wrapper, internal Node action and operator-backed authority query
 against synthetic admissions on both anonymous backends. It checks exact IDs,
 unknown replies, recovery without replay and identity/URL refusal, then reads both
 external indexes. No live Boat mutation or historical fork reconciliation is
-part of these checks. Native cleanup dispatch/removal guards and shared key
-import remain separate work.
+part of these checks. Native cleanup dispatch/removal guards remain separate
+work. Credential import uses the explicit command described below.
 
 The runtime qualification mounts a temporary public shim from
 `example/fixtures/ownershipRuntime.ts` only in its owned anonymous test host.
@@ -364,3 +364,43 @@ only its exact shim and regenerates the production function set. No public test
 endpoint ships in `example/convex`. The original admissions and unknowns remain
 in the backend and external index. Each invocation gets a fresh synthetic scope;
 retries within that scope cannot reset its run or replay an admitted intent.
+
+## Opt-in local Boat key import
+
+The default simulator setup needs no Boat credentials. For local Boat setup,
+run `pnpm worktree:setup`, then `pnpm worktree:start` in this checkout, and explicitly
+run `pnpm boat:import-key`. The command requires a running managed anonymous
+backend with its original deployment identity, both backend ports and reservation.
+It shares the lifecycle operation lock, refuses foreign or released state, and
+checks the target again after reading the source. It never selects a hosted
+backend as the local runtime.
+
+Management access uses `CONVEX_MANAGEMENT_ACCESS_TOKEN` when supplied, otherwise
+the existing authenticated Convex CLI token in `~/.convex/config.json`. Authorize
+Convex management access separately if neither is available. Inject tokens through
+your authorized secret manager or shell environment; do not paste values into
+commands, documentation or tickets. Management authorization is separate from
+local anonymous backend credentials.
+
+The importer verifies project `convex-sandbox`, ID `3397663`, and its owning team
+`fantastic-dev`, ID `419366`, using authenticated project metadata. It requests
+only `BOAT_API_KEY` filtered to the Development project default. Preview,
+production, deployment environments and unrelated variables are never copied.
+The approved hosted project is a credential source only. The import makes no
+Boat API calls and grants no operator identity or live-operation approval.
+
+The value stays in process memory during transfer and is stored only in the
+selected backend's environment. It is not written into an environment file,
+frontend variables, command arguments or a plaintext cache. Success output reports
+only that import completed. Errors suppress response bodies and secret details.
+After a timeout, the local write may have completed; retrying sets the same one
+variable. Re-running import replaces only this backend's `BOAT_API_KEY` with the
+current Development default. Restart and teardown preserve the backend value;
+explicit owned cleanup deletes its local database. Import separately in each
+worktree that needs Boat access.
+
+`pnpm test:worktree` covers source refusal, isolated targets and secret-free output
+with synthetic credentials and loopback test servers. The UbiCloud two-worktree
+integration verifies key-free default setup, then imports a synthetic default into
+one actual anonymous backend and verifies sibling isolation and restart. Neither
+test reads the real shared key or contacts Boat.

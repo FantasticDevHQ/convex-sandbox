@@ -484,7 +484,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
-            | "getConnection";
+            | "getConnection"
+            | "getDesktopSession";
           leaseUntil?: number;
           nativeImage?: {
             acceptedMachine?: { provider: string; providerId: string };
@@ -623,7 +624,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
-            | "getConnection";
+            | "getConnection"
+            | "getDesktopSession";
           leaseUntil?: number;
           nativeImage?: {
             acceptedMachine?: { provider: string; providerId: string };
@@ -744,7 +746,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
-            | "getConnection";
+            | "getConnection"
+            | "getDesktopSession";
           leaseUntil?: number;
           nativeImage?: {
             acceptedMachine?: { provider: string; providerId: string };
@@ -1057,7 +1060,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
-            | "getConnection";
+            | "getConnection"
+            | "getDesktopSession";
           operationId: string;
           sandbox: { key: string; scope: string };
         },
@@ -1100,7 +1104,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
-            | "getConnection";
+            | "getConnection"
+            | "getDesktopSession";
           leaseUntil?: number;
           nativeImage?: {
             acceptedMachine?: { provider: string; providerId: string };
@@ -1196,7 +1201,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "snapshotDisk"
               | "suspendMemory"
               | "resumeMemory"
-              | "getConnection";
+              | "getConnection"
+              | "getDesktopSession";
             leaseUntil?: number;
             nativeImage?: {
               acceptedMachine?: { provider: string; providerId: string };
@@ -1280,7 +1286,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
             | "snapshotDisk"
             | "suspendMemory"
             | "resumeMemory"
-            | "getConnection";
+            | "getConnection"
+            | "getDesktopSession";
           leaseUntil?: number;
           nativeImage?: {
             acceptedMachine?: { provider: string; providerId: string };
@@ -1376,7 +1383,8 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
               | "snapshotDisk"
               | "suspendMemory"
               | "resumeMemory"
-              | "getConnection";
+              | "getConnection"
+              | "getDesktopSession";
             leaseUntil?: number;
             nativeImage?: {
               acceptedMachine?: { provider: string; providerId: string };

@@ -23,6 +23,7 @@ export const capabilityValidator = v.union(
   v.literal("suspendMemory"),
   v.literal("resumeMemory"),
   v.literal("getConnection"),
+  v.literal("getDesktopSession"),
 );
 export type Capability = Infer<typeof capabilityValidator>;
 const persistenceValidator = v.union(

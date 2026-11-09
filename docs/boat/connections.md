@@ -44,3 +44,11 @@ no-dispatch result, host authorization order, unknown-kind rejection and safe
 projection of synthetic secret-bearing observations. boatConnectionProof exercises
 the same public factory/shared stores on owned anonymous and packed hosts. No live
 Boat credentials, guest sessions or resources are needed for these fixtures.
+
+## Separate native desktop sessions
+
+The [native desktop-session contract](../desktop-sessions.md) records the updated
+2026-11-09 documentation and API provenance. Its connection window allows an
+established stream to continue and does not establish token revocation. It leaves
+this strict expiring getConnection boundary intact. Boat implementation is CSB-57;
+no native desktop capability is advertised by this contract-only change.
