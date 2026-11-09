@@ -41,9 +41,13 @@ import type * as live_lifecycleModel from "../live/lifecycleModel.js";
 import type * as live_logs from "../live/logs.js";
 import type * as live_machines from "../live/machines.js";
 import type * as live_operator from "../live/operator.js";
+import type * as live_ownership from "../live/ownership.js";
+import type * as live_ownershipData from "../live/ownershipData.js";
+import type * as live_ownershipProvider from "../live/ownershipProvider.js";
 import type * as live_recovery from "../live/recovery.js";
 import type * as live_setup from "../live/setup.js";
 import type * as nativeLifecycleProof from "../nativeLifecycleProof.js";
+import type * as ownershipProof from "../ownershipProof.js";
 import type * as proof from "../proof.js";
 
 import type {
@@ -86,9 +90,13 @@ declare const fullApi: ApiFromModules<{
   "live/logs": typeof live_logs;
   "live/machines": typeof live_machines;
   "live/operator": typeof live_operator;
+  "live/ownership": typeof live_ownership;
+  "live/ownershipData": typeof live_ownershipData;
+  "live/ownershipProvider": typeof live_ownershipProvider;
   "live/recovery": typeof live_recovery;
   "live/setup": typeof live_setup;
   nativeLifecycleProof: typeof nativeLifecycleProof;
+  ownershipProof: typeof ownershipProof;
   proof: typeof proof;
 }>;
 

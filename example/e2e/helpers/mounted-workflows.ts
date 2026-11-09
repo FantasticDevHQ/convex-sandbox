@@ -1,3 +1,4 @@
+import { worktreeOwnershipFixture } from "../../../tests/boat/worktree-fixture";
 import { SyntheticBoatHTTP } from "./offline-network";
 export { SyntheticBoatHTTP, trapBrowserNetwork } from "./offline-network";
 import type { RecoveryContext } from "../../convex/live/recovery";
@@ -47,7 +48,12 @@ export async function createMountedBackend() {
       undefined,
       `${name} must be absent before synthetic configuration`,
     );
+  const ownership = await worktreeOwnershipFixture();
+  const savedCloudUrl = process.env.CONVEX_CLOUD_URL;
+  process.env.CONVEX_CLOUD_URL = "http://127.0.0.1:19999";
+  process.env.EXAMPLE_WORKTREE_OWNERSHIP = JSON.stringify(ownership.owner);
   const names = [
+    "EXAMPLE_WORKTREE_OWNERSHIP",
     "BOAT_API_KEY",
     "BOAT_ORG",
     "EXAMPLE_OPERATOR_GRANTS",
@@ -79,6 +85,8 @@ export async function createMountedBackend() {
   globalThis.fetch = http.fetch.bind(http) as typeof fetch;
   const t = convexTest(schema, {
     "./_generated/server.js": () => import("../../convex/_generated/server.js"),
+    "./live/ownership.ts": () => import("../../convex/live/ownership"),
+    "./live/ownershipData.ts": () => import("../../convex/live/ownershipData"),
     "./live/allowance.ts": () => import("../../convex/live/allowance"),
     "./live/create.ts": () => import("../../convex/live/create"),
     "./live/machines.ts": () => import("../../convex/live/machines"),
@@ -188,7 +196,10 @@ export async function createMountedBackend() {
       });
       await action("create:create", { key });
     },
-    close: () => {
+    close: async () => {
+      await ownership.cleanup();
+      if (savedCloudUrl === undefined) delete process.env.CONVEX_CLOUD_URL;
+      else process.env.CONVEX_CLOUD_URL = savedCloudUrl;
       globalThis.fetch = ambientFetch;
       for (const name of names) delete process.env[name];
       http.assertClean();

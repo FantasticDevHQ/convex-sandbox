@@ -132,7 +132,7 @@ test("credential-free scenario", async ({ page }, info) => {
     try {
       browser.assertClean();
     } finally {
-      backend.close();
+      await backend.close();
     }
   }
 });
@@ -183,7 +183,7 @@ test("provider failure", async ({ page }, info) => {
     try {
       browser.assertClean();
     } finally {
-      backend.close();
+      await backend.close();
     }
   }
 });
@@ -220,7 +220,7 @@ test("loading, missing configuration and denied access stay locked", async ({
     try {
       browser.assertClean();
     } finally {
-      backend.close();
+      await backend.close();
     }
   }
 });

@@ -7,6 +7,7 @@ import {
   readBoatSetup,
 } from "@fantastic.dev/convex-sandbox/boat";
 import { requireOperator } from "./operator";
+import { ownershipProvider } from "./ownershipProvider";
 import { currentPlan, refuse } from "./allowanceModel";
 function accessFor(ctx: Pick<ActionCtx, "auth" | "runQuery">) {
   return createHostAccess({
@@ -54,6 +55,7 @@ export async function ownedBoatClient(
     | "fork"
     | "imageStatus",
   billable = false,
+  childKey?: string,
 ) {
   const access = accessFor(ctx);
   const resolved = await access.resolve({ key }, operation);
@@ -113,11 +115,22 @@ export async function ownedBoatClient(
     },
   });
   providers.register(
-    createBoatProvider({
-      apiKey,
-      org: plan.wallet,
-      ttlSeconds: plan.durationMinutes * 60,
-    }),
+    childKey
+      ? ownershipProvider(
+          ctx,
+          {
+            apiKey,
+            org: plan.wallet,
+            ttlSeconds: plan.durationMinutes * 60,
+          },
+          childKey,
+          "fork",
+        )
+      : createBoatProvider({
+          apiKey,
+          org: plan.wallet,
+          ttlSeconds: plan.durationMinutes * 60,
+        }),
   );
   return { ...resolved, generation: bound.generation, access, providers, plan };
 }

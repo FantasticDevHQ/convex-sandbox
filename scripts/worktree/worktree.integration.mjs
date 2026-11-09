@@ -10,6 +10,8 @@ import net from "node:net";
 import { existsSync } from "node:fs";
 import { installDependencies } from "./dependencies.mjs";
 import { refreshCheckout } from "./freshness.mjs";
+import { registry } from "./context.mjs";
+import { readOwnership } from "./boat-ownership-store.mjs";
 import { mountPackedComponent } from "../release/packed-component.mjs";
 
 const source = await realpath(process.cwd());
@@ -219,6 +221,14 @@ test(
       });
       assert.equal((await componentRpc(roots[0], "appIsolationProof:get", {}, true)).runId, "qualification-alpha");
     });
+    for (let i = 0; i < roots.length; i++) {
+      await componentRpc(roots[i], "ownershipProof:exportIndex", {}, true);
+      const index = await readOwnership(path.join(await realpath(registry), "boat-ownership"), states[i].id);
+      assert.equal(index.owner.root, roots[i]);
+      assert.equal(index.intents[0].runId, i === 0 ? "qualification-alpha" : "qualification-beta");
+      assert.equal(index.intents[0].outcome, "unknown");
+    }
+    console.log("PASS: local Node actions export original app admissions to isolated external ownership indexes");
     console.log("PASS: actual app approval/reservation journals are isolated across packed and workspace anonymous hosts");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:runtime", {}, true), {
       injectedFetch: true, requestInputs: true, detachedCommand: true,

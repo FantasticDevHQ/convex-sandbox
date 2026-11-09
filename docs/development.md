@@ -300,3 +300,50 @@ The adopted setup/start commands, allocated ports and checkout-local ownership
 checks continue unchanged. Frozen installs apply the recorded patch hash. Remove
 the patch when an upstream CLI release supplies a verified equivalent fix; qualify
 a cold anonymous setup on UbiCloud before doing so.
+
+## Boat ownership recovery index
+
+Managed setup configures `EXAMPLE_WORKTREE_OWNERSHIP` in this anonymous backend
+with its worktree UUID, canonical checkout path, deployment and external index
+path. Existing checkouts must rerun setup before creating or forking. The index
+lives at `<WORKTREE_REGISTRY_DIR>/boat-ownership/<worktree-uuid>.json`, defaulting
+to `~/.local/state/convex-worktrees/boat-ownership`. It survives local stop,
+teardown, explicit local database cleanup and removal of the checkout.
+
+Create and fork adapters await an internal local Node action before native
+dispatch. It exports only the original app admission, reviewed account/wallet,
+operation, logical key and fork parent identity/generation. As soon as the
+adapter returns an exact sandbox ID, that ID is exported before the shared
+client records its result. A subsequent export records the shared generation.
+A failed pre-dispatch export prevents the native mutation. A missing reply,
+interrupted action or write failure after dispatch leaves an unknown record
+unless the exact ID was already retained. Identified means only that an ID is
+known, never that a machine is ready, absent or deleted.
+
+The app approval/reservation ledger and shared component remain the lifecycle
+authority. This file is a non-secret recovery index, not admission, deletion or
+replay authority. It contains no keys, viewer credentials, fixture contents or
+raw provider payloads. Fork children retain their original parent ID and
+generation even if the logical source is later rebound. Native IDs and original
+intent fields cannot be replaced. Writes use a per-worktree directory lock,
+file sync and atomic rename. An interrupted lock is not stolen on a timer;
+inspect the writer before explicitly removing its empty `.json.lock` directory.
+
+With the owned backend running, an operator can export the original admission
+and any already-known shared binding again through the internal action:
+`live/ownership:retain` with `{ "key": "research-one", "kind": "create" }`, or
+`kind: "fork"` with the child key. Use the managed local CLI selection and the
+original authorized operator identity. This action performs no Boat reads,
+creation, cleanup or replay. If the checkout is unavailable, read the external
+JSON using `readOwnership(directory, worktreeId)` from
+`scripts/worktree/boat-ownership-store.mjs`; reading does not require the
+checkout identity file. Unknown creation has no guessed ID and remains unresolved.
+
+`node --test scripts/worktree/boat-ownership.test.mjs` checks external retention,
+immutable identities, parent dependencies, concurrent writes and missing
+checkouts. Create/fork host tests inspect the actual index at the synthetic
+native boundary. UbiCloud's real two-backend qualification additionally runs
+local Node actions against the original synthetic app ledger and reads both
+external indexes. No live Boat mutation or historical fork reconciliation is
+part of these checks. Native cleanup dispatch/removal guards and shared key
+import remain separate work.

@@ -93,3 +93,36 @@ export const seed = internalMutation({
     return { runId, intentKeys: ["qualification-create"], unknown: 1 };
   },
 });
+
+/** Fixed synthetic app ledger exported by the local Node runtime qualification. */
+export const ownershipSnapshot = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const view = await read(ctx);
+    if (!view) throw Error("Seed the isolated qualification ledger first");
+    const reservation = await ctx.db
+      .query("liveReservations")
+      .withIndex("by_scope_and_runId_and_intentKey", (q) =>
+        q
+          .eq("scope", scope)
+          .eq("runId", view.runId)
+          .eq("intentKey", "qualification-create"),
+      )
+      .unique();
+    if (!reservation) throw Error("Missing original qualification admission");
+    const approval = await ctx.db.get(reservation.approvalId);
+    if (!approval) throw Error("Missing original qualification approval");
+    return {
+      scope,
+      runId: view.runId,
+      operationId: reservation.intentKey,
+      reservationId: String(reservation._id),
+      key: reservation.machineKey,
+      kind: "create" as const,
+      accountId: approval.plan.accountId,
+      wallet: approval.plan.wallet,
+      walletTeamId: approval.plan.walletTeamId,
+      parent: null,
+    };
+  },
+});
