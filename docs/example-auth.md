@@ -75,9 +75,13 @@ A failed sign-out keeps private views hidden and offers retry. A new identity
 gets a fresh private subtree; a cached session for a different subject is never
 used to authorize it. The public simulator uses a separate Convex client/cache.
 
-Authentication grants no spending approval. Setup now mounts authenticated configuration and read-only account/limits checks.
-Other live workflow pages remain unavailable until their consumer implementations land. No create, delete or
-other provider mutation is exposed by this ticket.
+Authentication grants no spending approval. Setup mounts authenticated configuration
+and read-only account/limits checks. The other mounted workflows retain scoped
+bindings and use the same operator boundary; billable creation, fork and resume
+also require the separately reviewed run proposal and durable admission ledger.
+Follow the [operator walkthrough](example-walkthrough.md) only after its separate
+live prerequisites and approval. No configuration or provisioning is authorized
+by this documentation.
 
 ## Verification and troubleshooting
 

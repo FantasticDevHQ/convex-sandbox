@@ -6,7 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed
+
+- Convex CLI cold-setup downloads fall back to the exact official GitHub release asset API after HTTP 5xx and report the HTTP status on failure.
+
 ### Added
+
+- Checked fresh simulator setup and operator walkthrough, including server-only credentials, FantasticDev hosted ownership and guarded recovery/reset.
 
 - Fresh packed-app build qualification and actual anonymous-backend isolation checks for retained app run journals.
 

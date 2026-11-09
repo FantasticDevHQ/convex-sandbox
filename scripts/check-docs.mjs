@@ -7,7 +7,13 @@ import { spawnSync } from "node:child_process";
 const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 export async function collectSamples() {
   const samples = [];
-  for (const file of ["quickstart.md", "adapters.md", "boat/guide.md", "boat/webhooks.md"]) {
+  for (const file of [
+    "quickstart.md",
+    "adapters.md",
+    "boat/guide.md",
+    "boat/webhooks.md",
+    "example-walkthrough.md",
+  ]) {
     const text = await readFile(path.join(root, "docs", file), "utf8");
     for (const match of text.matchAll(
       /^```(ts|tsx) ([^\n]+)\n([\s\S]*?)^```$/gm,

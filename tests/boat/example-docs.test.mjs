@@ -44,3 +44,66 @@ test("public samples: unavailable package symbols fail compilation", async () =>
   assert.notEqual(result.status, 0);
   assert.match(result.output, /MissingExampleExport/);
 });
+
+test("server setup: checked walkthrough compiles with a server-only credential boundary", async () => {
+  const { collectSamples } = await import("../../scripts/check-docs.mjs");
+  const { readFile } = await import("node:fs/promises");
+  const samples = (await collectSamples()).filter((sample) =>
+    sample.name.startsWith("example-walkthrough.md-"),
+  );
+  assert.equal(samples.length, 1);
+  const result = await checkSamples(samples);
+  assert.equal(result.status, 0, result.output);
+  const source = samples[0].source;
+  assert.match(source, /await requireOperator\(ctx\)/);
+  assert.match(source, /process\.env\.BOAT_API_KEY/);
+  assert.match(source, /from "@fantastic.dev\/convex-sandbox\/boat"/);
+  assert.doesNotMatch(
+    source,
+    /import\.meta\.env|VITE_|return\s+(?:apiKey|\{[^}]*apiKey)/,
+  );
+  assertNoCredentialValues(source);
+  const frontend = await readFile(
+    new URL("../../example/.env.example", import.meta.url),
+    "utf8",
+  );
+  const variables = [...frontend.matchAll(/^#?\s*(VITE_[A-Z_]+)\s*=/gm)].map(
+    (match) => match[1],
+  );
+  assert.deepEqual(variables, [
+    "VITE_CONVEX_URL",
+    "VITE_CLERK_PUBLISHABLE_KEY",
+  ]);
+});
+
+test("fresh simulator guide: commands match the adopted lifecycle", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const guide = await readFile(
+    new URL("../../docs/example-walkthrough.md", import.meta.url),
+    "utf8",
+  );
+  const block = guide.match(
+    /<!-- checked-simulator-commands -->\n```sh\n([\s\S]*?)```/,
+  );
+  assert.ok(block, "Fresh-start commands must remain explicitly checked");
+  assert.deepEqual(block[1].trim().split("\n"), [
+    "pnpm install --frozen-lockfile",
+    "pnpm worktree:setup",
+    "pnpm worktree:start --frontend",
+  ]);
+  const manifest = JSON.parse(
+    await readFile(new URL("../../package.json", import.meta.url), "utf8"),
+  );
+  assert.equal(
+    manifest.scripts["worktree:setup"],
+    "node scripts/worktree/cli.mjs setup",
+  );
+  assert.equal(
+    manifest.scripts["worktree:start"],
+    "node scripts/worktree/cli.mjs start",
+  );
+  assert.match(guide, /Reset then archives\nonly the completed view/);
+  assert.match(guide, /while any child or deletion is unknown\/pending/);
+  assert.match(guide, /FantasticDev/);
+  assert.match(guide, /Unverified/);
+});
