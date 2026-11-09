@@ -43,7 +43,7 @@ async function ok(cwd, ...args) {
   assert.equal(r.code, 0, r.output.slice(-8000));
   return r;
 }
-async function componentRpc(root, fn, args, host = false, identity = null) {
+async function componentRpc(root, fn, args, host = false) {
   const code = `
     import { spawnSync } from "node:child_process";
     import path from "node:path";
@@ -51,15 +51,14 @@ async function componentRpc(root, fn, args, host = false, identity = null) {
     import { backend, dir } from "./scripts/worktree/context.mjs";
     const s = await state(); await checkConfig(s, true);
     const componentArgs = process.argv[3] === "host" ? [] : ["--component", "sandbox"];
-    const identityArgs = process.argv[4] ? ["--identity", process.argv[4]] : [];
-    const result = spawnSync(process.execPath, [cli(), "run", ...identityArgs, "--env-file", path.join(dir, "convex.env"), ...componentArgs, process.argv[1], process.argv[2]], {cwd:backend, env:childEnv(s), encoding:"utf8"});
+    const result = spawnSync(process.execPath, [cli(), "run", "--env-file", path.join(dir, "convex.env"), ...componentArgs, process.argv[1], process.argv[2]], {cwd:backend, env:childEnv(s), encoding:"utf8"});
     if (result.status !== 0) throw new Error("Local component RPC failed: " + result.stderr.slice(-2000));
     const text = result.stdout.trim();
     process.stdout.write(text ? JSON.stringify(JSON.parse(text)) : "null");
   `;
   const output = execFileSync(
     process.execPath,
-    ["--input-type=module", "-e", code, fn, JSON.stringify(args), host ? "host" : "component", identity ? JSON.stringify(identity) : ""],
+    ["--input-type=module", "-e", code, fn, JSON.stringify(args), host ? "host" : "component"],
     {
       cwd: root,
       encoding: "utf8",
@@ -150,7 +149,7 @@ test(
         assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").outcome, "unknown");
         console.log("PASS: production-exported recovery index readable after its owned checkout was removed");
         // Only the two synthetic indexes created by this qualification are disposable.
-        assert.ok(index.intents.every(intent => intent.scope === "example-boat:ownership-qualification"));
+        assert.ok(index.intents.every(intent => intent.scope.startsWith("example-boat:ownership-qualification-")));
         await rm(path.join(owner.directory, `${owner.id}.json`));
       }
       execFileSync("git", ["worktree", "prune"], { cwd: source });
@@ -233,44 +232,19 @@ test(
       });
       assert.equal((await componentRpc(roots[0], "appIsolationProof:get", {}, true)).runId, "qualification-alpha");
     });
-    const ownershipIdentity = {issuer: "https://ownership-qualification.invalid", subject: "synthetic-operator"};
-    async function ownershipEnv(i, changes) {
-      const response = await fetch(`http://127.0.0.1:${states[i].ports.cloud}/api/update_environment_variables`, {
-        method: "POST", headers: {Authorization: `Convex ${configs[i].adminKey}`, "Content-Type": "application/json"},
-        body: JSON.stringify({changes}), signal: AbortSignal.timeout(10000),
-      });
-      assert.equal(response.status, 200, "Owned synthetic backend environment update must succeed");
-    }
     for (let i = 0; i < roots.length; i++) {
-      const runId = i === 0 ? "ownership-qualification-alpha" : "ownership-qualification-beta";
-      await ownershipEnv(i, [
-        {name:"EXAMPLE_OPERATOR_GRANTS", value: JSON.stringify([{...ownershipIdentity, scope:"ownership-qualification"}])},
-        {name:"EXAMPLE_LIVE_RUN_PLAN", value: JSON.stringify({runId, scope:"example-boat:ownership-qualification", accountId:"synthetic-qualification-account", wallet:"personal", walletTeamId:null, size:"small", expiresAt:Date.now()+600000, maxMachines:2, maxStarts:2, maxConcurrent:2, durationMinutes:10, estimateUsd:0.1, allowanceUsd:1})},
-      ]);
-      for (const unknown of [false, true]) {
-        assert.deepEqual(await componentRpc(roots[i], "ownershipProof:dispatch", {unknown}, true, ownershipIdentity), {calls:1,status:unknown?"unknown":"succeeded"});
-        const key = unknown ? "ownership-unknown" : "ownership-known";
-        await componentRpc(roots[i], "live/ownership:retain", {key,kind:"create"}, true, ownershipIdentity);
-        assert.deepEqual(await componentRpc(roots[i], "ownershipProof:dispatch", {unknown}, true, ownershipIdentity), {calls:0,status:unknown?"unknown":"succeeded"});
-      }
-      const index = await readOwnership(path.join(await realpath(registry), "boat-ownership"), states[i].id);
+      const output = execFileSync(process.execPath,
+        ["scripts/worktree/boat-ownership-runtime.fixture.mjs", i === 0 ? "alpha" : "beta"],
+        {cwd: roots[i], env: {...process.env, NODE_OPTIONS: "--max-old-space-size=512"}, encoding: "utf8", timeout: 180000});
+      console.log(output);
+      const directory = path.join(await realpath(registry), "boat-ownership");
+      const index = await readOwnership(directory, states[i].id);
       assert.equal(index.owner.root, roots[i]);
       assert.equal(index.intents.length, 2);
-      assert.ok(index.intents.every(intent => intent.runId === runId));
       assert.equal(index.intents.find(intent => intent.key === "ownership-known").nativeId, "synthetic-ownership-known");
-      assert.equal(index.intents.find(intent => intent.key === "ownership-known").generation, 1);
       assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").outcome, "unknown");
-      assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").nativeId, null);
-      await assert.rejects(componentRpc(roots[i], "live/ownership:retain", {key:"ownership-known",kind:"create"}, true));
-      await assert.rejects(componentRpc(roots[i], "live/ownership:retain", {key:"ownership-known",kind:"create"}, true, {...ownershipIdentity,subject:"foreign"}));
-      const owner = { ...index.owner, directory: path.join(await realpath(registry), "boat-ownership") };
-      ownershipExports.push(owner);
-      await ownershipEnv(i, [{name:"EXAMPLE_WORKTREE_OWNERSHIP",value:JSON.stringify({...owner,cloudPort:owner.cloudPort+1})}]);
-      await assert.rejects(componentRpc(roots[i], "live/ownership:retain", {key:"ownership-known",kind:"create"}, true, ownershipIdentity));
-      await ownershipEnv(i, [{name:"EXAMPLE_WORKTREE_OWNERSHIP",value:JSON.stringify(owner)}]);
-      await componentRpc(roots[i], "live/ownership:retain", {key:"ownership-unknown",kind:"create"}, true, ownershipIdentity);
+      ownershipExports.push({...index.owner,directory});
     }
-    console.log("PASS: production ownership wrapper/action/query exports exact IDs and unknowns on both anonymous runtimes; identity and URL fences reject; recovery never replays");
     console.log("PASS: actual app approval/reservation journals are isolated across packed and workspace anonymous hosts");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:runtime", {}, true), {
       injectedFetch: true, requestInputs: true, detachedCommand: true,
@@ -425,12 +399,11 @@ test(
     );
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
     for (let i = 0; i < roots.length; i++) {
-      await componentRpc(roots[i], "live/ownership:retain", {key:"ownership-unknown",kind:"create"}, true, ownershipIdentity);
       const index = await readOwnership(ownershipExports[i].directory, states[i].id);
       assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").nativeId, null);
       assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").outcome, "unknown");
     }
-    console.log("PASS: original external unknowns remain unknown after actual backend restart and production recovery");
+    console.log("PASS: original external unknowns remain unknown after actual backend restart and recovery qualification");
     assert.deepEqual(await componentRpc(roots[0], "appIsolationProof:get", {}, true), {
       runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
     });

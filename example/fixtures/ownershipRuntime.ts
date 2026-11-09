@@ -1,17 +1,17 @@
-import { internalAction } from "./_generated/server";
-import { internal, components } from "./_generated/api";
+import { action } from "../convex/_generated/server";
+import { internal, components } from "../convex/_generated/api";
 import { v } from "convex/values";
 import {
   SandboxProviders,
   createLifecycleStore,
 } from "@fantastic.dev/convex-sandbox";
-import { ownershipProvider } from "./live/ownershipProvider";
-import { requireOperator } from "./live/operator";
-import { currentPlan, reviewToken } from "./live/allowanceModel";
+import { ownershipProvider } from "../convex/live/ownershipProvider";
+import { requireOperator } from "../convex/live/operator";
+import { currentPlan, reviewToken } from "../convex/live/allowanceModel";
 
 /** Internal offline qualification through the production adapter/export/action/query path.
  * Fixed synthetic authority and exhaustive transport, never ambient Boat credentials/fetch. */
-export const dispatch = internalAction({
+export const dispatch = action({
   args: { unknown: v.boolean() },
   returns: v.object({ calls: v.number(), status: v.string() }),
   handler: async (
@@ -21,7 +21,9 @@ export const dispatch = internalAction({
     const operator = await requireOperator(ctx);
     const plan = currentPlan(operator.scope);
     if (
-      operator.scope !== "example-boat:ownership-qualification" ||
+      !/^example-boat:ownership-qualification(?:-[a-f0-9-]{36})?$/.test(
+        operator.scope,
+      ) ||
       !/^ownership-qualification-(alpha|beta)$/.test(plan.runId) ||
       plan.accountId !== "synthetic-qualification-account" ||
       plan.wallet !== "personal"
@@ -39,6 +41,17 @@ export const dispatch = internalAction({
       machineKey: key,
       kind: "create",
     });
+    if (!admission.admitted) {
+      const prior = await ctx.runQuery(
+        components.sandbox.lifecycle.getProvision,
+        { sandbox: { scope: operator.scope, key } },
+      );
+      await ctx.runAction(internal.live.ownership.retain, {
+        key,
+        kind: "create",
+      });
+      return { calls: 0, status: prior?.status ?? "unknown" };
+    }
     let calls = 0;
     const providers = new SandboxProviders({
       authorize: async () => {},
@@ -96,4 +109,12 @@ export const dispatch = internalAction({
     });
     return { calls, status: provision.status };
   },
+});
+
+// Mounted only by the ephemeral anonymous-runtime test bridge.
+export const recover = action({
+  args: { key: v.string(), kind: v.literal("create") },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> =>
+    ctx.runAction(internal.live.ownership.retain, args),
 });

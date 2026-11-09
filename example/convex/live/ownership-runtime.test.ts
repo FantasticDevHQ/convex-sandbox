@@ -39,7 +39,8 @@ test.each([false, true])(
       );
       const t = convexTest(schema, {
         "./_generated/server.js": () => import("../_generated/server.js"),
-        "./ownershipProof.ts": () => import("../ownershipProof"),
+        "./ownershipRuntimeFixture.ts": () =>
+          import("../../fixtures/ownershipRuntime"),
         "./live/ownership.ts": () => import("./ownership"),
         "./live/ownershipData.ts": () => import("./ownershipData"),
         "./live/allowance.ts": () => import("./allowance"),
@@ -47,7 +48,7 @@ test.each([false, true])(
       register(t);
       const operator = t.withIdentity({ issuer, subject });
       const dispatch = makeFunctionReference<"action">(
-        "ownershipProof:dispatch",
+        "ownershipRuntimeFixture:dispatch",
       );
       const recover = makeFunctionReference<"action">("live/ownership:retain");
       const args = { unknown };

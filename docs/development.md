@@ -303,6 +303,10 @@ a cold anonymous setup on UbiCloud before doing so.
 
 ## Boat ownership recovery index
 
+Use Node.js 22 or 24 for local Convex development. The pinned local Node action
+executor does not support Node 26. For an existing fnm installation,
+`fnm exec --using 22 -- pnpm worktree:setup` selects a supported runtime.
+
 Managed setup configures `EXAMPLE_WORKTREE_OWNERSHIP` in this anonymous backend
 with its worktree UUID, canonical checkout path, deployment and external index
 path. Existing checkouts must rerun setup before creating or forking. The index
@@ -349,3 +353,14 @@ unknown replies, recovery without replay and identity/URL refusal, then reads bo
 external indexes. No live Boat mutation or historical fork reconciliation is
 part of these checks. Native cleanup dispatch/removal guards and shared key
 import remain separate work.
+
+The runtime qualification mounts a temporary public shim from
+`example/fixtures/ownershipRuntime.ts` only in its owned anonymous test host.
+Convex CLI impersonation cannot directly invoke an internal function; the shim
+lets an authorized synthetic caller exercise the real action-to-action identity
+path. It uses a fixed synthetic account and exhaustive injected transport, with
+no ambient fetch fallback. The harness restores the original environment, removes
+only its exact shim and regenerates the production function set. No public test
+endpoint ships in `example/convex`. The original admissions and unknowns remain
+in the backend and external index. Each invocation gets a fresh synthetic scope;
+retries within that scope cannot reset its run or replay an admitted intent.
