@@ -192,6 +192,7 @@ test("target isolation and secret output: actual command writes only one managed
   );
   const registry = path.join(base, "registry");
   const received = [[], []];
+  let failWrite = false;
   const servers = [];
   const supervisors = [];
   try {
@@ -204,8 +205,8 @@ test("target isolation and secret output: actual command writes only one managed
         req.on("data", (data) => (body += data));
         req.on("end", () => {
           received[index].push(JSON.parse(body));
-          res.writeHead(200);
-          res.end("{}");
+          res.writeHead(failWrite ? 403 : 200);
+          res.end(failWrite ? body : "{}");
         });
       });
       server.listen(0, "127.0.0.1");
@@ -276,6 +277,18 @@ test("target isolation and secret output: actual command writes only one managed
       );
       assert.equal(config.includes(secret), false);
     }
+    // The server receives the supplied key, then echoes it in a failing response.
+    // Captured command output must suppress that body and omit success output.
+    failWrite = true;
+    const rejectedWrite = await execute(states[0].root, registry, code);
+    assert.equal(rejectedWrite.status, 1);
+    assert.equal(rejectedWrite.output.includes(secret), false);
+    assert.match(rejectedWrite.output, /Local key import failed/);
+    assert.doesNotMatch(rejectedWrite.output, /Imported BOAT_API_KEY/);
+    assert.equal(received[0].length, 2);
+    assert.equal(received[0][1].changes[0].value, secret);
+    assert.deepEqual(received[1], []);
+    failWrite = false;
     // Released reservations and missing supervisors refuse before any source read.
     const unread = `try { const {importBoatKey}=await import(${JSON.stringify(moduleUrl)}); await importBoatKey({accessToken:"synthetic",managementFetch:()=>{console.log("UNEXPECTED_SOURCE_READ");throw new Error();}}); } catch(error) {console.error(error.message);process.exitCode=1;}`;
     await writeFile(path.join(registry, "leases.json"), "{}");
@@ -303,7 +316,7 @@ test("target isolation and secret output: actual command writes only one managed
     const refused = await execute(states[0].root, registry, code);
     assert.equal(refused.status, 1);
     assert.equal(refused.output.includes(secret), false);
-    assert.equal(received[0].length, 1);
+    assert.equal(received[0].length, 2);
     const cli = await execute(
       states[0].root,
       registry,

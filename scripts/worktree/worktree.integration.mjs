@@ -405,9 +405,8 @@ test(
       runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
     });
     assert.equal((await componentRpc(roots[1], "appIsolationProof:get", {}, true)).runId, "qualification-beta");
-    assert.ok(boatKeyMatches(roots[0],"synthetic-isolation-key"),"Imported key must survive owned restart");
-    assert.ok(boatKeyMatches(roots[1],""),"Sibling remains key-free after restart");
-    console.log("PASS: synthetic Boat key persists only in its owned backend across teardown/restart, with secret-free import output");
+    assert.ok(roots.every(root=>boatKeyMatches(root,"")),"Default backends must remain key-free before opt-in import");
+    console.log("PASS: default anonymous backends remain key-free after restart, before opt-in import");
     console.log("PASS: retained app run journals survive owned restart without crossing into the sibling backend");
     const boatBinding = await componentRpc(roots[0], "registry:get", {
       sandbox: { scope: "boat-provision-proof", key: "created" },
