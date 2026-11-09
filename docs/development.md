@@ -301,6 +301,70 @@ checks continue unchanged. Frozen installs apply the recorded patch hash. Remove
 the patch when an upstream CLI release supplies a verified equivalent fix; qualify
 a cold anonymous setup on UbiCloud before doing so.
 
+## Boat ownership recovery index
+
+Use Node.js 22 or 24 for local Convex development. The pinned local Node action
+executor does not support Node 26. For an existing fnm installation,
+`fnm exec --using 22 -- pnpm worktree:setup` selects a supported runtime.
+
+Managed setup configures `EXAMPLE_WORKTREE_OWNERSHIP` in this anonymous backend
+with its worktree UUID, canonical checkout path, deployment and external index
+path. Existing checkouts must rerun setup before creating or forking. The index
+lives at `<WORKTREE_REGISTRY_DIR>/boat-ownership/<worktree-uuid>.json`, defaulting
+to `~/.local/state/convex-worktrees/boat-ownership`. It survives local stop,
+teardown, explicit local database cleanup and removal of the checkout.
+
+Create and fork adapters await an internal local Node action before native
+dispatch. It exports only the original app admission, reviewed account/wallet,
+operation, logical key and fork parent identity/generation. As soon as the
+adapter returns an exact sandbox ID, that ID is exported before the shared
+client records its result. A subsequent export records the shared generation.
+A failed pre-dispatch export prevents the native mutation. A missing reply,
+interrupted action or write failure after dispatch leaves an unknown record
+unless the exact ID was already retained. Identified means only that an ID is
+known, never that a machine is ready, absent or deleted.
+
+The app approval/reservation ledger and shared component remain the lifecycle
+authority. This file is a non-secret recovery index, not admission, deletion or
+replay authority. It contains no keys, viewer credentials, fixture contents or
+raw provider payloads. Fork children retain their original parent ID and
+generation even if the logical source is later rebound. Native IDs and original
+intent fields cannot be replaced. Writes use a per-worktree directory lock,
+file sync and atomic rename. An interrupted lock is not stolen on a timer;
+inspect the writer before explicitly removing its empty `.json.lock` directory.
+
+With the owned backend running, an operator can export the original admission
+and any already-known shared binding again through the internal action:
+`live/ownership:retain` with `{ "key": "research-one", "kind": "create" }`, or
+`kind: "fork"` with the child key. Use the managed local CLI selection and the
+original authorized operator identity. This action performs no Boat reads,
+creation, cleanup or replay. If the checkout is unavailable, read the external
+JSON using `readOwnership(directory, worktreeId)` from
+`scripts/worktree/boat-ownership-store.mjs`; reading does not require the
+checkout identity file. Unknown creation has no guessed ID and remains unresolved.
+
+`node --test scripts/worktree/boat-ownership.test.mjs` checks external retention,
+immutable identities, parent dependencies, concurrent writes and missing
+checkouts. Create/fork host tests inspect the actual index at the synthetic
+native boundary. UbiCloud's real two-backend qualification additionally runs
+the production wrapper, internal Node action and operator-backed authority query
+against synthetic admissions on both anonymous backends. It checks exact IDs,
+unknown replies, recovery without replay and identity/URL refusal, then reads both
+external indexes. No live Boat mutation or historical fork reconciliation is
+part of these checks. Native cleanup dispatch/removal guards remain separate
+work. Credential import uses the explicit command described below.
+
+The runtime qualification mounts a temporary public shim from
+`example/fixtures/ownershipRuntime.ts` only in its owned anonymous test host.
+Convex CLI impersonation cannot directly invoke an internal function; the shim
+lets an authorized synthetic caller exercise the real action-to-action identity
+path. It uses a fixed synthetic account and exhaustive injected transport, with
+no ambient fetch fallback. The harness restores the original environment, removes
+only its exact shim and regenerates the production function set. No public test
+endpoint ships in `example/convex`. The original admissions and unknowns remain
+in the backend and external index. Each invocation gets a fresh synthetic scope;
+retries within that scope cannot reset its run or replay an admitted intent.
+
 ## Opt-in local Boat key import
 
 The default simulator setup needs no Boat credentials. For local Boat setup,

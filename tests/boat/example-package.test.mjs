@@ -114,6 +114,15 @@ test(
         path.join(source, "scripts/boat", file),
         path.join(consumer, "scripts/boat", file),
       );
+    await mkdir(path.join(consumer, "scripts/worktree"), { recursive: true });
+    for (const file of [
+      "boat-ownership-store.mjs",
+      "boat-ownership-store.d.mts",
+    ])
+      await cp(
+        path.join(source, "scripts/worktree", file),
+        path.join(consumer, "scripts/worktree", file),
+      );
     const rootOptions = JSON.parse(
       await readFile(path.join(source, "tsconfig.json"), "utf8"),
     ).compilerOptions;

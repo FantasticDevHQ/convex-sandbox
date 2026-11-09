@@ -1,3 +1,5 @@
+import { worktreeOwnershipFixture } from "../../../tests/boat/worktree-fixture";
+import { readOwnership } from "../../../scripts/worktree/boat-ownership-store.mjs";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { register } from "@fantastic.dev/convex-sandbox/testing";
@@ -15,7 +17,11 @@ let native = vi.fn(
     new Response(),
 );
 let lose = false;
-beforeEach(() => {
+let ownership: Awaited<ReturnType<typeof worktreeOwnershipFixture>>;
+beforeEach(async () => {
+  ownership = await worktreeOwnershipFixture();
+  vi.stubEnv("EXAMPLE_WORKTREE_OWNERSHIP", JSON.stringify(ownership.owner));
+  vi.stubEnv("CONVEX_CLOUD_URL", "http://127.0.0.1:19999");
   vi.stubEnv(
     "EXAMPLE_OPERATOR_GRANTS",
     JSON.stringify(
@@ -44,6 +50,15 @@ beforeEach(() => {
   );
   lose = false;
   native = vi.fn(async (_url: unknown, init?: RequestInit) => {
+    const index = await readOwnership(
+      ownership.owner.directory,
+      ownership.owner.id,
+    );
+    expect(index.intents[0]).toMatchObject({
+      outcome: "unknown",
+      nativeId: null,
+      operationId: "create-research-one",
+    });
     expect(init?.method).toBe("POST");
     expect(JSON.parse(String(init?.body))).toMatchObject({
       type: "small",
@@ -78,13 +93,16 @@ beforeEach(() => {
     }),
   );
 });
-afterEach(() => {
+afterEach(async () => {
+  await ownership.cleanup();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 async function fixture() {
   const functions = await import("./create");
   const t = convexTest(schema, {
+    "./live/ownership.ts": () => import("./ownership"),
+    "./live/ownershipData.ts": () => import("./ownershipData"),
     "./_generated/server.js": () => import("../_generated/server.js"),
     "./live/create.ts": async () => functions,
     "./live/allowance.ts": async () => allowance,
@@ -131,6 +149,14 @@ test("lost reply retains the original unknown operation and financial slot acros
   await a.action(create, { key: "research-one" });
   const first = await a.query(status, { key: "research-one" });
   expect(first.provision.status).toBe("unknown");
+  await a.action(makeFunctionReference<"action">("live/ownership:retain"), {
+    key: "research-one",
+    kind: "create",
+  });
+  expect(
+    (await readOwnership(ownership.owner.directory, ownership.owner.id))
+      .intents[0],
+  ).toMatchObject({ outcome: "unknown", nativeId: null });
   expect(
     (await a.query(status, { key: "research-one" })).provision.operationId,
   ).toBe(first.provision.operationId);
@@ -174,4 +200,25 @@ test("an interrupted reservation before the component claim is retained without 
   await a.action(create, { key: "research-one" });
   expect(native).not.toHaveBeenCalled();
   expect((await a.query(proposal, {})).approval.activeReservations).toBe(1);
+});
+
+test("external ownership binds exact ID and generation from the shared create", async () => {
+  const { a } = await fixture();
+  await a.action(create, { key: "research-one" });
+  const index = await readOwnership(
+    ownership.owner.directory,
+    ownership.owner.id,
+  );
+  expect(index.intents[0]).toMatchObject({
+    nativeId: "synthetic-native",
+    generation: 1,
+    operationId: "create-research-one",
+    accountId: "synthetic-account",
+  });
+});
+test("unavailable ownership index prevents native dispatch", async () => {
+  const { a } = await fixture();
+  vi.stubEnv("EXAMPLE_WORKTREE_OWNERSHIP", "");
+  await a.action(create, { key: "research-one" });
+  expect(native).not.toHaveBeenCalled();
 });

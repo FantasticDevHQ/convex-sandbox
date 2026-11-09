@@ -14,6 +14,7 @@ import {
   configFile,
   read,
   layout,
+  registry,
 } from "./context.mjs";
 import { safe, json, upsert } from "./files.mjs";
 import { locked, projectLock, available } from "./registry.mjs";
@@ -172,6 +173,12 @@ export async function setup(prepareOnly) {
         });
       }
       await checkConfig(s, true);
+      // Local Node actions export recovery outside removable backend/checkout state.
+      await fs.mkdir(registry, { recursive: true, mode: 0o700 });
+      await upsert(path.join(dir, "backend.env"), {
+        EXAMPLE_WORKTREE_OWNERSHIP: JSON.stringify({id: s.id, root, deployment: s.deployment, cloudPort: s.ports.cloud,
+          directory: path.join(await fs.realpath(registry), "boat-ownership")}),
+      });
       await run(
         [
           cli(),

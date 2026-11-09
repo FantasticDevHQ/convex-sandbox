@@ -235,7 +235,13 @@ export const start = action({
       refuse(
         "Confirm the original source stop and home fixture before forking.",
       );
-    const c = await ownedBoatClient(ctx, input.sourceKey, "fork", true);
+    const c = await ownedBoatClient(
+      ctx,
+      input.sourceKey,
+      "fork",
+      true,
+      input.childKey,
+    );
     const fixture = await ctx.runQuery(api.live.lifecycle.status, {
       key: input.sourceKey,
     });
@@ -288,6 +294,10 @@ export const start = action({
         operation.status === "succeeded"
       )
         await ctx.runMutation(internal.live.fork.bindChild, input);
+      await ctx.runAction(internal.live.ownership.retain, {
+        key: input.childKey,
+        kind: "fork",
+      });
       if (operation.status === "unknown")
         await ctx.runMutation(internal.live.allowance.markUnknown, {
           reservationId: admitted.intent.reservationId,
@@ -385,6 +395,10 @@ export const inspect = action({
       current.operation?.status === "succeeded"
     )
       await ctx.runMutation(internal.live.fork.bindChild, input);
+    await ctx.runAction(internal.live.ownership.retain, {
+      key: input.childKey,
+      kind: "fork",
+    });
     return ctx.runQuery(api.live.fork.status, input);
   },
 });

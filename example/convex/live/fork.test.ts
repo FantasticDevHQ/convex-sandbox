@@ -1,3 +1,5 @@
+import { worktreeOwnershipFixture } from "../../../tests/boat/worktree-fixture";
+import { readOwnership } from "../../../scripts/worktree/boat-ownership-store.mjs";
 import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { register } from "@fantastic.dev/convex-sandbox/testing";
@@ -17,7 +19,11 @@ let forkCount = 0,
   childStopped = false,
   stop = "pending",
   bytes = Buffer.alloc(0);
-beforeEach(() => {
+let ownership: Awaited<ReturnType<typeof worktreeOwnershipFixture>>;
+beforeEach(async () => {
+  ownership = await worktreeOwnershipFixture();
+  vi.stubEnv("EXAMPLE_WORKTREE_OWNERSHIP", JSON.stringify(ownership.owner));
+  vi.stubEnv("CONVEX_CLOUD_URL", "http://127.0.0.1:19999");
   forkCount = 0;
   lost = false;
   corrupt = false;
@@ -62,6 +68,15 @@ beforeEach(() => {
       if (u.pathname.endsWith("/me")) return reply({ user: { id: "account" } });
       if (u.pathname.endsWith("/limits")) return reply({ canStart: true });
       if (u.pathname.endsWith("/fork")) {
+        const index = await readOwnership(
+          ownership.owner.directory,
+          ownership.owner.id,
+        );
+        expect(index.intents[0]).toMatchObject({
+          kind: "fork",
+          nativeId: null,
+          parent: { nativeId: "native-source", generation: 1 },
+        });
         forkCount++;
         expect(JSON.parse(String(init?.body))).toMatchObject({
           noEnv: true,
@@ -129,13 +144,16 @@ beforeEach(() => {
     }),
   );
 });
-afterEach(() => {
+afterEach(async () => {
+  await ownership.cleanup();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
 async function fixture() {
   const fork = await import("./fork");
   const t = convexTest(schema, {
+    "./live/ownership.ts": () => import("./ownership"),
+    "./live/ownershipData.ts": () => import("./ownershipData"),
     "./_generated/server.js": () => import("../_generated/server.js"),
     "./live/fork.ts": async () => fork,
     "./live/lifecycle.ts": async () => lifecycle,
@@ -199,6 +217,14 @@ test("source identity and distinct child binding survive query reload without re
   expect(view.source.reference.providerId).toBe("native-source");
   expect(view.intent.operationId).toBe("fork-research-child");
   expect(view.child?.reference.providerId).toBe("native-child");
+  expect(
+    (await readOwnership(ownership.owner.directory, ownership.owner.id))
+      .intents[0],
+  ).toMatchObject({
+    nativeId: "native-child",
+    generation: 1,
+    parent: { nativeId: "native-source", generation: 1 },
+  });
   expect(forkCount).toBe(1);
   ready = true;
   await a.action(action("fork", "inspect"), args);
@@ -227,10 +253,31 @@ test("unknown child intent remains unresolved after lost fork reply without gues
   await a.action(action("fork", "start"), args);
   let view = await a.query(status, args);
   expect(view.operation.status).toBe("unknown");
+  await a.action(action("ownership", "retain"), {
+    key: args.childKey,
+    kind: "fork",
+  });
+  expect(
+    (await readOwnership(ownership.owner.directory, ownership.owner.id))
+      .intents[0],
+  ).toMatchObject({
+    outcome: "unknown",
+    nativeId: null,
+    parent: { nativeId: "native-source" },
+  });
   expect(view.child).toBeNull();
   await a.action(action("fork", "inspect"), args);
   await a.action(action("fork", "start"), args);
   view = await a.query(status, args);
+  expect(
+    (await readOwnership(ownership.owner.directory, ownership.owner.id))
+      .intents[0],
+  ).toMatchObject({
+    outcome: "unknown",
+    nativeId: null,
+    operationId: "fork-research-child",
+    parent: { nativeId: "native-source", generation: 1 },
+  });
   expect(view.intent.childKey).toBe(args.childKey);
   expect(view.intent.childId).toBeUndefined();
   expect(view.child).toBeNull();

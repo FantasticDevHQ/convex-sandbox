@@ -15,13 +15,11 @@ import {
   provisionRecordValidator,
 } from "@fantastic.dev/convex-sandbox";
 import { createHostAccess } from "@fantastic.dev/convex-sandbox/server";
-import {
-  createBoatProvider,
-  readBoatSetup,
-} from "@fantastic.dev/convex-sandbox/boat";
+import { readBoatSetup } from "@fantastic.dev/convex-sandbox/boat";
 import { components, internal, api } from "../_generated/api";
 import { v } from "convex/values";
 import { requireOperator } from "./operator";
+import { ownershipProvider } from "./ownershipProvider";
 import { currentPlan, refuse } from "./allowanceModel";
 const args = { key: v.string() };
 const view = v.object({
@@ -145,16 +143,25 @@ export const create = action({
         authorizeCreate: access.authorizeCreate,
       });
       providers.register(
-        createBoatProvider({
-          apiKey,
-          org: plan.wallet,
-          machineType: plan.size,
-          ttlSeconds: plan.durationMinutes * 60,
-        }),
+        ownershipProvider(
+          ctx,
+          {
+            apiKey,
+            org: plan.wallet,
+            machineType: plan.size,
+            ttlSeconds: plan.durationMinutes * 60,
+          },
+          key,
+          "create",
+        ),
       );
       const result = await providers
         .lifecycle(createLifecycleStore(ctx, components.sandbox))
         .create({ sandbox, provider, operationId });
+      await ctx.runAction(internal.live.ownership.retain, {
+        key,
+        kind: "create",
+      });
       if (result.kind === "provision" && result.provision.status === "unknown")
         await ctx.runMutation(internal.live.allowance.markUnknown, {
           reservationId: reservation.reservationId,

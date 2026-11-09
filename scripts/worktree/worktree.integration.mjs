@@ -10,6 +10,8 @@ import net from "node:net";
 import { existsSync } from "node:fs";
 import { installDependencies } from "./dependencies.mjs";
 import { refreshCheckout } from "./freshness.mjs";
+import { registry } from "./context.mjs";
+import { readOwnership } from "./boat-ownership-store.mjs";
 import { mountPackedComponent } from "../release/packed-component.mjs";
 
 const source = await realpath(process.cwd());
@@ -145,6 +147,7 @@ test(
       await mkdtemp(path.join(tmpdir(), "convex-worktree-e2e-")),
     );
     const roots = ["alpha", "beta"].map((name) => path.join(base, name));
+    const ownershipExports = [];
     t.after(async () => {
       let safeToRemove = true;
       for (const root of roots) {
@@ -165,6 +168,16 @@ test(
             cwd: source,
             stdio: "ignore",
           });
+      }
+      for (const owner of ownershipExports) {
+        if (existsSync(owner.root)) continue;
+        const index = await readOwnership(owner.directory, owner.id);
+        assert.equal(index.owner.root, owner.root);
+        assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").outcome, "unknown");
+        console.log("PASS: production-exported recovery index readable after its owned checkout was removed");
+        // Only the two synthetic indexes created by this qualification are disposable.
+        assert.ok(index.intents.every(intent => intent.scope.startsWith("example-boat:ownership-qualification-")));
+        await rm(path.join(owner.directory, `${owner.id}.json`));
       }
       execFileSync("git", ["worktree", "prune"], { cwd: source });
       if (safeToRemove) await rm(base, { recursive: true, force: true });
@@ -248,6 +261,19 @@ test(
       });
       assert.equal((await componentRpc(roots[0], "appIsolationProof:get", {}, true)).runId, "qualification-alpha");
     });
+    for (let i = 0; i < roots.length; i++) {
+      const output = execFileSync(process.execPath,
+        ["scripts/worktree/boat-ownership-runtime.fixture.mjs", i === 0 ? "alpha" : "beta"],
+        {cwd: roots[i], env: {...process.env, NODE_OPTIONS: "--max-old-space-size=512"}, encoding: "utf8", timeout: 180000});
+      console.log(output);
+      const directory = path.join(await realpath(registry), "boat-ownership");
+      const index = await readOwnership(directory, states[i].id);
+      assert.equal(index.owner.root, roots[i]);
+      assert.equal(index.intents.length, 2);
+      assert.equal(index.intents.find(intent => intent.key === "ownership-known").nativeId, "synthetic-ownership-known");
+      assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").outcome, "unknown");
+      ownershipExports.push({...index.owner,directory});
+    }
     console.log("PASS: actual app approval/reservation journals are isolated across packed and workspace anonymous hosts");
     for (const root of roots) assert.deepEqual(await componentRpc(root, "boatProbe:runtime", {}, true), {
       injectedFetch: true, requestInputs: true, detachedCommand: true,
@@ -401,6 +427,12 @@ test(
       "Repeated setup must preserve managed configuration",
     );
     assert.equal((await readObservation(roots[0])).providerId, "alpha");
+    for (let i = 0; i < roots.length; i++) {
+      const index = await readOwnership(ownershipExports[i].directory, states[i].id);
+      assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").nativeId, null);
+      assert.equal(index.intents.find(intent => intent.key === "ownership-unknown").outcome, "unknown");
+    }
+    console.log("PASS: original external unknowns remain unknown after actual backend restart and recovery qualification");
     assert.deepEqual(await componentRpc(roots[0], "appIsolationProof:get", {}, true), {
       runId: "qualification-alpha", intentKeys: ["qualification-create"], unknown: 1,
     });
