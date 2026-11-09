@@ -269,6 +269,15 @@ test("unknown child intent remains unresolved after lost fork reply without gues
   await a.action(action("fork", "inspect"), args);
   await a.action(action("fork", "start"), args);
   view = await a.query(status, args);
+  expect(
+    (await readOwnership(ownership.owner.directory, ownership.owner.id))
+      .intents[0],
+  ).toMatchObject({
+    outcome: "unknown",
+    nativeId: null,
+    operationId: "fork-research-child",
+    parent: { nativeId: "native-source", generation: 1 },
+  });
   expect(view.intent.childKey).toBe(args.childKey);
   expect(view.intent.childId).toBeUndefined();
   expect(view.child).toBeNull();

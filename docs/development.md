@@ -343,7 +343,9 @@ checkout identity file. Unknown creation has no guessed ID and remains unresolve
 immutable identities, parent dependencies, concurrent writes and missing
 checkouts. Create/fork host tests inspect the actual index at the synthetic
 native boundary. UbiCloud's real two-backend qualification additionally runs
-local Node actions against the original synthetic app ledger and reads both
+the production wrapper, internal Node action and operator-backed authority query
+against synthetic admissions on both anonymous backends. It checks exact IDs,
+unknown replies, recovery without replay and identity/URL refusal, then reads both
 external indexes. No live Boat mutation or historical fork reconciliation is
 part of these checks. Native cleanup dispatch/removal guards and shared key
 import remain separate work.
