@@ -150,7 +150,7 @@ test(
     import assert from "node:assert/strict";
     import { realpath } from "node:fs/promises";
     import { fileURLToPath } from "node:url";
-    import { SandboxProviders } from "@fantastic.dev/convex-sandbox";
+    import { SandboxProviders, normalizeDesktopSession, defineCapabilities } from "@fantastic.dev/convex-sandbox";
     import config from "@fantastic.dev/convex-sandbox/convex.config.js";
     import "@fantastic.dev/convex-sandbox/_generated/component.js";
     import { createHostAccess } from "@fantastic.dev/convex-sandbox/server";
@@ -158,6 +158,10 @@ test(
     const resolved = await realpath(fileURLToPath(import.meta.resolve("@fantastic.dev/convex-sandbox")));
     assert.ok(resolved.startsWith(process.cwd() + "/node_modules/"));
     assert.equal(typeof SandboxProviders, "function");
+    const desktop = normalizeDesktopSession({kind:'desktop',url:'https://desktop.example/stream.html#token=synthetic',connectionWindow:{durationMs:600000,basis:'provider-issued'},activeStream:'may-outlive-connection-window',disconnect:'no-revocation-guarantee'});
+    assert.equal(desktop.activeStream, 'may-outlive-connection-window');
+    assert.equal(Object.hasOwn(desktop, 'expiresAt'), false);
+    assert.deepEqual(defineCapabilities({version:1,supported:['getDesktopSession']}).supported,['getDesktopSession']);
     assert.equal(typeof createHostAccess, "function");
     assert.ok(config);
     await assert.rejects(import("@fantastic.dev/convex-sandbox/dist/client/index.js"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
@@ -193,7 +197,16 @@ test(
     `]);
     await writeFile(join(root, "verify.ts"), `
       import { createBoatProvider, createBoatWebhookHandler, type BoatOptions, type BoatWebhookOptions } from '@fantastic.dev/convex-sandbox/boat';
-      import { SandboxProviders, type ProviderRegistration } from '@fantastic.dev/convex-sandbox';
+      import { normalizeDesktopSession, type DesktopSession, type DesktopSessionAdapter, type Capability, SandboxProviders, type ProviderRegistration } from '@fantastic.dev/convex-sandbox';
+      const desktop: DesktopSession = normalizeDesktopSession({
+        kind:'desktop', url:'https://desktop.example/stream.html#token=synthetic',
+        connectionWindow:{durationMs:600000,basis:'provider-issued'},
+        activeStream:'may-outlive-connection-window',disconnect:'no-revocation-guarantee',
+      });
+      const desktopAdapter: DesktopSessionAdapter = {get:async()=>desktop};
+      const desktopCapability: Capability = 'getDesktopSession';
+      // @ts-expect-error Native sessions do not claim a full access expiration.
+      const inventedExpiry: number = desktop.expiresAt;
       const webhook: BoatWebhookOptions = {
         accountId:'test-account', endpointId:'test-endpoint', signingKeys:[new TextEncoder().encode('synthetic-packed-webhook-key')],
         timestampUnit:'seconds', maxAgeMs:300000, maxFutureSkewMs:30000,
