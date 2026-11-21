@@ -34,12 +34,17 @@ const valid = {
   head: { sha: "abc123" },
 };
 
-function fixture(pr, comments = []) {
+const goodCommits = [
+  { sha: "c1", commit: { message: "ci: validate metadata\n\nRefs JIF-65" }, parents: [{}] },
+];
+
+function fixture(pr, comments = [], commits = goodCommits) {
   const calls = [];
   const api = async (method, path, data) => {
     calls.push({ method, path, data });
     if (path === "/pulls/65") return pr;
     if (path.startsWith("/pulls/65/files?")) return [];
+    if (path.startsWith("/pulls/65/commits?")) return commits;
     if (path.startsWith("/issues/65/comments?")) return comments;
     return {};
   };
@@ -65,7 +70,25 @@ test("invalid PR fails its own head status and receives actionable feedback", as
   assert.equal(calls.at(-1).data.state, "failure");
   const comment = calls.find((call) => call.path === "/issues/65/comments");
   assert.match(comment.data.body, /Summary/);
-  assert.match(comment.data.body, /TICKET-123/);
+  assert.match(comment.data.body, /type\(scope\): description/);
+});
+
+test("a commit without a Linear reference fails with actionable feedback", async () => {
+  const { calls, run } = fixture(valid, [], [
+    ...goodCommits,
+    { sha: "deadbeef", commit: { message: "ci: tweak" }, parents: [{}] },
+  ]);
+  assert.equal(await run(), false);
+  const comment = calls.find((call) => call.path === "/issues/65/comments");
+  assert.match(comment.data.body, /Commit deadbee "ci: tweak" has no ticket or issue reference/);
+});
+
+test("merge commits are exempt from the commit rule", async () => {
+  const { run } = fixture(valid, [], [
+    ...goodCommits,
+    { sha: "m1", commit: { message: "Merge branch 'main'" }, parents: [{}, {}] },
+  ]);
+  assert.equal(await run(), true);
 });
 
 test("corrected PR updates the bot comment and passes without comment spam", async () => {
@@ -115,6 +138,7 @@ test("API failure publishes failure instead of passing", async () => {
   const api = async (method, path, data) => {
     if (path === "/pulls/65") return valid;
     if (path.startsWith("/pulls/65/files?")) return [];
+    if (path.startsWith("/pulls/65/commits?")) return goodCommits;
     if (path.startsWith("/statuses/")) states.push(data.state);
     if (path.includes("comments")) throw new Error("GitHub unavailable");
   };

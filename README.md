@@ -75,7 +75,24 @@ and conformance kit without a runtime test dependency; component registration/te
 store helpers and their declarations use the optional convex-test peer. Backend
 security helpers live in the server-only subpath.
 
-## Contribute and verify
+## Contributing
+
+Contributions are welcome. Read the
+[contributing guide](https://github.com/FantasticDevHQ/.github/blob/main/CONTRIBUTING.md)
+and [Code of Conduct](https://github.com/FantasticDevHQ/.github/blob/main/CODE_OF_CONDUCT.md),
+and report vulnerabilities privately as described in the
+[security policy](https://github.com/FantasticDevHQ/.github/blob/main/SECURITY.md).
+
+Source development needs Node.js 22+ (CI uses Node.js 22) and pnpm 9.15.0,
+pinned in `package.json`.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm exec playwright install chromium   # browser for the example tests
+pnpm check:all   # lint, codegen, typecheck, tests, Boat guards, example build, package, docs, release, browser, PR-standard and worktree tests
+```
+
+For focused checks, run any of these:
 
 ```sh
 pnpm typecheck
@@ -86,7 +103,6 @@ pnpm test:package
 pnpm test:example
 ```
 
-Install Chromium with `pnpm exec playwright install chromium` before browser tests.
 Run focused checks serially with the shared host lock on constrained machines.
 UbiCloud runs full `pnpm check:all`, including checked documentation samples,
 packed-package consumption, browser flows and two real anonymous backends. Test
@@ -96,10 +112,14 @@ Read [development](docs/development.md), the [architecture decision](docs/archit
 and [PR standard](docs/pull-request-standard.md). No provider SDK, external bucket,
 custom desktop, scheduler or agent runtime is bundled by the baseline.
 
-## Provenance and license
+## Provenance
 
-MIT. Better Stripe at `7dfda90f0e734e94c5541738a68e0a68536b92e9` is the package-layout
+Better Stripe at `7dfda90f0e734e94c5541738a68e0a68536b92e9` is the package-layout
 reference; no Stripe business logic is included. Worktree tooling retains its
 license and upstream provenance under `scripts/worktree` and in the development
 guide. The official Fantastic.Dev logo is copied unchanged from brand-kit commit
 `0ce1aebc3e8418d7e59ce171e117cf9793dd2f3a`.
+
+## License
+
+[MIT](LICENSE), Copyright (c) 2026 Fantastic.Dev.
